@@ -1,5 +1,0 @@
-<config name="BTMusic_Multi_Dae_Custom" title="自定义音效" cfg_id="0xF0" size="142" num_items="2" category="ASET" attr="adjust_online">
-	<item type="Type_DAE_Settings" name="Dae_Settings" title="音效参数" offs="0"   size="126" refer="Type_DAE_Settings" attr="click_popup" />
-	<item type="uint8"             name="Name"         title="音效名称" offs="126" size="16"  range=""                  array="16" attr="string" />
-</config>
-

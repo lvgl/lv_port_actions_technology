@@ -1,1 +1,0 @@
-obj-y += tuya_ble_app_uart_common_handler.o

@@ -1,5 +1,0 @@
-r
-halt
-setpc 0x1d1
-g
-q

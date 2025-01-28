@@ -1,5 +1,0 @@
-r
-halt
-loadfile .\librom.hex
-loadfile .\brom.hex
-q

@@ -1,4 +1,0 @@
-./sty_convr.exe 固件中的sty文件 转换后的sty文件
-示例：
-	./sty_convr.exe bt_watch.sty bt_watch_ori.sty
-bt_watch_ori.sty是生成的文件，可以在styViewer.exe中查看。

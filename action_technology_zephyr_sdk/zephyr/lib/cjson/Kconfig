@@ -1,9 +1,0 @@
-# Copyright (c) 2016 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
-
-config CJSON_LIB
-	bool "Build cJSON library"
-	default n
-	help
-	  Build a cJSON parsing/encoding library. Used by sample
-	  applications such as the sample/cjson.

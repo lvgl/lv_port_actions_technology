@@ -1,1 +1,0 @@
-obj-y += tuya_ble_port_ats310x.o

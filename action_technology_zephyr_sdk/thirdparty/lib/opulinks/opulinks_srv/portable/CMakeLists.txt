@@ -1,9 +1,0 @@
-zephyr_library_sources(
-	spi_slave.c
-	gpio.c
-	serial.c
-	wifi.c
-	at_command.c
-	wifi_ble.c
-	download_stream.c
-)

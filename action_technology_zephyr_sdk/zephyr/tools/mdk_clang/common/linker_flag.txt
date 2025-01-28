@@ -1,7 +1,0 @@
---keep=__app_entry_*
---keep=__service_entry_*
---keep=__view_entry_*
---keep=*(.img_head*)
-#--keep=*(.ARM.extab*)
-#--keep=*(.ARM.exidx*)
-#--symdefs=.\ksym.map

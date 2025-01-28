@@ -1,2 +1,0 @@
-savebin fb.rgb16 180fb500 0x3f480
-q

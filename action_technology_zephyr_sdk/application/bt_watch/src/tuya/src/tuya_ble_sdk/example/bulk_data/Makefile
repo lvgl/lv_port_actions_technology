@@ -1,1 +1,0 @@
-obj-y += tuya_ble_app_bulk_data_demo.o
