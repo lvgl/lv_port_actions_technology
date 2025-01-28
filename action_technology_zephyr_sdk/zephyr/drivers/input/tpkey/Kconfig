@@ -1,0 +1,60 @@
+# Configuration options for Actions INPUT YP DRIVERS
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+if INPUT_DEV_ACTS_TP_KEY
+
+config INPUT_DEV_ACTS_CST816S_TP_KEY
+	bool "Actions SoC TP key driver"
+	default n
+	help
+	  Enable support for Actions SoC TP key driver.
+
+config INPUT_DEV_ACTS_CST816S_COB_TP_KEY
+	bool "Actions SoC TP key driver"
+	default n
+	help
+	  Enable support for Actions SoC TP key driver.
+
+config INPUT_DEV_ACTS_CST820_TP_KEY
+	bool "Actions SoC TP key driver"
+	default n
+	help
+	  Enable support for Actions SoC TP key driver.
+
+config INPUT_DEV_ACTS_IT7259_TP_KEY
+	bool "Actions SoC TP key driver"
+	default n
+	help
+	  Enable support for Actions SoC TP key driver.
+
+config INPUT_DEV_ACTS_FT5X0X_TP_KEY
+	bool "Actions SoC TP key driver"
+	default n
+	help
+	  Enable support for Actions SoC TP key driver.
+
+config INPUT_DEV_ACTS_FT3169_TP_KEY
+	bool "FocalTech FT3169 TP key driver"
+	default n
+	help
+	  Enable support for FocalTech FT3169 TP key driver.
+config INPUT_DEV_ACTS_FT3168_TP_KEY
+	bool "FocalTech FT3168 TP key driver"
+	default n
+	help
+	  Enable support for FocalTech FT3168 TP key driver.
+
+config INPUT_DEV_ACTS_ZTW622_TP_KEY
+	bool "FocalTech ZTW622 TP key driver"
+	help
+	  Enable support for FocalTech ZTW622 TP key driver.
+
+config INPUT_DEV_ACTS_TEST_FPS_FAKE_TP
+	bool "Test fps fake tp"
+	default y
+	help
+	  Enable support for test fps fake tp.
+
+endif # INPUT_DEV_ACTS_TP_KEY

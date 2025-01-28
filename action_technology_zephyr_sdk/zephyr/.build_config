@@ -1,0 +1,5 @@
+# Build config
+BOARD=ats3085s_dev_watch_ext_nor
+APPLICATION=app_demo
+SUB_APP=lvgl_demo
+APP_CONF=

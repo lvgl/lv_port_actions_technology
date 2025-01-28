@@ -1,0 +1,600 @@
+# Kconfig - ACTIONS primitive options for sdk version 2.0
+
+#
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+menuconfig BT_MAIN_APP
+	bool
+	prompt "Btbox Main App Support"
+	default n
+	help
+	This option enable or disable btbox main app
+
+if BT_MAIN_APP
+choice
+	prompt "audio policy for output channel"
+	default AUDIO_OUTPUT_DAC
+	depends on BT_MAIN_APP
+	help
+	  Select audio policy for output channel
+
+config AUDIO_OUTPUT_I2S
+	bool
+	prompt "output to i2s channel"
+	select AUDIO_OUT_I2STX0_SUPPORT
+	select OUTPUT_RESAMPLE
+	help
+	This option select audio output to i2s
+
+config AUDIO_OUTPUT_DAC
+	bool
+	prompt "output to dac channel"
+	depends on BT_MAIN_APP
+	help
+	This option select audio output to dac
+endchoice
+
+config AUDIO_OUT_STEREO_ENABLE
+	bool
+	prompt "output to stereo dac channel"
+	depends on BT_MAIN_APP
+	help
+	This option select audio output to dac
+
+config AUDIO_OUT_LEFT_ONLY
+	bool
+	prompt "output to left dac channel"
+	select RIGHT_CHANNEL_MUTE
+	depends on BT_MAIN_APP
+	help
+	This option select audio output to dac
+
+config AUDIO_OUT_RIGHT_ONLY
+	bool
+	prompt "output to right dac channel"
+	select LEFT_CHANNEL_MUTE
+	depends on BT_MAIN_APP
+	help
+	This option select audio output to dac
+
+config OUTPUT_RESAMPLE
+	bool
+	prompt "allow resample out put rate"
+	select RESAMPLE
+	depends on MEDIA
+	help
+	This option select audio output to dac
+
+config AUDIO_OUT_LEFT_RIGHT_SWAP
+	bool
+	prompt "output swap left/right dac channel"
+	depends on AUDIO_OUT_STEREO_ENABLE
+	default n
+	help
+	This option select audio output swap left/right dac
+
+if AUDIO_OUT_LEFT_RIGHT_SWAP
+config MEDIA_EFFECT_OUTMODE
+	default 1
+endif
+
+endif # BT_MAIN_APP
+
+menuconfig LAUNCHER_APP
+	bool "Launcher App"
+	default n
+	help
+	  Enable launcher app
+
+if LAUNCHER_APP
+config CLOCK_DEF_REFR_PERIOD
+	int "Clock Default Update Period in Milliseconds"
+	default 1000
+	help
+	  Set clock default update period in milliseconds
+
+config SVG_RENDER
+	bool "svg support"
+	depends on VG_LITE
+	help
+	  Enable SVG render using VG-Lite.
+
+endif # LAUNCHER_APP
+
+menuconfig BT_CALL_APP
+	bool
+	prompt "Bt Call App Support"
+	depends on MEDIA_PLAYER && BT_BR_ACTS
+  select BLUETOOTH
+  select BT_MANAGER
+  select BT_HFP_HF
+  select STREAM
+  select RINGBUFF_STREAM
+  select ACTS_RING_BUFFER
+  select VOICE_EFFECT
+  select HFP_PLC
+  select HFP_SPEECH
+  select HFP_DAE
+  select DECODER_CVSD
+  select ENCODER_CVSD
+  select DECODER_MSBC
+  select ENCODER_MSBC
+	default n
+	help
+	This option enable or disable bt call app
+
+if BT_CALL_APP
+
+config BT_CALL_FORCE_PLAY_PHONE_NUM
+	bool
+	prompt "force play phone number"
+	depends on BT_CALL_APP
+	default y
+	help
+	This option enable force play phone number
+
+endif # BT_CALL_APP
+
+menuconfig LCMUSIC_APP
+	bool
+	prompt "Local Music App Support"
+	depends on  MEDIA_PLAYER
+  select LOCAL_PLAYER
+  select BT_TRANSMIT
+	default n
+	help
+	This option enables or disable lcmusic app.
+
+if LCMUSIC_APP
+
+config DISK_MUSIC_APP
+	bool
+	prompt "Disk Music App Support"
+	default n
+	depends on LCMUSIC_APP
+	help
+	This option enables or disable the disk music app.
+
+config FORMAT_CHECK
+	bool
+	prompt "Format Check Support"
+	depends on LCMUSIC_APP
+	default y
+	help
+	This option enables or disable the format check.
+
+config BKG_SCAN_DISK
+	bool
+	prompt "Background scan disk support"
+	default n
+	depends on LCMUSIC_APP
+	help
+	This option enables or disable Background scan disk.
+
+endif # LCMUSIC_APP
+
+config LOCAL_PLAYER
+	bool
+	prompt "local music player support"
+	depends on  MEDIA_PLAYER
+  select ITERATOR
+  select FILE_ITERATOR
+  select FS_MANAGER
+  select MUTIPLE_VOLUME_MANAGER
+  select FAT_FILESYSTEM_ELM
+  select STREAM
+  select RINGBUFF_STREAM
+  select ACTS_RING_BUFFER
+  select FILE_SYSTEM
+  select AL_FORMAT_CHECK
+  select MUSIC_EFFECT
+  select MUSIC_DAE_FADE
+	default n
+	help
+	This option enables or disable utils player of local music file.
+
+config BT_TRANSMIT
+	bool
+	prompt "bt transmit player support"
+	depends on BT_BR_ACTS
+	default n
+  select BLUETOOTH
+  select BT_A2DP_TRS
+  select BT_A2DP_TRS
+  select BT_AVRCP
+  select BT_A2DP
+  select ENCODER_SBC
+  select ENCODER_SBC_HW_ACCELERATION
+	help
+	This option enables or disable bt transmit player
+
+config BT_PLAYER
+	bool "bt music player support"
+	depends on  MEDIA_PLAYER
+	depends on  BT_BR_ACTS
+  select BLUETOOTH
+  select ACTS_BT
+  select BT_MANAGER
+  select BT_A2DP
+  select BT_AVRCP
+  select BT_AVRCP_GET_ID3
+  select BT_A2DP_AAC
+  select STREAM
+  select RINGBUFF_STREAM
+  select ACTS_RING_BUFFER
+  select DECODER_SBC
+  select DECODER_AAC if BT_A2DP_AAC
+  select MUSIC_EFFECT
+  select MUSIC_DAE_FADE
+	help
+	  This option enables bt music player.
+
+config ALARM_APP
+	bool
+	prompt "alarm App Support"
+	depends on MEDIA_PLAYER
+	select ALARM_MANAGER
+	select FS_MANAGER
+	default n
+	help
+	This option enables or disable the alarm app.
+
+config NSM_APP
+	bool
+	prompt "NSM test"
+	depends on MEDIA_PLAYER
+	depends on BT_MANAGER
+	default n
+	help
+	This option enables the nsm test.
+
+config BT_MP_BTC_FILE_NAME
+	string "MP BTC FCC file name"
+	default "/NOR:K/mp_btc.bin"
+	help
+	  MP BTC FCC file name
+
+config CARD_READER_APP
+	bool
+	prompt "CARD READER App Support"
+	select USB_MASS_STORAGE
+	select MUTIPLE_VOLUME_MANAGER
+  select HOTPLUG
+  select USB_HOTPLUG
+	default n
+	help
+	This option enables or disable the card reader app.
+
+config CHARGER_APP
+	bool
+	prompt "Charger App Support"
+	default n
+	help
+	This option enables or disable the Charger app.
+
+config NV_APP
+	bool
+	prompt "NV app"
+	default n
+	help
+	This option enables the NV app.
+
+config TUYA_APP
+	bool
+	prompt "TUYA app"
+	default n
+	help
+	This option enables the TUYA app.
+
+config AP_USER_COMM
+	bool
+	prompt "ap_develop"
+	default n
+	depends on BT_MUSIC_APP
+	help
+	This option enables the app develop.
+
+config BT_VENDOR
+	bool
+	prompt "bt vendor service support"
+	select FILE_STREAM
+	default n
+	help
+	This option enables or disable bt vendor service
+
+menuconfig TOOL
+	bool "PC Tool Support"
+	depends on UART_CONSOLE
+	default n
+	help
+	This option enables the PC TOOL
+
+if TOOL
+config TOOL_STACK_SIZE
+	int "PC Tool thread stack size"
+	depends on TOOL
+	default 1536
+	help
+	This option configure PC Tool thread stack
+
+config TOOL_ASET
+	bool "PC TOOL ASET Support"
+	depends on TOOL && MEDIA
+	default y
+	help
+	This option enables the PC TOOL ASET
+
+config TOOL_ASQT
+	bool "PC TOOL ASQT Support"
+	depends on TOOL && MEDIA
+	default n
+	select STREAM
+	select ZERO_STREAM
+	help
+	This option enables the PC TOOL ASQT
+
+config TOOL_ECTT
+	bool "PC TOOL ECTT Support"
+	depends on TOOL && MEDIA
+	default n
+	help
+	This option enables the PC TOOL ECTT
+
+config SPP_TEST_SUPPORT
+	bool
+	prompt "sdk test support through SPP"
+	depends on TOOL && BT_MANAGER && MEDIA && BT_SPP
+	select STREAM
+    select BT_SPPBLE_STREAM
+	default y
+	help
+	  This option enable spp test.
+
+endif # TOOL
+
+menuconfig OTA_APP
+	bool
+	prompt "OTA App Support"
+	select OTA_UPGRADE
+	select STREAM
+	default n
+	help
+	This option enable or disable ota app
+
+config OTA_FOREGROUND
+	bool "OTA Foreground Support"
+	depends on OTA_APP
+	default n
+	help
+	  This option enable OTA foreground upgrade.
+
+config OTA_BACKGROUND
+	bool "OTA background Support"
+	depends on OTA_APP
+	default n
+	help
+	  This option enable OTA background upgrade.
+
+config SYSTEM_RECOVERY_APP_SUPPORT
+	bool
+	prompt "System Recovery App Support"
+	depends on OTA_APP
+	default n
+	depends on SYSTEM_RECOVERY
+	help
+	This option enable or disable system recovery app
+
+config OTA_UPGRADE
+	bool "OTA Upgrade Support"
+	default n
+	select PARTITION
+	select FIRMWARE_VERSION
+	help
+	  This option enable OTA upgrade.
+
+if OTA_UPGRADE
+config OTA_RECOVERY
+	bool "OTA recovery firmware Support"
+  	#select MMC
+	select STREAM
+	#select MMC_SDCARD
+	default n
+	depends on OTA_UPGRADE
+	help
+	  This option enable OTA recovery firmware.
+
+config OTA_RECOVERY_APP
+	bool "OTA recovery application Support"
+	default n
+	depends on OTA_RECOVERY
+	help
+	  This option enable OTA recovery application.
+
+config OTA_TEMP_PART_DEV_NAME
+	string "OTA temp partition device name"
+	depends on OTA_RECOVERY
+	default "sd"
+	help
+	  Specify the device name for temp partition.
+
+config XSPI1_NOR_ACTS_DEV_NAME
+	string "SPI1 NOR flash device name"
+	depends on XSPI_NOR_ACTS
+	default "spi1_nor"
+	help
+	  Specify the device name for SPI1 NOR flash driver.
+
+config OTA_BACKEND_SDCARD
+    bool "OTA upgrade by SDCARD Support"
+#	select MMC
+	select MUTIPLE_VOLUME_MANAGER
+	select FILE_STREAM
+	select STREAM
+#	select MMC_SDCARD
+    default n
+    help
+      This option enables OTA upgrade by SDCARD.
+
+config OTA_BACKEND_BLUETOOTH
+    bool "OTA upgrade by Bluetooth Support"
+	depends on BT_MANAGER
+	select STREAM
+    select BT_SPPBLE_STREAM
+    default n
+    help
+      This option enables OTA upgrade by Bluetooth SPP/BLE.
+
+config OTA_BACKEND_TEMP_PART
+    bool "OTA upgrade by spinor Support"
+    select FLASH
+    default n
+    help
+      This option enables OTA upgrade by spinor.
+
+config OTA_FILE_PATCH
+    bool "OTA file patch Support"
+    depends on !OTA_RECOVERY
+    default n
+    help
+      This option enables OTA file patch.
+
+config OTA_STORAGE_FS
+    bool "OTA upgrade by SDCARD Support"
+	select MUTIPLE_VOLUME_MANAGER
+	select FILE_STREAM
+    default n
+    help
+      This option enables OTA upgrade by SDCARD.
+
+config OTA_MUTIPLE_STORAGE
+    bool "OTA upgrade Support multiple storage"
+    depends on OTA_RECOVERY
+    default n
+    help
+      This option enables OTA upgrade by multiple storage.
+
+config OTA_RES_PATCH
+    bool "OTA res patch Support"
+    default n
+    help
+      This option enables OTA res patch.
+endif
+
+config BT_LOG_SERVICE
+	bool "BT Log Service"
+	depends on ACTLOG
+	select ACTLOG_OUTPUT_USER
+	select BT_MANAGER
+	select THREAD_TIMER
+	help
+	  Enable BT log service.
+
+if BT_LOG_SERVICE
+
+config BT_LOG_SERVICE_STACK_SIZE
+	int "BT Log Service Stack Size"
+	default 2048
+	help
+	  Set BT log service stack size.
+
+config BT_LOG_SERVICE_PRIORITY
+	int "BT Log Service Thread Priority"
+	default 11
+	help
+	  Set BT log service thread priority.
+
+endif # BT_LOG_SERVICE
+
+menuconfig ACTIONS_ATT
+    bool
+    prompt "ACTIONS auto test"
+    default n
+    help
+    This option ACTIONS auto test
+
+if ACTIONS_ATT
+
+config ATT_SUPPORT_MULTIPLE_DEVICES
+    bool
+    prompt "ACTIONS ATT SUPPORT MULTIPLE DEVICES"
+    depends on ACTIONS_ATT
+    default n
+    help
+    This option whether ACTIONS auto test supports multiple devices
+
+config ATT_ACTIVE_CONNECTION
+    bool
+    prompt "ACTIONS auto test active connection"
+    depends on ACTIONS_ATT
+    default n
+    help
+    This option ACTIONS auto test active connection
+
+config ATT_CYCLIC_TEST
+    bool
+    prompt "ACTIONS auto cyclic test"
+    depends on ACTIONS_ATT
+    default n
+    help
+    This option ACTIONS auto cyclic test
+
+endif # ACTIONS_ATT
+
+config MONKEY_TEST
+	bool
+	prompt "support monkey test"
+	default n
+	help
+	This option enable monkey test
+
+config DEEP_SUSPEND
+	bool
+	prompt "support deep suspend"
+	default n
+	help
+	This option support deep suspend
+	
+config VIDEO_APP
+	bool
+	prompt "support video app"
+	default n
+	help
+	This option support video app
+
+config VIDEO_APP_AUDIO_ENABLE
+	bool
+	prompt "enable video audio"
+	default y
+	help
+	This option enable video audio
+
+config CAT1_APP
+	bool
+	prompt "support App Support"
+	default n
+	select USING_AICXTEK_LIB
+	help
+	This option enables or disable CAT1 app.
+	
+config THIRD_PARTY_APP
+	bool
+	prompt "support third party App"
+	default n
+	help
+	This option enables or disable third party app.
+
+rsource "ui/Kconfig"
+

@@ -1,0 +1,17 @@
+BasedOnStyle: LLVM
+ColumnLimit: 100
+IndentWidth: 4
+Standard: c++03
+IndentCaseLabels: false
+IndentGotoLabels: false
+AccessModifierOffset: -4
+SpaceAfterTemplateKeyword: false
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Always
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: false
+MaxEmptyLinesToKeep: 1
+KeepEmptyLinesAtTheStartOfBlocks: false

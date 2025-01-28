@@ -1,0 +1,113 @@
+# Copyright (c) 2016 Linaro Limited.
+# SPDX-License-Identifier: Apache-2.0
+
+choice
+	prompt "LEOPARD MCU Selection"
+	depends on SOC_SERIES_LEOPARD
+
+config SOC_LEOPARD
+	bool "LEOPARD"
+
+endchoice
+
+if SOC_LEOPARD
+
+config SOC_SPI0_USE_CK64M
+	bool
+	prompt "enable cpu spi0 to use CK64M clock source"
+	default y
+	help
+		enable cpu spi0 to use CK64M clock source
+
+config IRQ_VECTOR_IN_SRAM
+	bool
+	prompt "enable irq vector copy to sram"
+	default n
+	help
+		enable irq vector copy to sram
+
+config SLEEP_FUNC_IN_SRAM
+	bool
+	prompt "enable sleep func copy to sram"
+	default y
+	help
+		enable sleep func copy to sram
+config SOC_WKEN_BAT
+	bool
+	prompt "eanbel battery first conected to run system"
+	default n
+	help
+		the battery is connected for the first time;if disable, battery first insert,system power off.
+
+config SOC_NO_PSRAM
+	bool
+	prompt "indicate soc not integrate psram"
+	default n
+	help
+		prompt  "indicate soc not integrate psram"
+
+config SLEEP_SENSOR_RUN_ON_NOR
+	bool
+	prompt "enable sleep sensor algo run on NOR"
+	default n
+	help
+		enable sleep sensor algo run on NOR
+
+config SLEEP_TIMER_DEBUG
+	bool
+	prompt "enable sleep timestamp debug"
+	default n
+	help
+		enable sleep timestamp debug
+
+config SLEEP_UART_SILENT
+	bool
+	prompt "enable sleep uart silent"
+	default n
+	help
+		enable sleep uart silent
+
+config SLEEP_COPY_SRAM_FOR_SENSOR
+	bool
+	prompt "enable copy sram for sensor algo"
+	default n
+	help
+		enable copy sram for sensor algo
+
+config SLEEP_MEMORY_CHECK_INTEGRITY
+	bool
+	prompt "enable memory check integrity"
+	default n
+	help
+		enable memory check integrity
+
+config SLEEP_DISABLE_BT
+	bool
+	prompt "disable Bluetooth when deep sleep"
+	default n
+	help
+		disable Bluetooth when deep sleep
+
+config SYS_WAKELOCK
+	bool
+	prompt "System Wake Lock Support"
+	depends on PM
+	default n
+	help
+	This option enables actions system wake lock.
+
+config CPU_PWRGAT
+	bool
+	prompt "support cpu power gating"
+	default n
+	help
+	This option support cpu power gating
+
+config S1ML_LITTLE_BIAS
+	bool
+	prompt "support s1ml little bias"
+	default n
+	help
+	This option support s1ml little bias regulation
+
+endif

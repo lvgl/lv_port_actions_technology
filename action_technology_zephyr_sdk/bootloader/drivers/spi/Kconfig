@@ -1,0 +1,46 @@
+# SPI driver configuration options
+
+# Copyright (c) 2015-2016 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+#
+# SPI Drivers
+#
+menuconfig SPI
+	bool "SPI hardware bus support"
+	help
+	  Enable support for the SPI hardware bus.
+
+if SPI
+
+config SPI_ASYNC
+	bool "Enable Asynchronous call support"
+	select POLL
+	help
+	  This option enables the asynchronous API calls.
+
+config SPI_SLAVE
+	bool "Enable Slave support [EXPERIMENTAL]"
+	help
+	  Enables Driver SPI slave operations. Slave support depends
+	  on the driver and the hardware it runs on.
+
+config SPI_INIT_PRIORITY
+	int "Init priority"
+	default 70
+	help
+	  Device driver initialization priority.
+
+config SPI_COMPLETION_TIMEOUT_TOLERANCE
+	int "Completion timeout tolerance (ms)"
+	default 200
+	help
+	  The tolerance value in ms for the SPI completion timeout logic.
+
+module = SPI
+module-str = spi
+source "subsys/logging/Kconfig.template.log_config"
+
+
+source "drivers/spi/Kconfig.acts"
+endif # SPI

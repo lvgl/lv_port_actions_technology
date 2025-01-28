@@ -1,0 +1,78 @@
+# Kconfig - Actions resource manager
+
+#
+# Copyright (c) 2016 Actions Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+menuconfig RES_MANAGER
+	bool "res_manager library"
+	depends on UI_MEMORY_MANAGER
+	help
+	  This option enables the res_manager library.
+
+if RES_MANAGER
+
+config RES_MANAGER_DISABLE_AUTO_SEARCH_FILES
+	bool "disable auto search for updated res files"
+	default y
+	help
+	  This option disables auto search for updated res files on incremental update
+
+config RES_PRELOAD_MAX_BLOCK_SIZE
+	int "max block size for res manager preload compact block"
+	default 102400
+	help
+	  This option set max block size for res manager preload compact block
+	  
+config RES_MANAGER_ENABLE_MEM_LEAK_DEBUG
+	bool "enable resource unload check in res manager"
+	default n
+	help
+	  This option enables pic resource unload check in res manager
+
+config RES_MANAGER_USE_STYLE_MMAP
+	bool "enable mmap style file in res manager"
+	default n
+	help
+	  This option enables mmap style file in res manager
+
+config RES_MANAGER_SKIP_PRELOAD
+	bool "makes preload do layout directly in res manager"
+	default n
+	help
+	  This option makes preload do layout directly in res manager
+
+config RES_MANAGER_ALIGN
+	int "set picture resource mem align, default is 4"
+	default 4
+	help
+	  This option set picture resource mem align  
+
+config RES_MANAGER_IMG_DECODER
+	bool "enable lvgl use res manager as an image decoder"
+	default n
+	help
+	  This option enables lvgl to use res manager as an image decoder
+
+config RES_MANAGER_RES_DISK
+	string "drive name for picture resource"
+	default "/SD:A"
+	help
+	  This option set driver name for picture resource
+
+config RES_MANAGER_BLOCK_SIZE
+	int "set block size for big pictures"
+	default 0
+	help
+	  This option set block size for big pictures
+
+config RES_MANAGER_BLOCK_NUM
+	int "set block size for big pictures"
+	default 0
+	help
+	  This option set block size for big pictures
+
+
+endif # RES_MANAGER

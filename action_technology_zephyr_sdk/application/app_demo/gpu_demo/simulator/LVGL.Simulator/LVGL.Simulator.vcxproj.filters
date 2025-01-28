@@ -1,0 +1,950 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="LVGL.Portable.vcxitems.filters" />
+  <Import Project="LVGL.Drivers.vcxitems.filters" />
+  <ItemGroup>
+    <ClInclude Include="lv_drv_conf.h" />
+    <ClInclude Include="bt_watch_simulator.h" />
+    <ClInclude Include="..\..\..\..\..\framework\base\core\srv_manager_inner.h">
+      <Filter>framework\base\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\utils\misc\trace.h">
+      <Filter>framework\base\utils\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\utils\stream\stream_internal.h">
+      <Filter>framework\base\utils\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\property\property_inner.h">
+      <Filter>framework\base\property</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\alarm_manager.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\app_switch.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\esd_manager.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\fm_manager.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\fs_manager.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\hotplug_manager.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\input_manager.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\input_manager_type.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\power_manager.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\sys_event.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\sys_event_type.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\sys_manager.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\sys_monitor.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\sys_wakelock.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\system_util.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\include\tts_manager.h">
+      <Filter>framework\system\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\system\input\input_manager_inner.h">
+      <Filter>framework\system\input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\core\app_manager.h">
+      <Filter>framework\base\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\core\mem_manager.h">
+      <Filter>framework\base\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\core\msg_manager.h">
+      <Filter>framework\base\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\core\property_manager.h">
+      <Filter>framework\base\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\core\srv_manager.h">
+      <Filter>framework\base\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\acts_ringbuf.h">
+      <Filter>framework\base\include\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\energy_statistics.h">
+      <Filter>framework\base\include\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\timeline.h">
+      <Filter>framework\base\include\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\iterator\file_iterator.h">
+      <Filter>framework\base\include\utils\iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\iterator\iterator.h">
+      <Filter>framework\base\include\utils\iterator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\stream\buffer_stream.h">
+      <Filter>framework\base\include\utils\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\stream\clone_stream.h">
+      <Filter>framework\base\include\utils\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\stream\file_stream.h">
+      <Filter>framework\base\include\utils\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\stream\loop_fstream.h">
+      <Filter>framework\base\include\utils\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\stream\net_stream.h">
+      <Filter>framework\base\include\utils\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\stream\psram_stream.h">
+      <Filter>framework\base\include\utils\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\stream\ringbuff_stream.h">
+      <Filter>framework\base\include\utils\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\stream\stream.h">
+      <Filter>framework\base\include\utils\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\utils\stream\zero_stream.h">
+      <Filter>framework\base\include\utils\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\libdisplay\lvgl\lvgl_input_dev.h">
+      <Filter>framework\display\libdisplay\lvgl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\libdisplay\ui_service\ui_service_inner.h">
+      <Filter>framework\display\libdisplay\ui_service</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\libdisplay\ui_service\view_manager_inner.h">
+      <Filter>framework\display\libdisplay\ui_service</Filter>
+    </ClInclude>
+    <ClInclude Include="native_window.h" />
+    <ClInclude Include="simulator_config.h" />
+    <ClInclude Include="framework_porting\include\os_common_api.h">
+      <Filter>framework_porting\include</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\soc.h">
+      <Filter>framework_porting\include</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\watchdog_hal.h">
+      <Filter>framework_porting\include</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\memory\mem_cache.h">
+      <Filter>framework_porting\include\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\display\display_composer.h">
+      <Filter>framework_porting\include\display</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\display\sw_draw.h">
+      <Filter>framework_porting\include\display</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\display\sw_math.h">
+      <Filter>framework_porting\include\display</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\display\sw_rotate.h">
+      <Filter>framework_porting\include\display</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\display\ui_graphics.h">
+      <Filter>framework_porting\include\display</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\display\ui_memsetcpy.h">
+      <Filter>framework_porting\include\display</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\app_ui.h">
+      <Filter>bt_watch\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\app_defines.h">
+      <Filter>bt_watch\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\launcher\launcher_app.h">
+      <Filter>bt_watch\launcher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\lvgl\lvgl_bitmap_font.h">
+      <Filter>framework\display\include\lvgl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\lvgl\lvgl_freetype_font.h">
+      <Filter>framework\display\include\lvgl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\lvgl\lvgl_img_decoder.h">
+      <Filter>framework\display\include\lvgl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\lvgl\lvgl_img_loader.h">
+      <Filter>framework\display\include\lvgl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\lvgl\lvgl_memory.h">
+      <Filter>framework\display\include\lvgl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\lvgl\lvgl_res_loader.h">
+      <Filter>framework\display\include\lvgl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\lvgl\lvgl_view.h">
+      <Filter>framework\display\include\lvgl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\vg_lite\vg_lite.h">
+      <Filter>framework\display\include\vg_lite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\bitmap_font_api.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\compress_api.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\font_mempool.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\freetype_font_api.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\graphic_buffer.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\gui_api.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\input_recorder.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\led_manager.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\msgbox_cache.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\res_manager_api.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\res_mempool.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\seg_led_manager.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\transition_anim.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\ui_manager.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\ui_math.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\ui_mem.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\ui_region.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\ui_service.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\ui_surface.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\view_cache.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\view_manager.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\view_stack.h">
+      <Filter>framework\display\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\compression\spress.h">
+      <Filter>framework\display\compression</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\compression\tile_cache.h">
+      <Filter>framework\display\compression</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\audio_hal.h">
+      <Filter>framework_porting\include</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\key_hal.h">
+      <Filter>framework_porting\include</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\utils\heap\heap.h">
+      <Filter>framework_porting\utils\heap</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\utils\heap\kheap.h">
+      <Filter>framework_porting\utils\heap</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\utils\input_dev.h">
+      <Filter>framework_porting\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\utils\thread_timer.h">
+      <Filter>framework_porting\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\drivers\display.h">
+      <Filter>framework_porting\include\drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\drivers\rtc.h">
+      <Filter>framework_porting\include\drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\drivers\display\display_graphics.h">
+      <Filter>framework_porting\include\drivers\display</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\base\include\core\mem_guard.h">
+      <Filter>framework\base\include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\compression\lz4\lz4.h">
+      <Filter>framework\display\compression</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\compression\lz4\lz4hc.h">
+      <Filter>framework\display\compression</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\compression\rle\rle.h">
+      <Filter>framework\display\compression</Filter>
+    </ClInclude>
+    <ClInclude Include="boards\ats3085s_dev_watch_ext_nor_conf.h">
+      <Filter>boards</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ui\svgrender\nanosvg.h">
+      <Filter>bt_watch\ui\svgrender</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ui\svgrender\vglite_renderer.h">
+      <Filter>bt_watch\ui\svgrender</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ui\widgets\draw_util.h">
+      <Filter>bt_watch\ui\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ui\widgets\simple_img.h">
+      <Filter>bt_watch\ui\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ui\widgets\svg_img.h">
+      <Filter>bt_watch\ui\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ui\widgets\text_canvas.h">
+      <Filter>bt_watch\ui\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ui\widgets\watch_tileview.h">
+      <Filter>bt_watch\ui\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\main\system_app.h">
+      <Filter>bt_watch\main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\launcher\launcher_app.h">
+      <Filter>bt_watch\launcher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\launcher\launcher_ui.h">
+      <Filter>bt_watch\launcher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\win32\lv_conf.h">
+      <Filter>lvgl\porting\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lv_gpu_acts.h">
+      <Filter>lvgl\porting\gpu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_draw_vglite.h">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_draw_vglite_arc.h">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_draw_vglite_blend.h">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_draw_vglite_glyphs.h">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_draw_vglite_line.h">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_draw_vglite_rect.h">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_vglite_buf.h">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_vglite_utils.h">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\fs\fs.h">
+      <Filter>framework_porting\include\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="framework_porting\include\fs\sdfs.h">
+      <Filter>framework_porting\include\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\lvgl\lvgl_virtual_display.h">
+      <Filter>framework\display\include\lvgl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\framework\display\include\vg_lite\vglite_util.h">
+      <Filter>framework\display\include\vg_lite</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="LVGL.Simulator.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Mile.Project.Properties.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="LVGL.Simulator.cpp" />
+    <ClCompile Include="..\..\..\..\..\framework\base\core\app_manager.c">
+      <Filter>framework\base\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\base\core\msg_manager.c">
+      <Filter>framework\base\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\base\core\srv_manager.c">
+      <Filter>framework\base\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\base\memory\mem_manager.c">
+      <Filter>framework\base\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\base\utils\acts_ringbuf\acts_ringbuf.c">
+      <Filter>framework\base\utils\acts_ringbuf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\base\utils\stream\bufferstream.c">
+      <Filter>framework\base\utils\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\base\utils\stream\ringbuff_stream.c">
+      <Filter>framework\base\utils\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\base\utils\stream\stream.c">
+      <Filter>framework\base\utils\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\base\utils\stream\zero_stream.c">
+      <Filter>framework\base\utils\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\base\property\property_cache.c">
+      <Filter>framework\base\property</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\base\property\property_manager.c">
+      <Filter>framework\base\property</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\system\app_switcher.c">
+      <Filter>framework\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\system\sys_event.c">
+      <Filter>framework\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\system\sys_manager.c">
+      <Filter>framework\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\system\sys_monitor.c">
+      <Filter>framework\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\system\sys_power_off.c">
+      <Filter>framework\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\system\sys_standby.c">
+      <Filter>framework\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\system\sys_wakelock.c">
+      <Filter>framework\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\system\system_init.c">
+      <Filter>framework\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\system\alarm_manager\alarm_manager.c">
+      <Filter>framework\system\alarm_manager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\system\hotplug\hotplug_manager.c">
+      <Filter>framework\system\hotplug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\system\input\input_manager.c">
+      <Filter>framework\system\input</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\soc.c">
+      <Filter>framework_porting\soc</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\os_malloc.c">
+      <Filter>framework_porting\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_watch_simulator.c" />
+    <ClCompile Include="native_window.c" />
+    <ClCompile Include="framework_porting\display\sw_rotate.c">
+      <Filter>framework_porting\display</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\display\sw_blend.c">
+      <Filter>framework_porting\display</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\display\sw_math.c">
+      <Filter>framework_porting\display</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\memory\mem_cache.c">
+      <Filter>framework_porting\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\osal\display_work_q.c">
+      <Filter>framework_porting\osal</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\osal\os_message.c">
+      <Filter>framework_porting\osal</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\osal\os_mutex.c">
+      <Filter>framework_porting\osal</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\osal\os_sem.c">
+      <Filter>framework_porting\osal</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\osal\os_thread.c">
+      <Filter>framework_porting\osal</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\osal\os_work.c">
+      <Filter>framework_porting\osal</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\osal\os_wrapper.c">
+      <Filter>framework_porting\osal</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\osal\user_work_q.c">
+      <Filter>framework_porting\osal</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\res_manager\res_manager_api.c">
+      <Filter>framework\display\res_manager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\base\memory\mem_pool.c">
+      <Filter>framework\base\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\display\display.c">
+      <Filter>framework_porting\display</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\display\display_composer.c">
+      <Filter>framework_porting\display</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\input\input_keypad.c">
+      <Filter>framework_porting\input</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\input\input_pointer.c">
+      <Filter>framework_porting\input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\lvgl\lvgl_img_decoder.c">
+      <Filter>framework\display\lvgl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\lvgl\lvgl_img_loader.c">
+      <Filter>framework\display\lvgl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\lvgl\lvgl_memory.c">
+      <Filter>framework\display\lvgl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\lvgl\lvgl_res_loader.c">
+      <Filter>framework\display\lvgl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\font\font_mempool.c">
+      <Filter>framework\display\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\res_manager\res_mempool.c">
+      <Filter>framework\display\res_manager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\memory\ui_mem.c">
+      <Filter>framework\display\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\memory\ui_mem_fb.c">
+      <Filter>framework\display\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\memory\ui_mem_gui.c">
+      <Filter>framework\display\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\memory\ui_mem_res.c">
+      <Filter>framework\display\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\ui_service\gesture.c">
+      <Filter>framework\display\ui_service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\ui_service\msgbox_cache_lvgl.c">
+      <Filter>framework\display\ui_service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\ui_service\view_cache.c">
+      <Filter>framework\display\ui_service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\ui_service\view_cache_lite.c">
+      <Filter>framework\display\ui_service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\ui_service\view_stack.c">
+      <Filter>framework\display\ui_service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\surface\graphic_buffer.c">
+      <Filter>framework\display\surface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\surface\ui_surface.c">
+      <Filter>framework\display\surface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\transition_anim\transition_anim.c">
+      <Filter>framework\display\transition_anim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\ui_manager.c">
+      <Filter>framework\display</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\compression\spress.c">
+      <Filter>framework\display\compression</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\compression\tile_cache.c">
+      <Filter>framework\display\compression</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\utils\hex.c">
+      <Filter>framework_porting\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\utils\heap\heap.c">
+      <Filter>framework_porting\utils\heap</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\utils\heap\heap-validate.c">
+      <Filter>framework_porting\utils\heap</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\utils\heap\kheap.c">
+      <Filter>framework_porting\utils\heap</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\base\memory\mem_guard.c">
+      <Filter>framework\base\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\ui_service\msgbox_cache_lvgl.c">
+      <Filter>framework\display\ui_service</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\lvgl\lvgl_freetype_font.c">
+      <Filter>framework\display\lvgl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\compression\lz4\lz4.c">
+      <Filter>framework\display\compression</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\compression\lz4\lz4hc.c">
+      <Filter>framework\display\compression</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\compression\rle\rle.c">
+      <Filter>framework\display\compression</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\compression\pic_compress.c">
+      <Filter>framework\display\compression</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\display\ui_math.c">
+      <Filter>framework_porting\display</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\display\ui_region.c">
+      <Filter>framework_porting\display</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ui\app_ui_init.c">
+      <Filter>bt_watch\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ui\app_ui_main_view.c">
+      <Filter>bt_watch\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ui\app_ui_scene_tiles_proc.c">
+      <Filter>bt_watch\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ui\app_ui_stack.c">
+      <Filter>bt_watch\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ui\app_ui_table.c">
+      <Filter>bt_watch\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ui\svgrender\vglite_renderer.c">
+      <Filter>bt_watch\ui\svgrender</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ui\widgets\draw_util.c">
+      <Filter>bt_watch\ui\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ui\widgets\simple_img.c">
+      <Filter>bt_watch\ui\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ui\widgets\svg_img.c">
+      <Filter>bt_watch\ui\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ui\widgets\text_canvas.c">
+      <Filter>bt_watch\ui\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ui\widgets\watch_tileview.c">
+      <Filter>bt_watch\ui\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\system_app_input.c">
+      <Filter>bt_watch\main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\system_app_launcher.c">
+      <Filter>bt_watch\main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\system_app_main.c">
+      <Filter>bt_watch\main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\launcher\cube_scene.c">
+      <Filter>bt_watch\launcher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\launcher\launcher_app.c">
+      <Filter>bt_watch\launcher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\launcher\main_scene.c">
+      <Filter>bt_watch\launcher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\launcher\svg_scene.c">
+      <Filter>bt_watch\launcher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\win32\lvgl.c">
+      <Filter>lvgl\porting\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lv_gpu_acts.c">
+      <Filter>lvgl\porting\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lv_gpu_acts_dma2d.c">
+      <Filter>lvgl\porting\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lv_gpu_acts_jpg.c">
+      <Filter>lvgl\porting\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lv_gpu_acts_sw.c">
+      <Filter>lvgl\porting\gpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_draw_vglite.c">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_draw_vglite_arc.c">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_draw_vglite_blend.c">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_draw_vglite_glyphs.c">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_draw_vglite_line.c">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_draw_vglite_rect.c">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_vglite_buf.c">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\vglite\lv_vglite_utils.c">
+      <Filter>lvgl\porting\gpu\vglite</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\fs\fs.c">
+      <Filter>framework_porting\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="framework_porting\fs\sdfs.c">
+      <Filter>framework_porting\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\launcher\font_scene.c">
+      <Filter>bt_watch\launcher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\framework\display\vg_lite\vglite_util.c">
+      <Filter>framework\display\vg_lite</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="LVGL.Simulator.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="LVGL.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LVGL.Portable.vcxitems" />
+    <None Include="LVGL.Portable.vcxitems.filters" />
+    <None Include="LVGL.Drivers.vcxitems" />
+    <None Include="LVGL.Drivers.vcxitems.filters" />
+    <None Include="..\..\src\main\Makefile" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="framework">
+      <UniqueIdentifier>{e7d817e4-97de-4618-bbfe-8e5a101e115e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base">
+      <UniqueIdentifier>{b9304b04-1342-4f71-8616-6fc7670ff0ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base\core">
+      <UniqueIdentifier>{ff0c6195-cdbe-4abb-b3c5-c36149441f9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base\memory">
+      <UniqueIdentifier>{6d0ad631-dfd4-41f5-beca-6183dafd3950}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base\property">
+      <UniqueIdentifier>{702b763e-d9cc-4a66-ae25-e894aecadccb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base\utils">
+      <UniqueIdentifier>{73ab0bda-cb6f-4136-9fe6-49dc3eb41a38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base\utils\acts_ringbuf">
+      <UniqueIdentifier>{7746aeab-06c3-45ba-86b0-2063a7042517}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base\utils\misc">
+      <UniqueIdentifier>{15248c1f-5da6-4b72-8194-7ebef5a57450}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base\utils\stream">
+      <UniqueIdentifier>{9440ea16-b088-4ab4-b1ba-9ed41bd1fe96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base\include">
+      <UniqueIdentifier>{78964667-ff3b-4103-8261-dc59fe967b57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base\include\core">
+      <UniqueIdentifier>{ea22119c-3a9c-4b2c-b465-ddbe7c826634}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base\include\utils">
+      <UniqueIdentifier>{45707bc8-39ad-4a71-b89b-37dc0f440f85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base\include\utils\iterator">
+      <UniqueIdentifier>{73e5dbe6-fb15-4ef7-ac8e-b86db0ccf067}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\base\include\utils\stream">
+      <UniqueIdentifier>{73254365-79e2-4cd3-972c-0594d9744dee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display">
+      <UniqueIdentifier>{d7b10601-5ce3-42f4-a162-956a3bd01dee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\libdisplay">
+      <UniqueIdentifier>{a0968fb1-229b-4e23-8c14-8b31afc44358}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\libdisplay\freetype">
+      <UniqueIdentifier>{3609bb4a-30a2-49bd-8164-101c0b265349}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\libdisplay\lvgl">
+      <UniqueIdentifier>{9c47848c-a958-4986-97c4-69b2ce6536ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\libdisplay\ui_service">
+      <UniqueIdentifier>{1687fded-2112-4981-b5a1-beee55205746}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\lvgl">
+      <UniqueIdentifier>{5add95b1-54bc-4608-a2c0-16fd2d6e321e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\ui_service">
+      <UniqueIdentifier>{fda66c69-40d7-46b1-a350-ad028356db2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\memory">
+      <UniqueIdentifier>{8f1b608c-1134-499e-a72b-dadb00cdc792}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\system">
+      <UniqueIdentifier>{9c9cf69a-7504-4195-aab7-5b79e6f1d183}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\system\alarm_manager">
+      <UniqueIdentifier>{d356deeb-1eb6-422c-af4d-d0cc442e6fec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\system\fs_manager">
+      <UniqueIdentifier>{6852916f-7f9b-4b0c-be0b-f6f7e1be33ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\system\hotplug">
+      <UniqueIdentifier>{d4540ef0-c5ca-46e2-b4ac-85222263402f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\system\include">
+      <UniqueIdentifier>{0a4893a7-595d-4637-8a14-fa3235a12a7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\system\input">
+      <UniqueIdentifier>{1a229b33-0404-43b3-ab42-1b32f29fa23e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\system\tts">
+      <UniqueIdentifier>{b2c0cccb-a6e3-4d80-a8d2-69a71275423e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting">
+      <UniqueIdentifier>{46d61724-f740-411d-aeb1-425a71540123}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\osal">
+      <UniqueIdentifier>{3a2ea5a8-9707-446a-9a34-13ae55df3590}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\memory">
+      <UniqueIdentifier>{8e01cb89-0f90-4265-9d54-22a08d1cd918}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\include">
+      <UniqueIdentifier>{3a333759-f9df-4914-9874-28ffa39af5bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\include\display">
+      <UniqueIdentifier>{9af4b4d1-d592-40b6-ae88-ae0bb5c5c5a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\include\memory">
+      <UniqueIdentifier>{d0c53a6c-5ca7-4d42-8c2f-1ff1d6340068}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\utils">
+      <UniqueIdentifier>{19cdf1bf-7dbc-4c72-9b53-929c82d8abcf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\display">
+      <UniqueIdentifier>{eb999fd0-92c4-4201-9175-6117950558bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\fs">
+      <UniqueIdentifier>{24e832e1-966a-4619-a453-ac5e6df53659}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\soc">
+      <UniqueIdentifier>{1d806942-c2bd-479b-bcb4-716647fd64be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bt_watch">
+      <UniqueIdentifier>{959bdb39-0e7f-4ffd-b6f9-4fcdc4e9db04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bt_watch\main">
+      <UniqueIdentifier>{758d9b50-9c20-4ec2-b341-3c4c18fcb130}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bt_watch\launcher">
+      <UniqueIdentifier>{2f4d200f-9359-4bfe-833f-4d034c4ad9aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\input">
+      <UniqueIdentifier>{03ab8c07-06b2-4f81-921d-961bfadc99d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\res_manager">
+      <UniqueIdentifier>{e8585bab-f1a4-4211-bd7f-7840f50f889f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\include">
+      <UniqueIdentifier>{4c050394-8076-4caa-b058-0583caba73b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\include\lvgl">
+      <UniqueIdentifier>{e582f402-141e-47c3-aa65-834f83ac0ede}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bt_watch\include">
+      <UniqueIdentifier>{f87a3c0e-76ff-41e7-ab52-86b6b4f1eb5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lvgl\src\extra\libs\barcode">
+      <UniqueIdentifier>{0726e831-cc46-401a-b682-bd9185bdb6e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="boards">
+      <UniqueIdentifier>{a73d291b-29c8-4a0c-a58d-57e7a7fcf5f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\include\drivers">
+      <UniqueIdentifier>{e58ef2ce-72f5-450e-a8c9-323c0ca9dd5e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\include\vg_lite">
+      <UniqueIdentifier>{4d95244a-30f5-4b11-8bf4-57af358c52d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\font">
+      <UniqueIdentifier>{f5d79077-43c8-417e-8fbe-242bdcd4ae95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\surface">
+      <UniqueIdentifier>{3c80214d-690f-41c4-bf38-41103a19d91a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\transition_anim">
+      <UniqueIdentifier>{65b08476-46d8-450d-bef2-aac0395d4455}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\compression">
+      <UniqueIdentifier>{17851406-e70b-4375-a9b2-a7ee414dde4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\utils\heap">
+      <UniqueIdentifier>{79a666a6-d46f-4a34-83cc-75fa44178d3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\include\drivers\display">
+      <UniqueIdentifier>{8f8f35fe-b2ec-44f8-9b88-d9dbe1e5676e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lvgl\porting">
+      <UniqueIdentifier>{d98ba799-abfa-4f8b-9dea-15ad3f686337}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lvgl\porting\win32">
+      <UniqueIdentifier>{6d9d978c-baed-47cf-8934-566a9bd06ca2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lvgl\porting\gpu">
+      <UniqueIdentifier>{ec371adb-bc6c-4fec-8e5e-4ab99d4308b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\libdisplay\bitmap_font">
+      <UniqueIdentifier>{e33b2a9b-1640-47fd-a5af-5040753889f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lvgl\porting\gpu\vglite">
+      <UniqueIdentifier>{5b5450d4-0bda-44a8-83a4-576ea85f740e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bt_watch\ui">
+      <UniqueIdentifier>{df1db995-c199-4ac9-8b0e-0d5f3efd8186}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bt_watch\ui\widgets">
+      <UniqueIdentifier>{2a26d58f-14dc-4984-8203-075e4a594b8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bt_watch\ui\svgrender">
+      <UniqueIdentifier>{6bb66adf-18dc-477e-8b15-3d2c954dba4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework_porting\include\fs">
+      <UniqueIdentifier>{30b28562-b90b-4439-a2fc-87e2471bfebd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\vg_lite">
+      <UniqueIdentifier>{f2c14918-4966-462d-a565-ae8e79cc7f11}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

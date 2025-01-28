@@ -1,0 +1,28 @@
+# ADC configuration options
+
+# Copyright (c) 2021 Actions Semiconductor Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+config ADC_ACTS_LARK
+	bool "Actions Lark ADC driver"
+	default n
+	help
+	  Support the ADC functions for the Actions Lark chipset.
+
+config ADC_ACTS_LEOPARD
+	bool "Actions Leopard ADC driver"
+	default n
+	help
+	  Support the ADC functions for the Actions Leopard chipset.
+
+config PMUADC_NAME
+	string "PMU ADC Driver's name"
+	depends on ADC_ACTS_LARK || ADC_ACTS_LEOPARD
+	default "PMUADC_0"
+
+config ADC_ACTS_ALWAYS_ON
+	bool "Actions ADC function always on"
+	depends on ADC_ACTS_LARK || ADC_ACTS_LEOPARD
+	default n
+	help
+	  Always enable ADC function in normal stage.

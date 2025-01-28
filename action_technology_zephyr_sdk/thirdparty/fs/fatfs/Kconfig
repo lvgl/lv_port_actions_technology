@@ -1,0 +1,48 @@
+
+config FAT_FILESYSTEM_ELM
+	bool "ELM FAT File System"
+	#depends on FILE_SYSTEM_FAT
+	select FAT_FILESYSTEM_ELM_UTF8
+	default y
+	help
+	Use the ELM FAT File system implementation.
+
+config LONG_FILE_NAME
+	bool "LONG FILE NAME System"
+	depends on FAT_FILESYSTEM_ELM
+	default y
+	help
+	Use the long file name implementation.
+
+config CODE_TABLE_IN_SDFS
+	bool "code table in sdfs System"
+	depends on FAT_FILESYSTEM_ELM
+	default n
+	help
+	Use the code table in sdfs.
+
+config FAT_FILESYSTEM_ELM_UTF8
+	bool "UTF8 for ELM FAT File System"
+	depends on FAT_FILESYSTEM_ELM
+	select NLS
+	select NLS_UTF8
+	default n
+	help
+	Use the UTF-8 for ELM FAT File system implementation.
+
+config DISKIO_CACHE
+	bool "disk io cache"
+	depends on FAT_FILESYSTEM_ELM
+	default n
+	help
+	enable disk io cache.
+
+config DISKIO_CACHE_TIMEOUT
+	int
+	prompt"disk io cache timeout"
+	depends on DISKIO_CACHE
+	default 3000
+	help
+	This option set diskio cache timeout.
+
+rsource "nls/Kconfig"

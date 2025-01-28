@@ -1,0 +1,6 @@
+config USING_AICXTEK_LIB
+	bool
+	prompt "Enable using aicxtek lib"
+    default n
+    help
+    This option choose aicstek lib

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<config_file version="LARK_V1.0" size="51" num_cfgs="1">
+
+<category num_items="1">
+	<item name="SYSTEM"         title="系统"       parent="" />
+</category>
+
+<config name="Version" title="版本" cfg_id="0x01" offs="0x13" size="32" num_items="1" category="SYSTEM" attr="readonly" >
+	<item type="uint8" name="Version" title="版本信息" offs="0" size="32" range="" array="32" attr="string" />
+</config>
+
+</config_file>
+

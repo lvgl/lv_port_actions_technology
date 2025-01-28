@@ -1,0 +1,26 @@
+
+mainmenu "lvgl demo"
+
+source "Kconfig.zephyr"
+
+menu "App Configuration"
+
+config OTA_UPGRADE
+	bool "OTA Upgrade Support"
+	default n
+	select PARTITION
+	select FIRMWARE_VERSION
+	select RING_BUFFER
+	help
+	  This option enable OTA upgrade.
+
+config OTA_BACKEND_BLUETOOTH
+    bool "OTA upgrade by Bluetooth Support"
+	depends on BT_MANAGER
+	select STREAM
+    select BT_SPPBLE_STREAM
+    default n
+    help
+      This option enables OTA upgrade by Bluetooth SPP/BLE.
+
+endmenu

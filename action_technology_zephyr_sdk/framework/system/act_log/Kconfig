@@ -1,0 +1,176 @@
+# Kconfig - Actions system manager
+
+#
+# Copyright (c) 2016 Actions Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+menuconfig ACTLOG
+	bool
+	prompt "Actlog"
+	default n
+	help
+	This option enables actions log system
+
+if ACTLOG
+config ACTLOG_COMPILE_LEVEL
+	int "Default actlog compile level"
+	default 3
+	range 0 4
+	help
+	  Sets log level for modules which don't specify it explicitly. When
+	  set to 0 it means log will not be activated for those modules.
+	  Levels are:
+
+	  - 0 OFF, do not write by default
+	  - 1 ERROR, default to only write LOG_LEVEL_ERR
+	  - 2 WARNING, default to write LOG_LEVEL_WRN
+	  - 3 INFO, default to write LOG_LEVEL_INFO
+	  - 4 DEBUG, default to write LOG_LEVEL_DBG	
+
+config ACTLOG_APP_COMPILE_LEVEL
+	int "Default actlog app compile level"
+	default 3
+	range 0 4
+	help
+	  Sets log level for modules which don't specify it explicitly. When
+	  set to 0 it means log will not be activated for those modules.
+	  Levels are:
+
+	  - 0 OFF, do not write by default
+	  - 1 ERROR, default to only write LOG_LEVEL_ERR
+	  - 2 WARNING, default to write LOG_LEVEL_WRN
+	  - 3 INFO, default to write LOG_LEVEL_INFO
+	  - 4 DEBUG, default to write LOG_LEVEL_DBG		  
+
+config ACTLOG_USE_NORMALLOG
+	bool "Enable normal in actlog"
+	default n
+	help
+	  Enable normal log in actlog  	
+
+config ACTLOG_USE_NANOLOG
+	bool "Enable nanolog replace normal log in actlog"
+	default n
+	help
+	  Enable nanolog replace normal log in actlog  	  
+
+config ACTLOG_COMPILE_MODUL_LEVEL
+	bool "Enable actlog compile by module level"
+	default n
+	help
+	  Enable actlog compile by module level or not  
+
+config ACTLOG_SHOW_FUNCTION
+	bool "Enable show functions in actlog"
+	default n
+	help
+	  Enable show functions in actlog  
+
+config ACTLOG_SHOW_TIMESTAMP
+	bool "Enable show timestamp in actlog"
+	default n
+	help
+	  Enable show timestamp in actlog 
+
+config ACTLOG_OUTPUT_BINARY
+	bool "Enable actlog output to flash binary region"
+	default n
+	help
+	  Enable actlog output to flash binary region
+
+config ACTLOG_OUTPUT_FILE
+	bool "Enable actlog output to flash filesystem"
+	default n
+	help
+	  Enable actlog output to flash filesystem	 
+
+config ACTLOG_OUTPUT_FLOW
+	bool "Enable actlog output to flow device"
+	default n
+	help
+	  Enable actlog output to flow device	
+
+config ACTLOG_OUTPUT_USER
+	bool "Enable actlog output to user-defined flow"
+	default n
+	help
+	  Enable actlog output to user-defined flow
+
+config ACTLOG_LOG_DATA_COMPRESS
+	bool "Enable actlog data compress store"
+	default n
+	help
+	  enable actlog data compress store
+
+config ACTLOG_LOG_BUFFER
+	bool "Enable actlog store normal log to flash buffer"
+	default n
+	help
+	  Enable actlog store normal log to flash buffer		  
+
+config ACTLOG_RUNTIME_LOG_BUFFER
+	bool "Enable actlog store runtime log to flash buffer"
+	default n
+	help
+	  Enable actlog store runtime log to flash buffer	
+
+config ACTLOG_EVENT_BUFFER
+	bool "Enable actlog store event to flash buffer"
+	default n
+	help
+	  Enable actlog store event to flash buffef
+
+config DEBUG_ACTLOG_SHELL  
+	bool "Enable actlog shell to dump actlog"
+	default n
+	help
+	  Enable actlog shell to dump actlog
+
+config ACTLOG_FLASH_CACHE_SIZE
+	int "Default actlog flash cache size, must be an integer multiple of 4k"
+	default 2048
+	help
+		Default actlog flash cache size, must be an integer multiple of 4k
+
+config ACTLOG_LINEBUF_SIZE
+	int "Default actlog line buf size"
+	default 256
+	help
+		Default actlog line buf size	
+
+config ACTLOG_FMT_DATA_SIZE
+	int "Default actlog vsnprintk max buf size"
+	default 128
+	help
+		Default actlog vsnprintk max buf size	
+
+config ACTLOG_NORMAL_LOG_NUM
+	int "Default actlog normal log number"
+	default 3
+	help
+		Default actlog normal log number
+
+config ACTLOG_NANO_LOG_NUM
+	int "Default actlog nano log number"
+	default 16
+	help
+		Default actlog nano log number				
+
+config ACTLOG_PRINT_DROP_COUNT
+	bool "Enable actlog output drop count"
+	default n
+	help
+	  Enable actlog output drop count
+
+#specify module name
+module = ACTLOG
+
+#specify module name str
+module-str = logging_actlog
+
+#import kconfig template
+source "subsys/logging/Kconfig.template.log_config"
+
+endif	  					

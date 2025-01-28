@@ -1,0 +1,2 @@
+menuconfig BT_HIDS
+	bool "Enable GATT HID service"

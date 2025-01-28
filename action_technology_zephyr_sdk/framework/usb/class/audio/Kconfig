@@ -1,0 +1,525 @@
+# Kconfig - USB Audio Source configuration options
+
+#
+# Copyright (c) 2018 Actions Corp.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+config USB_AUDIO_CLASS
+	bool "USB Audio Device Class Driver"
+	help
+	  USB Audio Device Class driver.
+
+if USB_AUDIO_CLASS
+
+config USB_AUDIO_SINK
+	bool
+	prompt "USB audio sink device support"
+	default n
+	depends on USB_AUDIO_CLASS
+	help
+	  Enables USB audio sink device driver.
+
+if USB_AUDIO_SINK
+
+config USB_AUDIO_SINK_OUT_EP_ADDR
+	hex
+	prompt "USB audio sink out endpoint address"
+	default 0x01
+	range 0x01 0x0f
+	help
+	  USB audio sink out endpoint address.
+
+config USB_AUDIO_SINK_OUT_EP_FS_INTERVAL
+	int
+	prompt "USB audio sink out endpoint interval(Full-Speed Mode)"
+	default 1
+	help
+	  USB audio sink out endpoint interval.
+
+config USB_AUDIO_SINK_OUT_EP_HS_INTERVAL
+	int
+	prompt "USB audio sink out endpoint interval(High-Speed Mode)"
+	default 4
+	help
+	  USB audio sink out endpoint interval.
+
+config USB_AUDIO_SINK_DOWNLOAD_CHANNEL_NUM
+	int
+	prompt "USB audio sink channel number"
+	default 1
+	help
+	  USB audio sink channel number.
+
+config USB_AUDIO_SINK_RESOLUTION
+	int
+	prompt "USB Audio Source resolution (unit: bit)"
+	default 16
+	help
+	  USB audio sink resolution (unit: bit).
+
+config USB_AUDIO_SINK_BCONTROLSIZE
+	int
+	prompt "The byte size of the bmacontrols(n)"
+	default 1
+	range 1 2
+	help
+	  The byte size of the bmacontrols(n), maximum value is 2.
+
+config USB_AUDIO_SINK_MAINCH_CONFIG
+	hex
+	prompt "USB audio sink main channel configuration"
+	default 0x03
+	range 0x0000 0x03ff
+	help
+	  USB audio source main channel config.
+
+config USB_AUDIO_SINK_LOGICALCH01_CONFIG
+	hex
+	prompt "USB audio logical channel_01 configuration"
+	default 0x02
+	range 0x0000 0x03ff
+	help
+	  USB audio logical channel_01 configuration.
+
+config USB_AUDIO_SINK_LOGICALCH02_CONFIG
+	hex
+	prompt "USB audio logical channel_02 configuration"
+	default 0x02
+	range 0x0000 0x03ff
+	help
+	  USB audio logical channel_02 configuration.
+
+config USB_AUDIO_SINK_SAMPLE_FREQ_TYPE
+	int
+	prompt "USB audio sink sampling frequency type"
+	default 1
+	range 1 4
+	help
+	  USB audio sink sampling frequency type.
+
+config USB_AUDIO_SINK_SAMPLE_RATE
+	int
+	prompt "USB audio sink sampling rate(unit: Hz)"
+	default 48000
+	help
+	  USB audio sink sampling rate(unit: Hz).
+
+config USB_AUDIO_SINK_MANUFACTURER
+	string
+	prompt "USB Audio sink device manufacturer"
+	default "Actions"
+	help
+	  USB audio sink device manufacturer string, can be configured by vendor.
+
+config USB_AUDIO_SINK_PRODUCT
+	string
+	prompt "USB Audio sink device product"
+	default "usb-sound-card"
+	help
+	  USB audio sink device product string, can be configured by vendor.
+
+config USB_AUDIO_SINK_SN
+	string
+	prompt "USB Audio sink device serial number"
+	default "0123456789AB"
+	help
+	  USB audio sink device serial-number string, can be configured by vendor.
+
+config USB_AUDIO_SINK_SN_NVRAM
+	string
+	prompt "get serial number from NVRAM"
+	default "BT_MAC"
+	help
+	  get USB audio sink serial number string from NVRAM, can be configured by vendor.
+
+config USB_AUDIO_SINK_SUPPORT_FEATURE_UNIT
+	bool
+	prompt "USB audio sink support feature unit"
+	default n
+	help
+	  USB audio sink support feature unit.
+
+config USB_AUDIO_SINK_VID
+	hex
+	prompt "USB audio sink device vendor ID"
+	default 0x10d6
+	help
+	  USB audio sink device vendor ID, can be configured by vendor.
+
+config USB_AUDIO_SINK_PID
+	hex
+	prompt "USB audio sink device product ID"
+	default 0xb016
+	help
+	  USB audio sink device product ID, can be configured by vendor.
+
+config SYS_LOG_USB_SINK_LEVEL
+	int "USB sink device class driver log level"
+	depends on LOG
+	default 0
+	help
+	  Sets log level for USB sink device class driver
+
+	  Levels are:
+
+	  - 0 OFF, do not write
+
+	  - 1 ERROR, only write SYS_LOG_ERR
+
+	  - 2 WARNING, write SYS_LOG_WRN in addition to previous level
+
+	  - 3 INFO, write SYS_LOG_INF in addition to previous levels
+
+	  - 4 DEBUG, write SYS_LOG_DBG in addition to previous levels
+endif #USB_AUDIO_SINK
+
+config USB_AUDIO_SOURCE
+	bool
+	prompt "USB audio source device support"
+	default n
+	depends on USB_AUDIO_CLASS
+	help
+	  Enables USB audio aource device driver.
+
+if USB_AUDIO_SOURCE
+
+config USB_AUDIO_SOURCE_IN_EP_ADDR
+	hex
+	prompt "USB audio source In Endpoint address"
+	default 0x81
+	range 0x81 0x8f
+	help
+	  USB audio source in endpoint address.
+
+config USB_AUDIO_SOURCE_IN_EP_FS_INTERVAL
+	int
+	prompt "USB audio source in endpoint interval(Full-Speed Mode)"
+	default 1
+	help
+	  USB audio sink out endpoint interval.
+
+config USB_AUDIO_SOURCE_IN_EP_HS_INTERVAL
+	int
+	prompt "USB audio source in endpoint interval(High-Speed Mode)"
+	default 4
+	help
+	  USB audio sink out endpoint interval.
+
+config USB_AUDIO_SOURCE_UPLOAD_CHANNEL_NUM
+	int
+	prompt "USB audio source channel numbers"
+	default 1
+	help
+	  USB audio source channel numbers.
+
+config USB_AUDIO_SOURCE_CHANNEL_CONFIG
+	hex
+	prompt "USB audio source channel config"
+	default 0x0
+	range 0x0 0xffff
+	help
+	  USB audio source channel config.
+
+config USB_AUDIO_BCONTROLSIZE
+	int
+	prompt "USB audio source subframesize"
+	default 2
+	range 1 2
+	help
+	  USB audio source subframesize (unit: byte), the maximum value is 2.
+
+config USB_AUDIO_SOURCE_RESOLUTION
+	int
+	prompt "USB Audio Source resolution (unit: bit)"
+	default 16
+	help
+	  USB audio source resolution (unit: bit).
+
+config USB_AUDIO_SOURCE_SAMPLE_RATE
+	int
+	prompt "USB audio source sampling rate(unit: Hz)"
+	default 16000
+	help
+	  USB audio source sampling rate(unit: Hz).
+
+config USB_AUDIO_SOURCE_MANUFACTURER
+	string
+	prompt "USB Audio source device manufacturer"
+	default "Actions"
+	help
+	  USB audio source device manufacturer string, can be configured by vendor.
+
+config USB_AUDIO_SOURCE_PRODUCT
+	string
+	prompt "USB Audio source device product"
+	default "usb-microphone"
+	help
+	  USB audio source device product string, can be configured by vendor.
+
+config USB_AUDIO_SOURCE_SN
+	string
+	prompt "USB Audio source device serial number"
+	default "0123456789AB"
+	help
+	  USB audio source device serial-number string, can be configured by vendor.
+
+config USB_AUDIO_SOURCE_SN_NVRAM
+	string
+	prompt "get serial number from NVRAM"
+	default "BT_MAC"
+	help
+	  get USB audio source serial number string from NVRAM, can be configured by vendor.
+
+config USB_AUDIO_SOURCE_VID
+	hex
+	prompt "USB audio source device vendor ID"
+	default 0x10d6
+	help
+	  USB audio source device vendor ID, can be configured by vendor.
+
+config USB_AUDIO_SOURCE_PID
+	hex
+	prompt "USB audio source device product ID"
+	default 0xb017
+	help
+	  USB audio source device product ID, can be configured by vendor.
+
+config SYS_LOG_USB_SOURCE_LEVEL
+	int "USB source device class driver log level"
+	depends on LOG
+	default 0
+	help
+	  Sets log level for USB source device class driver.
+
+	  Levels are:
+
+	  - 0 OFF, do not write
+
+	  - 1 ERROR, only write SYS_LOG_ERR
+
+	  - 2 WARNING, write SYS_LOG_WRN in addition to previous level
+
+	  - 3 INFO, write SYS_LOG_INF in addition to previous levels
+
+	  - 4 DEBUG, write SYS_LOG_DBG in addition to previous levels
+endif #USB_AUDIO_SOURCE
+
+config USB_AUDIO_SOURCESINK
+	bool
+	prompt "USB audio source && sink device support"
+	default n
+	depends on USB_AUDIO_CLASS
+	help
+	  Enables USB audio source && sink device support.
+
+if USB_AUDIO_SOURCESINK
+
+config USB_AUDIO_DEVICE_SOURCE_IN_EP_ADDR
+	hex
+	prompt "USB audio source in endpoint address"
+	default 0x81
+	range 0x81 0x8f
+	help
+	  USB audio source in endpoint address.
+
+config USB_AUDIO_DEVICE_SINK_OUT_EP_ADDR
+	hex
+	prompt "USB Audio sink out endpoint address"
+	default 0x01
+	range 0x01 0x0f
+	help
+	  USB Audio sink out endpoint address.
+
+config USB_AUDIO_DEVICE_SOURCE_SAMPLE_FREQ_TYPE
+	int
+	prompt "USB audio source sampling frequency type"
+	default 1
+	range 1 4
+	help
+	  USB audio source sampling frequency type.
+
+config USB_AUDIO_SOURCE_SAM_FREQ_UPLOAD
+	int
+	prompt "USB audio source upload samplings frequency (unit: Hz)"
+	default 48000
+	help
+	  USB Audio source sampling frequency (unit: Hz).
+
+config USB_AUDIO_DEVICE_SINK_SAMPLE_FREQ_TYPE
+	int
+	prompt "USB audio sink sampling frequency type"
+	default 1
+	range 1 4
+	help
+	  USB audio sink sampling frequency type.
+
+config USB_AUDIO_DEVICE_SINK_SAM_FREQ_DOWNLOAD
+	int
+	prompt "USB audio sink (1st) download samplings frequency (unit: Hz)"
+	default 48000
+	help
+	  USB audio sink sampling frequency (unit: Hz).
+
+config USB_AUDIO_UPLOAD_CHANNEL_NUM
+	int
+	prompt "USB audio source upload channel numbers"
+	default 1
+	help
+	  USB audio source upload channel numbers.
+
+config USB_AUDIO_DOWNLOAD_CHANNEL_NUM
+	int
+	prompt "USB audio sink download channel numbers"
+	default 2
+	help
+	  USB audio sink download channel numbers.
+
+config USB_AUDIO_DEVICE_BCONTROLSIZE
+	int
+	prompt "The byte size of the bmacontrols(n)"
+	default 1
+	range 1 2
+	help
+	  The byte size of the bmacontrols(n), maximum value is 2.
+
+config USB_AUDIO_DEVICE_SINK_MAINCH_CONFIG
+	hex
+	prompt "USB audio sink main channel configuration"
+	default 0x03
+	range 0x0000 0x03ff
+	help
+	  USB audio sink main channel(bmaControls(0)) config.
+
+config USB_AUDIO_DEVICE_SINK_LOGICALCH01_CONFIG
+	hex
+	prompt "USB audio logical channel_01 configuration"
+	default 0x02
+	range 0x0000 0x03ff
+	help
+	  USB audio sink logical channel_01(bmaControls(1)) configuration.
+
+config USB_AUDIO_DEVICE_SINK_LOGICALCH02_CONFIG
+	hex
+	prompt "USB audio logical channel_02 configuration"
+	default 0x02
+	range 0x0000 0x03ff
+	help
+	  USB audio sink logical channel_02(bmaControls(2)) configuration.
+
+config USB_AUDIO_RESOLUTION
+	int
+	prompt "Size in bytes of Sampling bits of per sample"
+	default 16
+	help
+	  Size in bytes of Sampling bits of per sample.
+
+config SUPPORT_HD_AUDIO_PLAY
+	bool
+	prompt "Support HD audio playback"
+	default n
+	help
+	  Support HD audio playback.
+
+if SUPPORT_HD_AUDIO_PLAY
+
+config USB_AUDIO_SINK_HD_RESOLUTION
+	int
+	prompt "Size in bytes of Sampling bits of per sample"
+	default 24
+	help
+	  Size in bytes of Sampling bits of per sample.
+
+config USB_AUDIO_SINK_HD_SAM_FREQ_DOWNLOAD
+	int
+	prompt "USB Audio Sink HD-Format Download Samplings Frequency (unit: Hz)"
+	default 96000
+	help
+	  HD-Format Download Samplings Frequency (unit: Hz).
+
+endif #SUPPORT_HD_AUDIO_PLAY
+
+config SUPPORT_USB_AUDIO_SOURCE
+	bool
+	prompt "Support usb audio source device(Microphone)"
+	default n
+	help
+	  Support usb audio source device(Microphone).
+
+config USB_AUDIO_DEVICE_IF_NUM
+	int
+	prompt "Interface number of usb composite device"
+	default 0
+	help
+	  Interface number of usb composite device.
+
+config USB_AUDIO_CONTROL_UNIT
+	bool
+	prompt "Implement feature unit"
+	default n
+	help
+	  Define usb audio control unit.
+
+config USB_AUDIO_SOURCESINK_MANUFACTURER
+	string
+	prompt "USB audio(composite device) manufacturer name"
+	default "Actions"
+	help
+	  USB audio device manufacturer string. can be configured by vendor.
+
+config USB_AUDIO_SOURCESINK_PRODUCT
+	string
+	prompt "USB audio sourcesink product name"
+	default "USB Audio & SOURCESINK"
+	help
+	  USB audio device product string. can be configured by vendor.
+
+config USB_AUDIO_SOURCESINK_SN
+	string
+	prompt "USB audio sourcesink serial number"
+	default "0123456789AB"
+	help
+	  USB audio device serial number string. can be configured by vendor.
+
+config USB_AUDIO_SOURCESINK_SN_NVRAM
+	string
+	prompt "get serial number from NVRAM"
+	default "BT_MAC"
+	help
+	  get audio device serial number string from NVRAM, can be configured by vendor.
+
+config USB_AUDIO_SOURCESINK_VID
+	hex
+	prompt "USB audio device vendor ID"
+	default 0x10d6
+	help
+	  USB audio device vendor ID. MUST be configured by vendor.
+
+config USB_AUDIO_SOURCESINK_PID
+	hex
+	prompt "USB audio device product ID"
+	default 0xb00f
+	help
+	  USB audio device product ID. MUST be configured by vendor.
+
+config SYS_LOG_USB_SOURCESINK_LEVEL
+	int "USB sourcesink device class driver log level"
+	depends on LOG
+	default 0
+	help
+	  Sets log level for USB source device class driver
+
+	  Levels are:
+
+	  - 0 OFF, do not write
+
+	  - 1 ERROR, only write SYS_LOG_ERR
+
+	  - 2 WARNING, write SYS_LOG_WRN in addition to previous level
+
+	  - 3 INFO, write SYS_LOG_INF in addition to previous levels
+
+	  - 4 DEBUG, write SYS_LOG_DBG in addition to previous levels
+endif #USB_AUDIO_SOURCESINK
+endif #USB_AUDIO_CLASS

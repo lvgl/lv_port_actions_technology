@@ -1,0 +1,75 @@
+# Copyright (c) 2018-2019 Jan Van Winkel <jan.van_winkel@dxplore.eu>
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig FREETYPE
+	bool "Freetype library"
+	help
+	  This option enables the freetype library.
+
+if FREETYPE
+
+module = FREETYPE
+module-str = freetype
+
+choice
+	prompt "Memory pool"
+	default FREETYPE_MEM_POOL_USER
+	help
+	  Memory pool to use for freetype allocated objects
+
+	config FREETYPE_MEM_POOL_HEAP_KERNEL
+		bool "Kernel Heap"
+		depends on HEAP_MEM_POOL_SIZE != 0
+		help
+		  Use k_malloc and k_free to allocate objects on the kernel heap
+
+	config FREETYPE_MEM_POOL_HEAP_LIB_C
+		bool "C library Heap"
+		depends on !MINIMAL_LIBC || (MINIMAL_LIBC_MALLOC_ARENA_SIZE != 0)
+		help
+		  Use C library malloc and free to allocate objects on the C library heap
+
+	config FREETYPE_MEM_POOL_KERNEL
+		bool "Kernel space freetype pool"
+		help
+		  Use a dedicated memory pool in kernel space to allocate freetype objects
+		  on
+
+	config FREETYPE_MEM_POOL_USER
+		bool "User space freetype pool"
+		help
+		  Use a dedicated memory pool in user space to allocate freetype objects on
+
+endchoice
+
+if FREETYPE_MEM_POOL_KERNEL || FREETYPE_MEM_POOL_USER
+
+config FREETYPE_MEM_POOL_MIN_SIZE
+	int "Minimum memory pool block size"
+	default 16
+	help
+	  Size of the smallest block in the memory pool in bytes
+
+config FREETYPE_MEM_POOL_MAX_SIZE
+	int "Maximum memory pool block size"
+	default 32768
+	help
+	  Size of the largest block in the memory pool in bytes
+
+config FREETYPE_MEM_POOL_NUMBER_BLOCKS
+	int "Number of max size blocks in memory pool"
+	default 1
+	help
+	  Number of maximum sized blocks in the memory pool
+
+endif
+
+config APP_LINK_WITH_FREETYPE
+	bool "Link 'app' with Freetype"
+	default y
+	help
+	  Add Freetype header files to the 'app' include path. It may be
+	  disabled if the include paths for Freetype are causing aliasing
+	  issues for 'app'.
+
+endif # FREETYPE

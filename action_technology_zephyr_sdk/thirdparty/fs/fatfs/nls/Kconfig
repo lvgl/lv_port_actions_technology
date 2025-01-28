@@ -1,0 +1,14 @@
+config NLS
+	bool "Native language support"
+	default n
+	help
+	  The base Native Language Support.
+
+if NLS
+
+config NLS_UTF8
+	bool "NLS UTF-8"
+	help
+	  UTF-8 Support.
+
+endif # NLS

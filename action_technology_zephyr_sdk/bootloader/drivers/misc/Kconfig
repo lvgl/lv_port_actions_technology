@@ -1,0 +1,22 @@
+# misc configuration options
+
+# Copyright (c) 2021 Action Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+#
+# misc options
+#
+
+#source "drivers/misc/Kconfig.acts"
+
+config AUDIO_CHAN_SEL
+	bool "select audio channel"
+	default n
+	help
+	  audio channel select device driver initialization priority.
+
+config AUDIO_CHAN_SEL_INIT_PRIORITY
+	int "Init priority"
+	default 60
+	help
+	  I2C device driver initialization priority.

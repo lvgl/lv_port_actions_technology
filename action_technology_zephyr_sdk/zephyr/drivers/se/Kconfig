@@ -1,0 +1,72 @@
+# Kconfig - SE configuration options
+
+#
+# Copyright (c) 2015 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+menuconfig SE
+	bool "SE device drivers"
+	default n
+	help
+	  Enable input device driver configuration
+
+if SE
+config LOG_SE_DEV_LEVEL
+	int
+	prompt "INPUT Device drivers log level"
+	range 0 4
+	default 0
+	help
+	  Sets log level for PWM Device driver.
+
+	  Levels are:
+	  - 0 OFF, do not write
+	  - 1 ERROR, only write SYS_LOG_ERR
+	  - 2 WARNING, write SYS_LOG_WRN in addition to previous level
+	  - 3 INFO, write SYS_LOG_INF in addition to previous levels
+	  - 4 DEBUG, write SYS_LOG_DBG in addition to previous levels
+
+config AES_ACTS
+	bool "Actions hardware aes"
+	default n
+	help
+	  Enable support for Actions hardware aes.
+
+config SHA_ACTS
+	bool "Actions hardware sha"
+	default n
+	help
+	  Enable support for Actions hardware sha.
+
+if AES_ACTS
+	config AES_DMA
+	bool "AES encrypt by dma"
+	default n
+	help
+	  Enable DMA for hardware aes.
+endif # AES_ACTS
+
+config CRC_ACTS
+	bool "Actions hardware crc"
+	default n
+	help
+	  Enable support for Actions hardware crc.
+
+if SHA_ACTS
+	config LOG_SHA_LEVEL
+	int "SHA log level"
+	default 3
+	help
+	  LOG level for SHA.
+
+	config SHA_CACHE_NSEG
+	int "SHA cache N segments"
+	default 16
+	help
+	  Segments for SHA cache.
+
+endif # LOG_SHA_LEVEL
+
+endif # SE

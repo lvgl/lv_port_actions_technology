@@ -1,0 +1,16 @@
+# Copyright (c) 2016 Linaro Limited
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_SERIES_LEOPARD
+	bool "LEOPARD Series MCU"
+	select ARM
+	select CPU_CORTEX_M33
+	select CPU_CORTEX_M_HAS_DWT
+	select CPU_HAS_FPU
+	select SOC_FAMILY_ACTS
+	select CPU_HAS_ARM_MPU
+	select HAS_SWO
+	select HAS_SYS_POWER_STATE_SLEEP_1
+	select HAS_SYS_POWER_STATE_DEEP_SLEEP_1	
+	help
+	  Enable support for LEOPARD  MCU series

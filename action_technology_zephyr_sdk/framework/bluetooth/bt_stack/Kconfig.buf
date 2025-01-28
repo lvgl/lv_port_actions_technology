@@ -1,0 +1,29 @@
+# Kconfig - net stack configuration options
+
+#
+# Copyright (c) 2015 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+if ACTS_NET_BUF
+
+config NET_BUF_USER_DATA_SIZE
+	int "Size of user_data available in every network buffer"
+	default 8 if (BT || NET_TCP2) && 64BIT
+	default 4
+	range 4 65535 if BT || NET_TCP2
+	range 0 65535
+	help
+	  Amount of memory reserved in each network buffer for user data. In
+	  most cases this can be left as the default value.
+
+config NET_BUF_POOL_USAGE
+	bool "Network buffer pool usage tracking"
+	help
+	  Enable network buffer pool tracking. This means that:
+	  * amount of free buffers in the pool is remembered
+	  * total size of the pool is calculated
+	  * pool name is stored and can be shown in debugging prints
+
+endif

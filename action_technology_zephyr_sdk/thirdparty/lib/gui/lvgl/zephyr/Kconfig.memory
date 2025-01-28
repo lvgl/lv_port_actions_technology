@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: Apache-2.0
+
+menu "Memory manager settings"
+
+config LV_Z_MEM_POOL_SYS_HEAP
+	bool "User space lvgl pool"
+	depends on LV_USE_CUSTOM_MALLOC
+	help
+		Use a dedicated memory pool from a private sys heap.
+
+config LV_Z_MEM_POOL_SIZE
+	int "Memory pool size"
+	default 2048
+	depends on LV_Z_MEM_POOL_SYS_HEAP
+	help
+	  Size of the memory pool in bytes
+
+config LV_VDB_SIZE
+	int "Rendering buffer size in bytes"
+	default 0
+	help
+	  Size of the buffer used for rendering screen content in bytes.
+
+config LV_VDB_NUM
+	int "Number of VDB for rendering"
+	range 1 2
+	default 2
+	help
+	  Number of buffers to render and flush data in parallel.
+	  To increase the upper limit, modify LV_DISP_BUF_MAX_NUM in lv_hal_disp.h.
+
+endmenu

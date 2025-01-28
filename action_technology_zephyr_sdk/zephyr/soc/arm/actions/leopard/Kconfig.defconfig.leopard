@@ -1,0 +1,26 @@
+# LEOPARD MCU configuration options
+
+# Copyright (c) 2016 Linaro Limited.
+# SPDX-License-Identifier: Apache-2.0
+
+if SOC_LEOPARD
+
+config SOC
+	default "leopard"
+
+config NUM_IRQS
+	default 64
+
+config SOC_SPICACHE_PROFILE
+	bool "Enable SPI cache profile"
+	default n
+	help
+	  Enable SPI cache profile for actions SoC
+
+config SOC_SPICACHE_PROFILE_STAT
+	bool "Enable SPI cache profile stat"
+	default n
+	help
+	  Enable SPI cache profile stat for actions SoC
+
+endif # SOC_LEOPARD

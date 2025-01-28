@@ -1,0 +1,81 @@
+# Configuration options for Actions Sensor
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+config SENSOR_ACC_LIS2DW12
+	bool
+	prompt "ACC Sensor LIS2DW12 Support"
+	default n
+	help
+	This option enables actions sensor LIS2DW12.
+
+config SENSOR_ACC_STK8321
+	bool
+	prompt "ACC Sensor STK8321 Support"
+	default n
+	help
+	This option enables actions sensor STK8321.
+
+config SENSOR_ACC_SC7A20
+	bool
+	prompt "ACC Sensor SC7A20 Support"
+	default n
+	help
+	This option enables actions sensor SC7A20.
+
+config SENSOR_ACC_QMA6100
+	bool
+	prompt "ACC Sensor QMA6100 Support"
+	default n
+	help
+	This option enables actions sensor QMA6100.
+
+config SENSOR_HR_GH3011
+	bool
+	prompt "HR Sensor GH3011 Support"
+	default n
+	help
+	This option enables actions sensor GH3011.
+
+config SENSOR_HR_VC9201
+	bool
+	prompt "HR Sensor VC9201 Support"
+	default n
+	help
+	This option enables actions sensor VC9201.
+
+config SENSOR_HR_VC9202
+	bool
+	prompt "HR Sensor VC9202 Support"
+	default n
+	help
+	This option enables actions sensor VC9202.
+
+config SENSOR_HR_HX3605
+	bool
+	prompt "HR Sensor HX3605 Support"
+	default n
+	help
+	This option enables actions sensor HX3605.
+
+config SENSOR_HR_HX3690
+	bool
+	prompt "HR Sensor HX3690 Support"
+	default n
+	help
+	This option enables actions sensor HX3690.
+		
+config SENSOR_MAG_MMC5603NJ
+	bool
+	prompt "MAG Sensor MMC5603NJ Support"
+	default n
+	help
+	This option enables actions sensor MMC5603NJ.
+
+config SENSOR_BARO_ICP10125
+	bool
+	prompt "BARO Sensor ICP10125 Support"
+	default n
+	help
+	This option enables actions sensor ICP10125.

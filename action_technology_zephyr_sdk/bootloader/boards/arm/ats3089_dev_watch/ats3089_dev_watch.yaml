@@ -1,0 +1,15 @@
+identifier: ats3089_dev_watch
+name: ats3089_dev_watch
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+ram: 872
+supported:
+  - nor
+testing:
+  ignore_tags:
+    - spinand
+    - emmc

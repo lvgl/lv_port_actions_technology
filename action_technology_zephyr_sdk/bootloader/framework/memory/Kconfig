@@ -1,0 +1,19 @@
+# Configuration options for Actions DSP
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig MEMORY
+	bool "memory hal"
+	help
+	  Enable memory hal
+
+if MEMORY
+
+config MEMORY_SLABS
+	bool "enable memory slabs"
+	default n
+	help
+	  enable memory slabs
+
+endif # MEMORY

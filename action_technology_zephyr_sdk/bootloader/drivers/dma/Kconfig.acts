@@ -1,0 +1,54 @@
+# Actions DMA configuration options
+
+# Copyright (c) 2018 Justin Watson
+# SPDX-License-Identifier: Apache-2.0
+
+
+menuconfig DMA_ACTS
+	bool "Actions acts DMA driver"
+	help
+	  Enable support for the Actions Physical DMA controllers.
+
+if DMA_ACTS
+
+choice
+	prompt "select Actions DMA driver"
+config VDMA_ACTS
+	bool "Virtual DMA driver for acts"
+	help
+	  Enable support for Virtual DMA  for acts dma controllers.
+config PDMA_ACTS
+	bool "Actions acts Physical DMA driver"
+	help
+	  Enable support for the Actions Physical DMA controllers.
+endchoice
+
+config DMA_DBG_DUMP
+	bool "DMA dbg dump cmd"
+	depends on DMA_ACTS
+	help
+	   DMA dbg dump cmd. 
+
+config DMA_LCD_RESEVER_CHAN
+	int "reserve chan for lcd"
+	range 0 12
+	default 12
+	help
+	  reserve chan for lcd，set 0-9 valid chan,else not reserve for lcd, default not reserve
+
+config DMA_SPINAND_RESEVER_CHAN
+	int "reserve chan for SPINAND"
+	range 0 12
+	default 12
+	help
+	  reserve chan for spinand set 0-9 valid chan,else not reserve for lcd, default not reserve
+
+config DMA_SPINOR_RESEVER_CHAN
+	int "reserve chan for SPINOR"
+	range 0 12
+	default 12
+	help
+	  reserve chan for spinand set 0-9 valid chan,else not reserve for spinor, default not reserve
+
+endif
+

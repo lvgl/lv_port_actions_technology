@@ -1,0 +1,62 @@
+
+config SD_FS
+	bool "SD File System"
+	default n
+	help
+	Use the SD File system implementation.
+
+config SD_FS_VADDR_START
+	hex "SD File System start mapping addr"
+	default 0xb000000
+	depends on SD_FS
+	help
+	Use SD File System start mapping addr.
+
+config SD_FILE_MAX
+	int "SD File can open file max num"
+	default 6
+	depends on SD_FS
+	help
+	SD File open file allow  max num file.
+
+config SD_FS_NAND_SD_STORAGE
+	bool "SD File System can use nand/sd storage devices"
+	default n
+	depends on SD_FS
+	help
+	SD File System can use nand/sd storage devices.
+
+config SDFS_READ_BY_CACHE
+	bool "sdfs nand or sd read data by cache"
+	default n
+	depends on SD_FS_NAND_SD_STORAGE
+	help
+	sdfs nand or sd read data by cache.
+
+config SDFS_CACHE_BUF_LEN
+	hex "nand sdfs cache buf len"
+	default 0x200
+	depends on SD_FS_NAND_SD_STORAGE
+	help
+	nand sdfs cache buf len.It has to be a multiple of 512
+
+config SDFS_NOR_NOT_XIP
+	bool "sdfs nor not support XIP"
+	default n
+	depends on SD_FS
+	help
+	SD File System not support XIP in NOR medium.
+
+config SDFS_NOR_NOT_XIP_MAX_COPY_OFFSET
+	hex "sdfs nor not XIP max flash offset copied by bootloader"
+	default 0x200000
+	depends on SDFS_NOR_NOT_XIP
+	help
+	Specify the max flash offset which copied by bootloader.
+
+config SDFS_NOR_DEV_NAME
+	string "sdfs nor binding device name"
+	default "spi_flash"
+	depends on SDFS_NOR_NOT_XIP
+	help
+	Specify the nor device name that binding by SDFS

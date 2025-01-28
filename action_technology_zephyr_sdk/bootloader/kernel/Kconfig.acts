@@ -1,0 +1,14 @@
+# Kernel configuration options
+
+# Copyright (c) 2014-2015 Wind River Systems, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+menu "Actions Kernel Options"
+
+config DEVICE_DEBUG
+	bool "Device runtime debug"
+	default y
+	help
+	  This option enables device debug code in kernel.
+
+endmenu

@@ -1,0 +1,7 @@
+# video drivers
+
+# Copyright (c) 2017 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+source "drivers/video/jpeg_hw/Kconfig"
+
