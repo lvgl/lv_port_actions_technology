@@ -1,0 +1,38 @@
+# Copyright (c) 2016 Linaro Limited
+# SPDX-License-Identifier: Apache-2.0
+
+# Kconfig symbols common to leopard  series
+
+if SOC_SERIES_LEOPARD
+
+source "soc/arm/actions/leopard/Kconfig.defconfig.leopard*"
+
+config SOC_SERIES
+	default "leopard"
+
+#config CORTEX_M_SYSTICK
+#	bool
+#	default y
+
+config HOSC_CLK_MHZ
+	int "HOSC Clock (MHz)"
+
+DT_CHOSEN_Z_PSRAM := zephyr,psram
+
+config PSRAM_SIZE
+	int "PSRAM Size in kB"
+	default $(dt_chosen_reg_size_int,$(DT_CHOSEN_Z_PSRAM),0,K)
+	help
+	  The PSRAM size in kB. The default value comes from /chosen/zephyr,sram in
+	  devicetree. The user should generally avoid changing it via menuconfig or
+	  in configuration files.
+
+config PSRAM_BASE_ADDRESS
+	hex "PSRAM Base Address"
+	default $(dt_chosen_reg_addr_hex,$(DT_CHOSEN_Z_PSRAM))
+	help
+	  The PSRAM base address. The default value comes from from
+	  /chosen/zephyr,psram in devicetree. The user should generally avoid
+	  changing it via menuconfig or in configuration files.
+
+endif # SOC_SERIES_LEOPARD

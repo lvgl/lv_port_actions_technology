@@ -1,0 +1,16 @@
+menuconfig ACTS_TIMER
+	bool "Actions SoC timer"
+	default n
+	depends on SOC_FAMILY_ACTS
+	select TICKLESS_CAPABLE
+	help
+	This module implements a kernel device driver for the Actions
+	SoC timer and provides the standard "system clock driver" interfaces.  
+
+config ACTS_HRTIMER
+    bool "Actions hardware timer"
+    default n
+    help
+    This module implements a kernel device driver for the Actions
+    SoC timer and provides the standard "system clock driver" interfaces.
+ 

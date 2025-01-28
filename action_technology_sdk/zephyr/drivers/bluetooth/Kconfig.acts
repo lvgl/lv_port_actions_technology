@@ -1,0 +1,96 @@
+# Copyright (c) 2018 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig BT_DRV
+	bool "Actions Bluetooth driver"
+	default n
+	help
+	  Enable support for actions bt driver
+
+if BT_DRV
+
+config BT_HCI_RX_PRIO
+	int "BT hci rx thread priority"
+	default 6
+
+config BT_HCI_TX_RBUF_SIZE
+	int "BT hci tx ring buf size"
+	default 2048
+
+config BT_HCI_RX_RBUF_SIZE
+	int "BT hci rx ring buf size"
+	default 4096
+
+config BT_HCI_ACTS
+	bool "Enable bt hci driver"
+	default n
+
+config BT_ECC_ACTS
+	bool "Enable Actions Bluetooth Tinycrypt Ecc"
+	select TINYCRYPT
+	select TINYCRYPT_ECC_DH
+	select TINYCRYPT_SHA256
+	select TINYCRYPT_SHA256_HMAC
+	select TINYCRYPT_SHA256_HMAC_PRNG
+	default n
+
+config BT_CTRL_TWS
+	bool "bt ctrl support tws"
+	default y
+
+config BT_CTRL_REG
+	bool "bt ctrl support read/write (bb/rf) op"
+	default n
+
+config BT_CTRL_DEBUG
+	bool "Enable debug for BT CPU"
+	default n
+
+config BT_CTRL_LOG
+	bool "Enable btc log"
+	default n
+
+config BT_HCI_RX_PRINT
+	bool "Enable Bluetooth hci RX Print"
+	default n
+
+config BT_HCI_TX_PRINT
+	bool "Enable Bluetooth hci RX Print"
+	default n
+
+config BT_CTRL_BQB
+	bool "Enable Actions Bluetooth Controller BQB Test"
+	default n
+
+config BT_CTRL_RF_DEBUG
+	bool "Enable Load bt_rf.bin"
+	depends on BT_CTRL_BQB
+	default n
+
+config BT_FCC_TEST
+	bool "Enable Actions Bluetooth FCC Test"
+	default n
+
+config BT_SRRC_TEST
+	bool "Enable Actions Bluetooth SRRC Test"
+	default n
+
+config BT_QC_TEST
+	bool "Bluetooth for QC test"
+	default n
+	help
+	  Bluetooth for QC test
+
+config BT_FAST_BOOT
+	bool "Bluetooth fast boot"
+	default n
+	help
+	  Bluetooth fast boot
+
+config BT_3M
+	bool "Bluetooth BREDR 3M support"
+	default n
+	help
+	  Bluetooth 3M support
+
+ endif # BT_DRV

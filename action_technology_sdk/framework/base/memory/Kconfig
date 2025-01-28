@@ -1,0 +1,239 @@
+# Kconfig - Actions memory manager
+
+#
+# Copyright (c) 2016 Actions Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+menuconfig MEMORY
+        bool
+        prompt "Actions Memory Manager Support"
+        default y
+        help
+        This option enables mem manager support
+
+config SYS_MEMORY_DEBUG
+        bool
+        prompt "sys mem debug"
+        default n
+        help
+        This option sys mem debug enable
+choice
+	prompt "app Memory Manager Funciton Selection"
+	default APP_USED_MEM_POOL
+	depends on MEMORY
+	help
+	  Select Memory Manager Funciton to compile.
+
+config  APP_USED_MEM_POOL
+        bool
+        prompt "used mem pool as app mem manager"
+		depends on MEMORY
+        help
+        This option enables used mem pool as app mem manager
+
+config APP_USED_MEM_SLAB
+        bool
+        prompt "used mem slab as app mem manager"
+		depends on MEMORY
+        help
+        This option enables used mem slab as app mem manager
+
+config APP_USED_MEM_PAGE
+        bool
+        prompt "used mem page/buddy as app mem manager"
+        depends on MEMORY
+        help
+        This option enables used mem page/buddy as app mem manager
+
+endchoice
+
+config  APP_USED_SYSTEM_SLAB
+        bool
+        prompt "enable app shared system slab"
+		depends on MEMORY
+        help
+        This option enables used system slab as app mem manager
+
+config APP_USED_DYNAMIC_SLAB
+        bool
+        prompt "used mem dynamic slab , one big slab maybe divided into multiple small slab"
+        default n
+		depends on APP_USED_MEM_SLAB
+		depends on MEMORY
+        help
+        This option enables used mem dynamic slab , one big slab maybe divided into multiple small slab
+
+config MEM_GUARD
+        bool
+        prompt "enable mem guard for leak and overwrite"
+        default n
+        depends on MEMORY
+        help
+        This option enables detect memory leak
+        
+config SLAB_TOTAL_NUM
+        int
+        prompt "total slabs num"
+        default 9
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set total slabs num
+
+config SLAB0_BLOCK_SIZE
+        int
+        prompt "sys SLAB0 block size of per slabs"
+        default 8
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set block size of slab0
+
+config SLAB0_NUM_BLOCKS
+        int
+        prompt "sys SLAB0 num of blocks of per slabs"
+        default 32
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set num of blocks of slab0
+
+config SLAB1_BLOCK_SIZE
+        int
+        prompt "sys SLAB1 block size of per slabs"
+        default 16
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set block size of slab1
+
+config SLAB1_NUM_BLOCKS
+        int
+        prompt "sys SLAB1 num of blocks of per slabs"
+        default 11
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set num of blocks of slab1
+
+config SLAB2_BLOCK_SIZE
+        int
+        prompt "sys SLAB2 block size of per slabs"
+        default 32
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set block size of slab2
+
+config SLAB2_NUM_BLOCKS
+        int
+        prompt "sys SLAB2 num of blocks of per slabs"
+        default 60
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set num of blocks of slab2
+
+config SLAB3_BLOCK_SIZE
+        int
+        prompt "sys SLAB3 block size of per slabs"
+        default 64
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set block size of slab3
+
+config SLAB3_NUM_BLOCKS
+        int
+        prompt "sys SLAB3 num of blocks of per slabs"
+        default 12
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set num of blocks of slab3
+
+config SLAB4_BLOCK_SIZE
+        int
+        prompt "sys SLAB4 block size of per slabs"
+        default 128
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set block size of slab4
+
+config SLAB4_NUM_BLOCKS
+        int
+        prompt "sys SLAB4 num of blocks of per slabs"
+        default 4
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set num of blocks of slab4
+
+config SLAB5_BLOCK_SIZE
+        int
+        prompt "sys SLAB5 block size of per slabs"
+        default 256
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set block size of slab5
+
+config SLAB5_NUM_BLOCKS
+        int
+        prompt "sys SLAB5 num of blocks of per slabs"
+        default 9
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set num of blocks of slab5
+
+config SLAB6_BLOCK_SIZE
+        int
+        prompt "sys SLAB6 block size of per slabs"
+        default 512
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set block size of slab6
+
+config SLAB6_NUM_BLOCKS
+        int
+        prompt "sys SLAB6 num of blocks of per slabs"
+        default 7
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set num of blocks of slab6
+
+config SLAB7_BLOCK_SIZE
+        int
+        prompt "sys SLAB7 block size of per slabs"
+        default 1024
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set block size of slab7
+
+config SLAB7_NUM_BLOCKS
+        int
+        prompt "sys SLAB7 num of blocks of per slabs"
+        default 7
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set num of blocks of slab7
+
+config SLAB8_BLOCK_SIZE
+        int
+        prompt "sys SLAB8 block size of per slabs"
+        default 1536
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set block size of slab7
+
+config SLAB8_NUM_BLOCKS
+        int
+        prompt "sys SLAB8 num of blocks of per slabs"
+        default 2
+		depends on APP_USED_MEM_SLAB
+        help
+        This option set num of blocks of slab8
+
+
+config RAM_POOL_PAGE_NUM
+        int
+        prompt "sys ram pool page num"
+        default 10
+        help
+        This option set num of ram pool page
+
+
+
+
+

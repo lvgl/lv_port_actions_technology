@@ -1,0 +1,14 @@
+# Configuration options for Actions Display
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+config DISPLAY_MMU
+	bool
+	help
+	  Enable Display MMU.
+
+orsource "engine/Kconfig"
+orsource "dma2d_lite/Kconfig"
+rsource "controller/Kconfig"
+rsource "panel/Kconfig"

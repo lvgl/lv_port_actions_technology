@@ -1,0 +1,20 @@
+# Configuration options for GPU
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+config VG_LITE
+	bool "Verisilicon VG-Lite"
+	help
+	  This option enables the Verisilicon VG-Lite support.
+
+if VG_LITE
+
+config VG_LITE_K_MEM_POOL_SIZE
+	int "VG-Lite heap memory pool size (in bytes)"
+	default 0
+	help
+	  This option specifies the size of the VG-Lite heap memory pool.
+	  A size of zero means that no VG-Lite memory pool is defined.
+
+endif # VG_LITE

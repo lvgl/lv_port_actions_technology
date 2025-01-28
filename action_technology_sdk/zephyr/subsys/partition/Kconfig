@@ -1,0 +1,16 @@
+# Kconfig - Partition options
+#
+# Copyright (c) 2019 Actions Semiconductor Co.,Ltd
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+menu "Partition"
+
+config PARTITION
+	bool
+	prompt "Enable partition interface"
+	default y
+	help
+	  This option enable partition interface for FLASH device
+endmenu

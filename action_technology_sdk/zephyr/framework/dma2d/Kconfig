@@ -1,0 +1,15 @@
+# Configuration options for Actions OSAL
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig DMA2D_HAL
+	bool "DMA2D Hal"
+	default y
+	depends on DISPLAY_ENGINE
+	help
+	  Enable DMA2D Hal
+
+if DMA2D_HAL
+
+endif # DMA2D_HAL

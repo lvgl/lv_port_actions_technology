@@ -1,0 +1,47 @@
+# Sensor configuration options
+
+# Copyright (c) 2016 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig SENSOR
+	bool "Sensor Drivers"
+	help
+	  Include sensor drivers in system config
+
+if SENSOR
+
+module = SENSOR
+module-str = sensor
+source "subsys/logging/Kconfig.template.log_config"
+
+config SENSOR_INIT_PRIORITY
+	int "Sensor init priority"
+	default 90
+	help
+	  Sensor initialization priority.
+
+config SENSOR_SHELL
+	bool "Enable sensor shell"
+	depends on SHELL
+	select CBPRINTF_FP_SUPPORT
+	default y if !SHELL_MINIMAL
+	help
+	  This shell provides access to basic sensor data.
+
+config SENSOR_SHELL_BATTERY
+	bool "Enable sensor shell 'battery' command"
+	depends on SHELL
+	help
+	  This enables the 'battery' command which reports charging information
+	  in a convenient format. It makes use of a fuel gauge to read its
+	  information.
+
+comment "Device Drivers"
+
+source "drivers/sensor/lis2dw12/Kconfig"
+
+source "drivers/sensor/lps22hh/Kconfig"
+
+source "drivers/sensor/lsm6dso/Kconfig"
+
+endif # SENSOR

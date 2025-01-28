@@ -1,0 +1,122 @@
+# Kconfig - Actions font manager
+
+#
+# Copyright (c) 2016 Actions Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+config BITMAP_FONT_CACHE_POOL_SIZE
+	int "cache pool size for all fonts"
+	default 368640
+	help
+	   This option set cache size for each font size
+
+config EMOJI_FONT_USE_MMAP
+	bool "enable mmap on emoji font"
+	default false
+	help
+	   This option enable mmap emoji font to save cache space	
+
+config BITMAP_FONT
+	bool "bitmap font library"
+	help
+	  This option enables the bitmap font library.
+
+if BITMAP_FONT
+
+config BITMAP_FONT_USE_HIGH_FREQ_CACHE
+	bool "bitmap font high freq cache"
+	help
+	  This option enables bitmap font high freqency cache.
+
+config BITMAP_FONT_HIGH_FREQ_CACHE_SIZE
+	int "high freq char cache size"
+	default 1536000
+	help
+	   This option set max font cache size for high freq Hanzi chars
+
+config BITMAP_PER_FONT_CACHE_SIZE
+	int "cache size per font size"
+	default 65536
+	help
+	   This option set cache size for each font size
+
+config BITMAP_FONT_MAX_OPENED_FONT
+	int "max fonts can be opened"
+	default 2
+	help
+	  This option set max num of opened fonts
+
+config BITMAP_FONT_SUPPORT_EMOJI
+	bool "bitmap font emoji support"
+	help
+	  This option enables bitmap font emoji support.	  
+endif # BITMAP_FONT
+
+config FREETYPE_FONT
+	bool "freetype font library"
+	help
+	  This option enables the freetype font library.
+
+if FREETYPE_FONT
+
+config FREETYPE_MEM_POOL_USER
+	bool "freetype use mem pool"
+	help
+	  This option enables the freetype mem pool.
+
+config FREETYPE_FONT_MAX_FACES
+	int "freetype max faces can be opened"
+	default 2
+	help
+		This option set max faces can be opened
+		
+config FREETYPE_FONT_MAX_SIZES
+	int "freetype max sizes can be opened"
+	default 5
+	help
+		This option set max sizes can be opened
+
+config FREETYPE_FONT_ENABLE_MEMORY_FACE
+	bool "freetype enable memory face"
+	help
+	  This option enables freetype to open memory face.
+
+config FREETYPE_FONT_BITMAP_BPP
+	int "final bpp of rendered glyph"
+	default 2
+	help
+	  This option set final bpp of rendered glyph
+	  
+config FREETYPE_PER_FONT_CACHE_SIZE
+	int "cache size per font size"
+	default 65536
+	help
+	   This option set cache size for each font size
+
+	  
+config FREETYPE_FONT_MAX_SUBCACHE_BYTES
+	int "freetype max bytes can be used in freetype cache"
+	default 5
+	help
+		This option set max btyes can be used in freetype cache
+
+config FREETYPE_FONT_ENABLE_SVG_PATH
+	bool "enable svg path optimization"
+	default n
+	help
+		This option enalbe svg path optimization
+
+config FREETYPE_SHAPE_INFO_CACHE_SIZE
+	int "shape info cache size"
+	default 4096
+	help
+		This option set shape info cache size
+
+config FREETYPE_FONT_SHAPE_CACHE_SIZE
+	int "shape cache size"
+	default 120000
+	help
+	This option set shape cache size
+endif # FREETYPE_FONT

@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: Apache-2.0
+
+menu "Rendering Configuration"
+
+config LV_VG_LITE_COMMAND_BUFFER_SIZE
+	int "Command buffer size in kilobytes for VG-Lite."
+	depends on LV_USE_DRAW_VG_LITE
+	default 32
+
+config LV_USE_DRAW_ACTS_DMA2D
+	bool "Use Actions' DMA2D GPU"
+	depends on DMA2D_HAL
+	default y
+
+endmenu

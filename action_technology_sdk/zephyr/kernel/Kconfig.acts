@@ -1,0 +1,43 @@
+# Kernel configuration options
+
+# Copyright (c) 2014-2015 Wind River Systems, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+menu "Actions Kernel Options"
+
+config DEVICE_DEBUG
+	bool "Device runtime debug"
+	default y
+	help
+	  This option enables device debug code in kernel.
+
+config STACK_MONITOR
+	bool "Enable stack usage monitor"
+	depends on STACK_SENTINEL
+	default n
+	help
+	  Support stack usage monitor. The kernel will check the thread stack
+	  usage at the entry of interrupt.
+
+config STACK_MONITOR_WARN_THRESHOLD
+	int "The warning threshold of free stack size"
+	depends on STACK_MONITOR
+	default 64
+	help
+	  Config the warning threshold of free stack size.
+
+config STACK_MONITOR_PARANOID
+	bool "Check stack usage more paranoid"
+	depends on STACK_MONITOR && INIT_STACKS
+	default n
+	help
+	  Check stack usage by comparing with stack initial magic data
+
+config TIME_SLEEP_COMP
+	bool "cpu Sleep time compensation"
+	depends on ACTS_TIMER  && PM_DEVICE
+	default n
+	help
+	  CPU enter S3, Time stop, need compensation
+
+endmenu

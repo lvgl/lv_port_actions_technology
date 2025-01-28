@@ -1,0 +1,60 @@
+# Kconfig - DSP device configuration options
+#
+#
+# Copyright (c) 2018 Actions Semiconductor Co., Ltd
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+#
+# compenstation options
+#
+
+config COMPENSATION
+    bool
+    prompt "compensation drivers"
+    default n
+    help
+    enable freq compensation
+      
+config COMPENSATION_ACTS
+    bool
+	prompt "actions compensation drivers"
+    default n
+	select COMPENSATION
+    help
+    enable actions freq compensation
+    
+config COMPENSATION_FREQ_INDEX_NUM
+	int
+	prompt "compensation freq index num"
+	depends on COMPENSATION_ACTS
+	default 2
+	help
+	config actions freq compensation array number
+	
+config COMPENSATION_DEFAULT_HOSC_CAP
+    int 
+	prompt "default hosc cap"
+    depends on COMPENSATION_ACTS
+    default 100
+    help
+    config actions freq compensation default value 
+
+config COMPENSATION_HOSC_CAP_NVRAM_PRIORITY
+    bool 
+	prompt "compensation hosc cap read nvram priority"
+    depends on COMPENSATION_ACTS
+    default y
+    help
+    config actions freq compensation hosc cap read nvram priority 
+    
+config TEMP_COMPENSATION_ACTS
+    bool
+	prompt "actions temp compensation"
+    depends on COMPENSATION_ACTS
+    default n
+    help
+    enable actions temperature freq compensation
+                 
+                                           

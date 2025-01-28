@@ -1,0 +1,13 @@
+# drivers configuration options
+
+# Copyright (c) 2020 Actions Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+menu "Framework Porting Drivers"
+rsource "key/Kconfig"
+rsource "osal/Kconfig"
+rsource "dma2d/Kconfig"
+rsource "display/Kconfig"
+rsource "memory/Kconfig"
+rsource "misc/Kconfig"
+endmenu

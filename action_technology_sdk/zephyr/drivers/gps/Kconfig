@@ -1,0 +1,24 @@
+
+config SENSOR_GPS_AG3352B
+	bool "GPS AG3352B enable"
+	default n
+	help
+		Enable AG3352B GPS
+
+config SENSOR_GPS_TG9255
+	bool "GPS TG9255 enable"
+	default n
+	help
+		Enable TG9255 GPS
+
+config SENSOR_GPS_CC1165W
+	bool "GPS CC1165W enable"
+	default n
+	help
+		Enable CC1165W GPS
+
+config GPS
+	bool "GPS  enable"
+	default n
+	help
+		Enable  GPS

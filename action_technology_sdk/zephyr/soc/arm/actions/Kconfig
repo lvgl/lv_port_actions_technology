@@ -1,0 +1,17 @@
+# Copyright (c) 2016 Open-RnD Sp. z o.o.
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_FAMILY_ACTS
+	bool
+	select HAS_SEGGER_RTT
+	select BUILD_OUTPUT_HEX
+
+if SOC_FAMILY_ACTS
+
+config SOC_FAMILY
+	string
+	default "actions"
+
+source "soc/arm/actions/*/Kconfig.soc"
+
+endif # SOC_FAMILY_ACTS

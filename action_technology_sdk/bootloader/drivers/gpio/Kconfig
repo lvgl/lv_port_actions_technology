@@ -1,0 +1,37 @@
+# GPIO configuration options
+
+# Copyright (c) 2015 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig GPIO
+	bool "GPIO Drivers"
+	select HAS_DTS_GPIO
+	help
+	  Include GPIO drivers in system config
+
+if GPIO
+
+module = GPIO
+module-str = gpio
+source "subsys/logging/Kconfig.template.log_config"
+
+config GPIO_SHELL
+	bool "Enable GPIO Shell"
+	depends on SHELL
+	help
+	  Enable GPIO Shell for testing.
+
+config EXTEND_GPIO_ET6416
+	bool "Enable GPIO_ET6416"
+	help
+	  Enable GPIO GPIO_ET6416.
+
+config EXTEND_GPIO_ET6416_SHELL
+	bool "Enable GPIO_ET6416 shell dbg"
+	depends on EXTEND_GPIO_ET6416
+	help
+	  Enable GPIO GPIO_ET6416 shell dbg.
+
+source "drivers/gpio/Kconfig.acts"
+
+endif # GPIO

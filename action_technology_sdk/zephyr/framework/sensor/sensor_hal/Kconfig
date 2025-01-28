@@ -1,0 +1,28 @@
+# Configuration options for Actions Sensor
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig SENSOR_HAL
+	bool "Sensor hal"
+	help
+	  Enable Sensor Hal
+
+if SENSOR_HAL
+
+config SENSOR_TASK_CFG
+	bool "Config sensor using task"
+	default y
+#	depends on (SOC_SERIES_LARK || SOC_SERIES_LARK_FPGA)
+	help
+	  Config sensor using task
+
+config SENSOR_TASK_POLL
+	bool "Poll sensor using task"
+	default y
+	help
+	  Poll sensor using task
+
+rsource "devices/Kconfig"
+
+endif # SENSOR_HAL

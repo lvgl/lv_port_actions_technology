@@ -1,0 +1,33 @@
+# Configuration options for Actions Display Controller
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig DISPLAY_CONTROLLER
+	bool "Display Controller"
+	help
+	  Enable display controller
+
+if DISPLAY_CONTROLLER
+
+config DISPLAY_LCDC
+	bool "Display LCD Controller"
+	default y
+	help
+	  Enable LCD display controller
+
+config DISPLAY_LCDC_LARK
+	bool
+	default y if SOC_SERIES_LARK
+	depends on DISPLAY_LCDC
+	help
+	  Enable LCD display controller for Lark SoC Series.
+
+config DISPLAY_LCDC_LEOPARD
+	bool
+	default y if SOC_SERIES_LEOPARD
+	depends on DISPLAY_LCDC
+	help
+	  Enable LCD display controller for Leopard SoC Series.
+
+endif # DISPLAY_CONTROLLER

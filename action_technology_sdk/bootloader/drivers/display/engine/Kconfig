@@ -1,0 +1,54 @@
+# Configuration options for Actions Display Accelerator
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig DISPLAY_ENGINE
+	bool "Display Engine"
+	help
+	  Enable display engine
+
+if DISPLAY_ENGINE
+
+config DISPLAY_ENGINE_LARK
+	bool
+	default y if SOC_SERIES_LARK
+	help
+	  Display Engine for Lark SoC Series.
+
+config DISPLAY_ENGINE_LEOPARD
+	bool
+	default y if SOC_SERIES_LEOPARD
+	help
+	  Display Engine for Leopard SoC Series.
+
+config DISPLAY_ENGINE_INSTANCE_NUM
+	int "Display Engine Instance Number"
+	default 3
+	help
+	  Set display engine maximum instances to support
+
+config DISPLAY_ENGINE_HIHG_PRIO_INSTANCE
+	bool
+	help
+	  Enable display engine high priority instance
+
+config DISPLAY_ENGINE_DRAW_COMMAND_NUM
+	int "Display Engine Command Number Per Instance"
+	default 10
+	help
+	  Set display engine maximum instances commands to support
+
+config DISPLAY_ENGINE_POST_COMMAND_NUM
+	int "Display Engine Command Number Per Instance"
+	default 3
+	help
+	  Set display engine maximum instances commands to support
+
+config DISPLAY_ENGINE_COMMAND_TIMEOUT_MS
+	int "Display Engine Command Timeout in Milliseconds"
+	default 500
+	help
+	  Set display engine command timeout in milliseconds
+
+endif # DISPLAY_ENGINE

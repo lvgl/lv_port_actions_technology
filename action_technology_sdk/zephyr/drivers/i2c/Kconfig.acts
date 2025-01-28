@@ -1,0 +1,45 @@
+# Copyright (c) 2018 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+
+menuconfig I2C_ACTS
+	bool "actions I2C driver"
+	select RING_BUFFER
+	help
+	  Enable support for actions I2C driver
+
+menuconfig I2CMT_ACTS
+	bool "actions I2CMT driver"
+	select RBUF_LIB
+	help
+	  Enable support for actions I2CMT driver
+
+if I2CMT_ACTS
+
+config I2CMT_LARK
+	bool "I2CMT driver on SoC Lark"
+	default n
+	depends on SOC_SERIES_LARK
+	help
+	  Enable I2CMT driver on SoC Lark
+
+config I2CMT_LEOPARD
+	bool "I2CMT driver on SoC Leopard"
+	default y
+	depends on SOC_SERIES_LEOPARD
+	help
+	  Enable I2CMT driver on SoC Leopard
+
+config I2CMT_0_MAX_TASK_LEN
+	int "I2CMT0 max task len"
+	default 256
+	help
+	  Setting max task len limit for I2CMT0
+
+config I2CMT_1_MAX_TASK_LEN
+	int "I2CMT1 max task len"
+	default 256
+	help
+	  Setting max task len limit for I2CMT1
+
+endif # I2CMT_ACTS

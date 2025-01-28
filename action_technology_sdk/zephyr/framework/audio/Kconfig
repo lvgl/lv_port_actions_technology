@@ -1,0 +1,18 @@
+# Configuration options for Actions DSP
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+config AUDIO_IN
+	bool
+	prompt "Audio In Hal Support"
+	default n
+	help
+	This option enables actions audio in hal.
+
+config AUDIO_OUT
+	bool
+	prompt "Audio Out Hal Support"
+	default n
+	help
+	This option enables actions audio out hal.

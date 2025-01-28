@@ -1,0 +1,91 @@
+# Kconfig - Actions system manager
+
+#
+# Copyright (c) 2016 Actions Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+if ACTIONS_FRAMEWORK
+
+menuconfig SYSTEM
+	bool
+	prompt "System"
+	default n
+	help
+	This option enables actions system manager.
+
+config ESD_MANAGER
+	bool
+	prompt "Esd Manager Support"
+	depends on SYSTEM
+	default n
+	help
+	This option enables actions esd manager.
+
+config SYS_STANDBY
+	bool
+	prompt "System Standby Support"
+	depends on SYSTEM
+	select SYS_WAKELOCK
+	select PM_CPU_IDLE_LOW_POWER
+	default n
+	help
+	This option enables actions system standby.
+
+
+config AUTO_STANDBY_TIME_SEC
+    int "delay how long (second) to enter standby"
+    depends on SYS_STANDBY
+	default 0
+    help
+    This option set the time to enter standby when system idle
+
+config AUTO_POWEDOWN_TIME_SEC
+    int "delay how long (second) to auto power down"
+    depends on SYS_STANDBY
+	default 1800
+    help
+    This option set the time to enter auto power down
+
+config AUTO_POWEDOWN_UNCONNECTED
+    bool 
+    prompt "Poweroff When No Device Connected Support"
+	depends on SYSTEM
+    help
+        allow poweroff when no device connected
+
+config AUTO_POWEDOWN_NOPLAYING
+    bool
+    prompt "Poweroff When Not Playing Support"
+	depends on SYSTEM
+    help
+        allow poweroff when not playing   
+
+config MONITOR_PERIOD
+    int "delay how long (second) to monitor running"
+	depends on SYSTEM
+	default 100
+    help
+    This option set the time to monitor running
+
+config SYSTEM_SHELL
+	bool "System Shell Support"
+	depends on SYSTEM
+	default n
+	select CONSOLE_SHELL
+	help
+	  This shell provides to  modify system config.
+
+if SYSTEM
+
+rsource "fs_manager/Kconfig"
+rsource "hotplug/Kconfig"
+rsource "input/Kconfig"
+rsource "power/Kconfig"
+rsource "tts/Kconfig"
+rsource "alarm_manager/Kconfig"
+rsource "act_log/Kconfig"
+endif
+
+endif #ACTIONS_FRAMEWORK

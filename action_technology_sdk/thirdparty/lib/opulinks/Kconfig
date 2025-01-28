@@ -1,0 +1,6 @@
+config USING_OPULINKS_LIB
+	bool
+	prompt "Enable using opulinks lib"
+    default n
+    help
+    This option choose opulinks lib

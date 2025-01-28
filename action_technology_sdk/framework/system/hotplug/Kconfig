@@ -1,0 +1,81 @@
+# Kconfig - Actions hotplug
+
+#
+# Copyright (c) 2016 Actions Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+menuconfig HOTPLUG
+	bool
+	prompt "Hotplug"
+	select HOTPLUG_MANAGER
+	default n
+	help
+	This option enables actions hotplug
+
+config HOTPLUG_MANAGER
+	bool
+	prompt "Hotplug Manager Support"
+	depends on HOTPLUG
+	default n
+	help
+	This option enables actions hotplug manager.
+
+config USB_HOTPLUG_THREAD_ENABLED
+	bool
+	prompt "USB hotplug thread (shared) enabled"
+	depends on USB_HOST || USB_MASS_STORAGE_SHARE_THREAD
+	default y
+	help
+	  This option enables USB hotplug thread (shared)
+
+config USB_HOTPLUG_STACKSIZE
+	int
+	prompt "USB hotplug stack (shared) size"
+	depends on USB_HOTPLUG_THREAD_ENABLED
+	default 1200
+	help
+	  Stack size for USB hotplug thread, be care it may be used for other
+	  shared threads at the same time.
+
+config USB_HOTPLUG_PRIORITY
+	int
+	prompt "USB hotplug thread priority"
+	depends on USB_HOTPLUG_THREAD_ENABLED
+	default 12
+	help
+	  priority only for USB host enumeration thread for now,
+	  others may have own prioities, such as mass storage.
+
+config USB_HOTPLUG
+	bool
+	prompt "USB hotplug"
+	depends on HOTPLUG
+	default n
+	help
+	  This option enables usb hotplug
+
+config CARD_HOTPLUG
+	bool
+	prompt "CARD hotplug"
+	depends on HOTPLUG && MMC
+	default n
+	help
+	  This option enables card hotplug
+
+config CHARGER_HOTPLUG
+	bool
+	prompt "charger hotplug"
+	depends on HOTPLUG
+	default n
+	help
+	  This option enables charger hotplug
+
+config LINEIN_HOTPLUG
+	bool
+	prompt "linein hotplug"
+	depends on HOTPLUG
+	default n
+	help
+	  This option enables linein hotplug

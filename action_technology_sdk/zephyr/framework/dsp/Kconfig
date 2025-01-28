@@ -1,0 +1,16 @@
+# Configuration options for Actions OSAL
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig DSP_HAL
+	bool "DSP Hal"
+	default n
+	help
+	  Enable DSP Hal
+
+if DSP_HAL
+
+
+
+endif # DSP_HAL

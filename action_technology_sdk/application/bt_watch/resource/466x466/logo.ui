@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<!--Actions IDE, Rapid Application Development-->
+<ui-rad>
+    <property name="prj_name" value="logo" />
+    <property name="prj_language" value="0x0" />
+    <property name="prj_screen_width" value="0x1d2" />
+    <property name="prj_screen_height" value="0x1d2" />
+    <property name="prj_res_file" value="..\..\boards\ats3085s_dev_watch_ext_nor\sdfs_k\logo.res" />
+    <property name="prj_res_str_dir" value="..\..\boards\ats3085s_dev_watch_ext_nor\sdfs_k" />
+    <property name="prj_res_head_file" value="..\454x454\logo_pic.h" />
+    <property name="prj_res_str_head_file" value="..\454x454\logo_str.h" />
+    <property name="prj_sty_head_file" value=".\logo_sty.h" />
+    <property name="prj_sty_file" value="..\..\boards\ats3085s_dev_watch_ext_nor\sdfs_k\logo.sty" />
+    <property name="prj_build_res_type" value="0x1" />
+    <property name="prj_build_res_mode" value="0x0" />
+    <property name="prj_case_path" value="..\466x466" />
+    <property name="prj_sdk_path" value="..\454x454" />
+    <property name="desktop_file_create" value="0x0" />
+    <property name="desktop_file_path" value="" />
+    <property name="desktop_file_comment" value="" />
+    <property name="desktop_file_exec_dir" value="/mnt/diska/apps/" />
+    <property name="desktop_file_type" value="0x0" />
+    <property name="desktop_file_child" value="" />
+    <property name="desktop_file_exec" value="Application.app" />
+    <property name="desktop_file_icon_id" value="0x0" />
+    <property name="desktop_file_icon" value="0x0" />
+    <property name="desktop_file_name_id" value="0x0" />
+    <property name="desktop_file_name" value="Application" />
+    <property name="desktop_file_name_str_id" value="" />
+    <scene>
+        <property name="name" value="SCENE_LOGO" />
+        <property name="id" value="0" />
+        <property name="direction" value="0" />
+        <property name="key1" value="1" />
+        <property name="key2" value="2" />
+        <property name="key3" value="3" />
+        <property name="key4" value="4" />
+        <property name="key5" value="5" />
+        <property name="key6" value="6" />
+        <property name="key7" value="7" />
+        <property name="key8" value="8" />
+        <property name="key9" value="9" />
+        <property name="key10" value="10" />
+        <property name="key11" value="11" />
+        <property name="key12" value="12" />
+        <property name="key13" value="13" />
+        <property name="key14" value="14" />
+        <property name="key15" value="15" />
+        <property name="key16" value="16" />
+        <element class="resgroup_resource">
+            <property name="name" value="window" />
+            <property name="id" value="1" />
+            <property name="x" value="0x0000" />
+            <property name="y" value="0x0000" />
+            <property name="width" value="0x01d2" />
+            <property name="height" value="0x01d2" />
+            <property name="background" value="0x00000000" />
+            <property name="opaque" value="0x0000" />
+            <property name="transparency" value="0x00ff" />
+            <property name="visible" value="0x0001" />
+            <property name="editable" value="1" />
+            <element class="picture_resource">
+                <property name="name" value="PIC_LOGO" />
+                <property name="id" value="2" />
+                <property name="x" value="0x007a" />
+                <property name="y" value="0x00be" />
+                <property name="width" value="0x00de" />
+                <property name="height" value="0x0056" />
+                <property name="visible" value="0x0010" />
+                <property name="compress" value="0x0000" />
+                <property name="PNG_A8" value="0x0000" />
+                <property name="ARGB" value="0x0000" />
+                <element class="layer">
+                    <property name="0" value=".\logo\logo.jpg" />
+                </element>
+            </element>
+            <element class="picture_resource">
+                <property name="name" value="PIC_OTA" />
+                <property name="id" value="3" />
+                <property name="x" value="0x007a" />
+                <property name="y" value="0x00a7" />
+                <property name="width" value="0x00de" />
+                <property name="height" value="0x0084" />
+                <property name="visible" value="0x0010" />
+                <property name="compress" value="0x0000" />
+                <property name="PNG_A8" value="0x0000" />
+                <property name="ARGB" value="0x0000" />
+                <element class="layer">
+                    <property name="0" value=".\logo\ota.jpg" />
+                </element>
+            </element>
+            <element class="picture_resource">
+                <property name="name" value="PIC_BYE" />
+                <property name="id" value="4" />
+                <property name="x" value="0x007a" />
+                <property name="y" value="0x00be" />
+                <property name="width" value="0x00d8" />
+                <property name="height" value="0x0054" />
+                <property name="visible" value="0x0010" />
+                <property name="compress" value="0x0000" />
+                <property name="PNG_A8" value="0x0000" />
+                <property name="ARGB" value="0x0000" />
+                <element class="layer">
+                    <property name="0" value=".\logo\goodby.jpg" />
+                </element>
+            </element>
+        </element>
+    </scene>
+    <resource>
+        <picture value=".\logo\logo.jpg" />
+        <picture value=".\logo\ota.jpg" />
+        <picture value=".\logo\goodby.jpg" />
+    </resource>
+</ui-rad>

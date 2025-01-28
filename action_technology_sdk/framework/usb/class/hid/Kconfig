@@ -1,0 +1,167 @@
+# Kconfig - USB HID configuration options
+
+#
+# Copyright (c) 2018 Intel Corp.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+config USB_DEVICE_HID
+	bool
+	prompt "USB human interface device(HID) support"
+	default n
+	help
+	  USB human interface device(HID) support.
+
+if USB_DEVICE_HID
+
+config USB_HID_DEVICE_IF_NUM
+	int
+	prompt "Interface number of hid device"
+	default 0
+	help
+	  Interface number of hid device.
+
+config HID_INTERRUPT_IN_EP_MPS
+	int
+	prompt "HID class (full-speed) interrupt IN endpoint size"
+	default 64
+	range 8 64
+	help
+	  HID class interrupt in endpoint size.
+
+config HID_INTERRUPT_IN_EP_ADDR
+	hex
+	prompt "USB HID device interrupt in endpoint address"
+	default 0x81
+	range 0x81 0x8f
+	help
+	  USB HID device interrupt in endpoint address.
+
+config USB_HID_MAX_PAYLOAD_SIZE
+	int
+	prompt "USB HID device payload size of interrupt endpoint"
+	default 64
+	range 8 1024
+	help
+	  Max allowed payload size over USB HID interrupt endpoint.
+
+config HID_INTERRUPT_OUT
+	bool
+	prompt "support USB HID device interrupt out"
+	default n
+	help
+	  support USB HID device interrupt out.
+
+if HID_INTERRUPT_OUT
+
+config HID_INTERRUPT_OUT_EP_MPS
+	int
+	prompt "HID class (full-speed) interrupt OUT endpoint size"
+	default 64
+	range 8 64
+	help
+	  HID class interrupt out endpoint size.
+
+config HID_INTERRUPT_OUT_EP_ADDR
+	hex
+	prompt "USB HID device interrupt out endpoint address"
+	default 0x01
+	range 0x01 0x0f
+	help
+	  USB HID device interrupt out endpoint address.
+
+endif #HID_INTERRUPT_OUT
+
+config HID_INTERRUPT_EP_INTERVAL_HS
+	hex
+	prompt "USB HID device interrupt interval in High-Speed mode"
+	default 0x4
+	range 0x1 0x10
+	help
+	  USB HID device interrupt interval in High-Speed mode.
+
+config HID_INTERRUPT_EP_INTERVAL_FS
+	hex
+	prompt "USB HID device interrupt interval in Full/Low-Speed mode"
+	default 0x1
+	range 0x1 0xff
+	help
+	  USB HID device interrupt interval in Full-Speed mode.
+
+config USB_HID_DEVICE_MANUFACTURER
+	string
+	prompt "USB HID device manufacturer name"
+	default "Actions"
+	help
+	  USB hid device manufacturer string, can be configured by vendor.
+
+config USB_HID_DEVICE_PRODUCT
+	string
+	prompt "USB HID device product name"
+	default "USB-HID-DEV"
+	help
+	  USB hid device product string, can be configured by vendor.
+
+config USB_HID_DEVICE_SN
+	string
+	prompt "USB HID device serial number"
+	default "0123456789AB"
+	help
+	  USB hid device serial number string, can be configured by vendor.
+
+config USB_HID_DEVICE_SN_NVRAM
+	string
+	prompt "get serial number from NVRAM"
+	default "BT_MAC"
+	help
+	  get USB hid device serial number string from NVRAM, can be configured by vendor.
+
+config USB_HID_DEVICE_VID
+	hex
+	prompt "USB hid device vendor ID"
+	default 0x10d6
+	help
+	  USB hid device vendor ID, can be configured by vendor.
+
+config USB_HID_DEVICE_PID
+	hex
+	prompt "USB hid device product ID"
+	default 0xb012
+	help
+	  USB hid device product ID, can be configured by vendor.
+
+config HID_REPORT_DESC_SIZE
+	int
+	prompt "USB HID device hid report descriptor size."
+	default 64
+	help
+	  USB HID device hid report descriptor size.
+
+config USB_SELF_DEFINED_REPORT
+	bool
+	prompt "Support HID class device self-defined report"
+	default n
+	help
+	  Support HID class device self-defined report.
+
+config SYS_LOG_USB_HID_LEVEL
+	int "USB HID device class driver log level"
+	depends on LOG
+	default 0
+	help
+	  Sets log level for USB HID device class driver.
+
+	  Levels are:
+
+	  - 0 OFF, do not write
+
+	  - 1 ERROR, only write LOG_ERR
+
+	  - 2 WARNING, write LOG_WRN in addition to previous level
+
+	  - 3 INFO, write LOG_INF in addition to previous levels
+
+	  - 4 DEBUG, write LOG_DBG in addition to previous levels
+
+endif #USB_DEVICE_HID

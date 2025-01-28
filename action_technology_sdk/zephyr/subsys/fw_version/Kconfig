@@ -1,0 +1,17 @@
+# Kconfig - Firmware version options
+#
+# Copyright (c) 2019 Actions Semiconductor Co.,Ltd
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+menu "Firmware version"
+
+config FIRMWARE_VERSION
+	bool
+	prompt "Enable firmware version interface"
+	default y
+	help
+	  This option enable firmware version interface
+
+endmenu

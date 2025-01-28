@@ -1,0 +1,159 @@
+# Kconfig - Actions system manager
+
+#
+# Copyright (c) 2016 Actions Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+menuconfig ACTIONS_FRAMEWORK_DISPLAY
+	bool "Display Support"
+	depends on ACTIONS_FRAMEWORK
+	help
+	  This option enables actions system manager.
+
+if ACTIONS_FRAMEWORK_DISPLAY
+
+config LED_MANAGER
+	bool "LED Manager Support"
+#	depends on LED
+	help
+	  This option enables actions led manager.
+
+config SEG_LED_MANAGER
+	bool "SEG LED Manager Support"
+	depends on SEG_LED
+	help
+	  This option enables actions seg led  manager.
+
+config UI_MANAGER
+	bool "Ui Manager Support"
+	help
+	  This option enables actions app manager.
+
+config UI_SERVICE
+	bool "UI Service"
+	depends on UI_MANAGER
+	depends on UI_MEMORY_MANAGER
+	depends on ACTS_RING_BUFFER
+	select DISPLAY_COMPOSER
+	help
+	  This option enables actions UI service.
+
+if UI_SERVICE
+
+config UISRV_PRIORITY
+	int "UI Service Thread Priority"
+	default 3
+	help
+	  This option set ui service thread priority
+
+config UISRV_STACKSIZE
+	int "UI Service Thread Stack Size"
+	default 2536
+	help
+	  This option set stack size for ui service thread
+
+config UI_VIEW_OVERLAY_OPA
+	int "UI View Overlay Opacity"
+	range 0 255
+	default 128
+	help
+	  This option sets the blend opacity for the views' intersection area.
+	  Set 255 to disable the blending.
+
+config UI_SWITCH_EFFECT
+	bool "UI switch effects"
+	help
+	  Enable special effects between ui switch.
+
+config UI_SWITCH_EFFECT_TRACKING_TOUCH
+	bool "UI switch effects tracking touch"
+	depends on UI_SWITCH_EFFECT
+	help
+	  Enable tracking touch during ui switch effects.
+
+config UI_SCROLL_EFFECT
+	bool "UI scroll effects"
+	help
+	  Enable special effects when view scroll.
+
+config UI_EFFECT_TRANSFORM_BUFFER_COUNT
+	int "UI transform buffer count for effects"
+	range 1 2
+	default 2
+	help
+	  Set UI transform buffer count for both swith and scroll effects.
+	  This will affect the UI effect performance if select 1.
+
+choice
+	prompt "View Cache Scroll Buffer Mode"
+	default VIEW_SCROLL_MEM_DEFAULT
+
+config VIEW_SCROLL_MEM_DEFAULT
+	bool "Scrolled View has Surface Buffer"
+
+config VIEW_SCROLL_MEM_SAVE
+	bool "Scrolled View has no Surface Buffer"
+
+config VIEW_SCROLL_MEM_LOWEST
+	bool "Scrolled View has no Surface Buffer and no Refresh"
+
+endchoice
+
+config VIEW_SCROLL_TRACKING_FINGER
+	bool "UI View Scrolling Tracking Finger"
+	help
+	  This option enable view scrolling always tracking finger.
+
+config VIEW_CACHE_LEVEL
+	int "cache level for view cache"
+	default 1
+	help
+	  This option set cache level for view cache
+
+config VIEW_STACK_LEVEL
+	int "maximum number of elements in view stack"
+	default 5
+	help
+	  This option set maximum number of elements in view stack
+
+config NUM_MSGBOX_POPUPS
+	int "Maximum number of in-flight msgbox popups"
+	default 3
+	help
+	  Set maximum number of in-flight msgbox popups.
+
+endif # UI_SERVICE
+
+choice
+	prompt "Surface Buffer Swap Mode"
+	default SURFACE_DOUBLE_BUFFER
+	depends on UI_MEMORY_MANAGER
+
+config SURFACE_DOUBLE_BUFFER
+	bool "Double Buffer"
+
+config SURFACE_SINGLE_BUFFER
+	bool "Single Buffer"
+
+config SURFACE_ZERO_BUFFER
+	bool "Zero Buffer"
+
+endchoice
+
+config SURFACE_TRANSFORM_UPDATE
+	bool "Surface update with transformation"
+	depends on UI_MEMORY_MANAGER && DMA2D_HAL
+	help
+	  Enable surface update with 90/180/270 rotation transform
+
+rsource "compression/Kconfig"
+rsource "font/Kconfig"
+rsource "lvgl/Kconfig"
+rsource "memory/Kconfig"
+rsource "res_manager/Kconfig"
+orsource "libdisplay/Kconfig"
+orsource "vg_lite/Kconfig"
+
+endif # ACTIONS_FRAMEWORK_DISPLAY

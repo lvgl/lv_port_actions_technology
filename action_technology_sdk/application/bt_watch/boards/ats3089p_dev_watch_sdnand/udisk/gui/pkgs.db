@@ -1,0 +1,56 @@
+{
+  "apps": {
+    "launcher.app": {
+      "uri": "prc://launcher.app"
+    },
+    "com.xfaith.recorder-test": {
+      "uri": "prc://com.xfaith.recorder-test"
+    },
+    "com.xfaith.device-info-test": {
+      "uri": "prc://com.xfaith.device-info-test"
+    },
+    "com.xfaith.file-storge-test": {
+      "uri": "prc://com.xfaith.file-storge-test"
+    },
+    "com.xfaith.network-test": {
+      "uri": "prc://com.xfaith.network-test"
+    },
+    "com.xfaith.crypto-test": {
+      "uri": "prc://com.xfaith.crypto-test"
+    },
+    "com.xfaith.playertest": {
+      "uri": "prc://com.xfaith.playertest"
+    },
+    "com.xfaith.asr-demo": {
+      "uri": "prc://com.xfaith.asr-demo"
+    },
+    "com.xfaith.game-2048": {
+      "uri": "prc://com.xfaith.game-2048"
+    },
+    "com.xfaith.woodenfish": {
+      "uri": "prc://com.xfaith.woodenfish"
+    },
+    "com.xfaith.buddhabeads": {
+      "uri": "prc://com.xfaith.buddhabeads"
+    },
+    "com.xfaith.flappy-bird": {
+      "uri": "prc://com.xfaith.flappy-bird"
+    },
+    "com.xfaith.weather": {
+      "uri": "prc://com.xfaith.weather"
+    },
+    "com.xfaith.calendar": {
+      "uri": "prc://com.xfaith.calendar"
+    },
+    "com.xfaith.spotify": {
+      "uri": "prc://com.xfaith.spotify"
+    },
+    "com.xfaith.ximalaya": {
+      "uri": "prc://com.xfaith.ximalaya"
+    },
+    "com.xfaith.netease-cloud-music": {
+      "uri": "prc://com.xfaith.netease-cloud-music"
+    }
+  },
+  "dials": {}
+}

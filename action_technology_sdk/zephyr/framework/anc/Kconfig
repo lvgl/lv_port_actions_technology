@@ -1,0 +1,16 @@
+# Configuration options for Actions OSAL
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig ANC_HAL
+	bool "ANC Hal"
+	default n
+	help
+	  Enable ANC Hal
+
+if ANC_HAL
+
+
+
+endif # ANC_HAL

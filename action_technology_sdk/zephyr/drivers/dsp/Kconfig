@@ -1,0 +1,56 @@
+# Configuration options for Actions DSP
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig DSP
+	bool "DSP Drivers"
+	help
+	  Enable dsp drivers
+
+if DSP
+
+config DSP_ACTS_DEV_NAME
+	string "Device name of DSP Controller"
+	default "DSP_LEOPARD"
+	help
+	  Device name of DSP Controller
+
+config DSP_ACTIVE_POWER_LATENCY_MS
+	int "dsp active power latency in milliseconds"
+	default -1
+	help
+	  Set the latency of power-off dsp after dsp became idle. Set negative (< 0)
+	  if you want to disable this feature.
+
+config DSP_DEBUG_PRINT
+    bool "enable dsp debug print"
+    default n
+    help
+       enable dsp debug print
+
+config DSP_LOAD_ROM
+    bool "enable load dsp rom"
+    default n
+    help
+      enable load dsp rom
+
+config DSP_DEPAND_ON_ROM
+    bool "depand on dsp rom"
+    default n
+    help
+      enable depand on dsp rom
+
+config LOAD_IMAGE_FROM_FS
+    bool "load dsp image from fs"
+    default n
+    help
+      enable load dsp image from fs
+
+config DSP_IMAGE_PATH
+	string "dsp image path"
+	default "/SD:K/"
+	help
+	  This is dsp image path.
+
+endif # DSP

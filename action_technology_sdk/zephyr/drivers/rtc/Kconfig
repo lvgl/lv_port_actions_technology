@@ -1,0 +1,35 @@
+# Kconfig - RTC configuration options
+#
+#
+# Copyright (c) 2015 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+#
+# Actions Real-Time Clock (RTC) options
+#
+
+config RTC_ACTS
+	bool "Actions SoC RTC Driver"
+	depends on SOC_FAMILY_ACTS
+	default n
+	help
+	Build Actions SoC RTC driver.
+
+config RTC_0_NAME
+	string "RTC0 Driver's name"
+	depends on RTC_ACTS
+	default "RTC_0"
+
+config ALARM8HZ_ACTS
+	bool "Actions SoC ALARM 8HZ Driver"
+	depends on SOC_FAMILY_ACTS
+	default n
+	help
+	Build Actions SoC Alarm 8HZ driver.
+
+config ALARM8HZ_0_NAME
+	string "ALARM8HZ Driver's name"
+	depends on ALARM8HZ_ACTS
+	default "ALARM8HZ_0"

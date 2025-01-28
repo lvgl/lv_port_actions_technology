@@ -1,0 +1,25 @@
+# Configuration options for Actions ANC
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig ANC
+	bool "ANC Drivers"
+	help
+	  Enable anc drivers
+
+if ANC
+
+config ANC_ACTS_DEV_NAME
+	string "Device name of ANC Controller"
+	default "ANC_LARK"
+	help
+	  Device name of ANC Controller
+
+config ANC_DEBUG_PRINT
+    bool "enable anc debug print"
+    default n
+    help
+       enable anc debug print
+
+endif # ANC

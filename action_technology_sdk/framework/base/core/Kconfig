@@ -1,0 +1,47 @@
+# Kconfig - Actions system manager
+
+#
+# Copyright (c) 2016 Actions Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+menuconfig CORE
+	bool
+	prompt "Core"
+	default n
+	select APP_MANAGER
+	select SRV_MANAGER
+	select MSG_MANAGER
+	help
+	This option enables actions system manager.
+
+config APP_MANAGER
+	bool
+	prompt "App Manager Support"
+	depends on CORE
+	default n
+	help
+	This option enables actions app manager.
+
+config SRV_MANAGER
+	bool
+	prompt "Server Manager Support"
+	depends on CORE
+	default n
+	help
+	This option enables actions server manager.
+
+config MSG_MANAGER
+	bool
+	prompt "Message Manager Support"
+	depends on CORE
+	default n
+	help
+	This option enables actions message manager.
+
+config MESSAGE_DEBUG
+	bool "Debug Message Support"
+	depends on MSG_MANAGER
+	help
+	  This option enable message debug support.

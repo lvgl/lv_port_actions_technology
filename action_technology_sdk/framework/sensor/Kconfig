@@ -1,0 +1,95 @@
+# Kconfig - Actions Sensor manager
+
+#
+# Copyright (c) 2016 Actions Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+if SENSOR
+
+config SENSOR_MANAGER
+	bool
+	prompt "Sensor Manager Support"
+	select SENSOR_SERVICE
+	select SENSOR_HAL
+	select SENSOR_ALGO
+	default n
+	help
+	This option enables actions sensor manager.
+
+config SENSOR_SERVICE
+	bool
+	prompt "Sensor Service Support"
+	default n
+	help
+	This option enables actions sensor service.
+
+config GPS_MANAGER
+	bool "GPS manager support enable"
+	default n
+	help
+		Enable GPS manager.
+
+config SENSOR_GPS_SERVICE
+	bool "GPS service support enable"
+	default n
+	help
+		Enable GPS service.
+
+config GPS_PARSE_GBS_ENABLE
+	bool "GPS nnea parse gbs support enable"
+	default n
+	help
+		Satellite Fault Detection.
+
+config GPS_PARSE_GGA_ENABLE
+	bool "GPS nnea parse gga support enable"
+	default n
+	help
+		Global Positioning System Fix Data.
+
+config GPS_PARSE_GLL_ENABLE
+	bool "GPS nnea parse gll support enable"
+	default n
+	help
+		Geographic Position: Latitude/Longitude.
+
+config GPS_PARSE_GSA_ENABLE
+	bool "GPS nnea parse gsa support enable"
+	default n
+	help
+		DOP and active satellites.	
+
+config GPS_PARSE_GST_ENABLE
+	bool "GPS nnea parse gst support enable"
+	default n
+	help
+		Pseudorange Noise Statistics.		
+
+config GPS_PARSE_GSV_ENABLE
+	bool "GPS nnea parse gsv support enable"
+	default n
+	help
+		Satellites in view.	
+
+config GPS_PARSE_RMC_ENABLE
+	bool "GPS nnea parse RMC support enable"
+	default n
+	help
+		Recommended Minimum: position, velocity, time.	
+
+config GPS_PARSE_VTG_ENABLE
+	bool "GPS nnea parse vtg support enable"
+	default n
+	help
+		Track made good and Ground speed.	
+
+config GPS_PARSE_ZDA_ENABLE
+	bool "GPS nnea parse zda support enable"
+	default n
+	help
+		Time & Date - UTC, day, month, year and local time zone.	
+
+
+endif # SENSOR

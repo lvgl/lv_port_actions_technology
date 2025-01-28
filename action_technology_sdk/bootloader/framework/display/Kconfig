@@ -1,0 +1,42 @@
+# Configuration options for Actions OSAL
+
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+if DISPLAY
+
+menuconfig DISPLAY_COMPOSER
+	bool "Display Composer"
+	default y if UI_SERVICE
+	help
+	  Enable Display composer
+
+if DISPLAY_COMPOSER
+
+config DISPLAY_COMPOSER_DEBUG_FPS
+	bool "Debug Post Frame Rate (fps) in Display Composer"
+	default y
+	help
+	  Debug post frame rate (fps) in Display Composer
+
+config DISPLAY_COMPOSER_DEBUG_VSYNC
+	bool "Debug VSYNC/TE Signal Period in Display Composer"
+	default y
+	help
+	  Debug VSYNC/TE signal period in Display Composer
+
+endif # DISPLAY_COMPOSER
+
+config GUI_API_BROM
+	bool "ROM GUI api"
+	default y if SOC_LARK_FPGA || SOC_LARK
+	help
+	  Enable ROM GUI api
+
+config UI_DMA_MEMSETCPY
+	bool "DMA accelerated memset/memcpy for UI"
+	default y if SOC_LARK_FPGA || SOC_LARK
+	help
+	  Enable DMA accelerated memset/memcpy for UI
+
+endif # DISPLAY

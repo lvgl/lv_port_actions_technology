@@ -1,0 +1,66 @@
+# Copyright (c) 2018 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig IPMSG_ACTS
+	bool "actions ipmsg driver"
+	select RBUF_LIB
+	help
+	  Enable support for actions ipmsg driver
+
+
+if IPMSG_ACTS
+
+config IPMSG_ACTS_SC
+	bool "IPM driver for Sensor CPU"
+	default n
+	help
+	  Driver for Sensor CPU
+
+config IPMSG_ACTS_BTC
+	bool "IPM driver for Bluetooth CPU"
+	depends on IPMSG_ACTS
+	help
+	  Driver for Bluetooth CPU
+
+if IPMSG_ACTS_BTC
+
+choice
+	prompt "select storage for bt fw"
+	default BTC_FW_IN_NOR
+
+config BTC_FW_IN_NOR
+	bool "BTC Firmware bin in nor"
+	help
+	   BTC Firmware bin in nor.
+config BTC_FW_IN_NAND
+	bool "BTC Firmware bin in nand"
+	help
+	   select BTC Firmware bin in sdcard.
+
+config BTC_FW_IN_SD
+	bool "BTC Firmware bin in sdcard"
+	help
+	   select BTC Firmware bin in sdcard.
+
+config BTC_FW_IN_NOR_EXT
+	bool "BTC Firmware bin in extern nor"
+	help
+	   select BTC Firmware bin in extern nor.
+
+endchoice
+endif
+
+config IPMSG_BTC_SEL_32K
+	bool "Bluetooth CPU select 32768 oscillator"
+	depends on IPMSG_ACTS
+	default n
+	help
+	  Bluetooth CPU select 32768 oscillator
+
+config IPMSG_BTC_FCC_NAME
+	string "BTC FCC file name"
+	default "fcc.bin"
+	help
+	  BTC FCC file name
+
+endif #IPMSG_ACTS
