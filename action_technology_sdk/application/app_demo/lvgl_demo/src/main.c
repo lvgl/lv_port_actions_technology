@@ -132,8 +132,8 @@ static void _lvgl_init(void)
 static void _lvgl_set_y_anim_cb(void *label, int32_t val)
 {
 	static const lv_color_t test_colors[] = {
-		LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(0, 255, 0),
-		LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(255, 255, 255),
+		LV_COLOR_MAKE(255, 50, 0), LV_COLOR_MAKE(0, 255, 0),
+		LV_COLOR_MAKE(0, 100, 255), LV_COLOR_MAKE(255, 255, 255),
 	};
 	static uint8_t color_idx = 0;
 
