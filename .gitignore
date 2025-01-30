@@ -51,5 +51,7 @@ Mkfile.old
 dkms.conf
 outdir/
 build/
-__pycache__/
-__pycache__/*
+**/__pycache__
+**/__pycache__/
+*.build_config
+*.pyc
