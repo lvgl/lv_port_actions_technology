@@ -1,0 +1,2 @@
+/* Placeholder file, action tech port uses Kconfig */
+#define LV_USE_OS   1
