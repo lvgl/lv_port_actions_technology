@@ -1,0 +1,56 @@
+{
+    "name": "LV Port ATS3089P-EVB",
+    "maintainer": "LVGL",
+    "hostOperatingsystem": [
+        "Windows",
+        "Linux",
+    ],
+    "environment": [
+        "make",
+        "cmake",
+        "Linux"
+    ],
+    "hardware": {
+        "chipVendor": "Actions Technology",
+        "manufacturer": "Actions Technology",
+        "specs": {
+            "MCU": "ATS3089P",
+            "RAM": "1.1 MB SRAM",
+            "Flash": "8 MB",
+            "GPU": "VGLite",
+            "Resolution": "466x466",
+            "Display Size": "4.3\u201d",
+            "Interface": "MIPI DSI",
+            "Color Depth": "24-bit",
+            "Technology": "LCD",
+            "DPI": "128 px/inch",
+            "Touch Pad": "Capacitive"
+        }
+    },
+    "description": "The Actions Technology ATS3089P-EVB is a smartwatch focused development board with round display plus touch, here is a basic directory structure for your custom LVGL app on top of Actions SDK based on Zephyr RTOS.",
+    "shortDescription": "Actions Technology ATS3089P-EVB project with LVGL support",
+    "urlToClone": "https://github.com/lvgl/lv_port_actions_technology",
+    "logos": [
+        "https://raw.githubusercontent.com/lvgl/project-creator/master/meta/images/zephyr/logo.svg"
+    ],
+    "branches": [
+        "release/v9.2"
+    ],
+    "settings": [
+        {
+            "type": "dropdown",
+            "label": "Show performance monitor",
+            "options": [
+                {
+                    "name": "Yes",
+                    "value": "1",
+                    "default": "true"
+                },
+                {
+                    "name": "No",
+                    "value": "0"
+                }
+            ]
+        }
+    ]
+}
