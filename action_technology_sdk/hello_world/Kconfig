@@ -1,0 +1,7 @@
+
+mainmenu "lvgl demo"
+
+source "Kconfig.zephyr"
+
+menu "App Configuration"
+endmenu
