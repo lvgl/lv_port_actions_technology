@@ -1,0 +1,11 @@
+<DataBase>
+  <!--                   -->
+  <!-- Actions -->
+  <!--                   -->
+  <Device>
+   <ChipInfo Vendor="Actions" Name="LEOPARD" Core="JLINK_CORE_CORTEX_M33" WorkRAMAddr="0x2ff68000" WorkRAMSize="0x0001c000" />
+   <FlashBankInfo Name="SPI Flash system" BaseAddr="0x10000000" MaxSize="0x1000000" Loader="leopard_flash.elf" LoaderType="FLASH_ALGO_TYPE_OPEN" />
+   <FlashBankInfo Name="SPI Flash bootloader" BaseAddr="0x11000000" MaxSize="0x1000000" Loader="leopard_flash.elf" LoaderType="FLASH_ALGO_TYPE_OPEN"/>
+   <FlashBankInfo Name="SPI Flash raw" BaseAddr="0x20000000" MaxSize="0x2000000" Loader="leopard_flash.elf" LoaderType="FLASH_ALGO_TYPE_OPEN"/>
+  </Device>
+</DataBase>
