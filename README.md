@@ -247,6 +247,14 @@ Let the build finish and proceed like the regular hello world application.
 
 Also to create another application you can just duplicate hello world, change the name and copy the folder (or create a symbolic link) into app_demo subfolder, this procedure also works if you want to have multiple different apps.
 
+Also consider to add the following option on your prj.conf:
+
+```
+CONFIG_COMPILER_OPT="-Wno-attributes -Wno-array-bounds -Wno-uninitialized"
+```
+
+Modern Zephyr SDKs may complain about of the warnings above that are present on some of the trace source files and they get promoted to build errors, for now these warnings does not represent a fault, so just append this option to avoid build errors on latest Zephyr SDK.
+
 ## Contribution and Support
 
 If you find any issues with the development board feel free to open an Issue in this repository. For LVGL related issues (features, bugs, etc) please use the main [lvgl repository](https://github.com/lvgl/lvgl).
