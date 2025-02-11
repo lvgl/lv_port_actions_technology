@@ -58,6 +58,9 @@
 #if LV_USE_DRAW_VG_LITE
     #include "draw/vg_lite/lv_draw_vg_lite.h"
 #endif
+#if LV_USE_ACTIONS
+    #include "draw/actions/lv_draw_actions.h"
+#endif
 #if LV_USE_WINDOWS
     #include "drivers/windows/lv_windows_context.h"
 #endif
@@ -231,13 +234,10 @@ void lv_init(void)
     lv_image_decoder_init(LV_CACHE_DEF_SIZE, LV_IMAGE_HEADER_CACHE_DEF_CNT);
     lv_bin_decoder_init();  /*LVGL built-in binary image decoder*/
 
-#if LV_USE_DRAW_CUSTOM_GPU_INIT
-    extern void lv_draw_custom_gpu_init(void);
-    lv_draw_custom_gpu_init();
-#endif
-
-#if LV_USE_DRAW_VG_LITE
-    lv_draw_vg_lite_init();
+#if LV_USE_ACTIONS
+    lv_draw_actions_init();
+#elif LV_USE_DRAW_VG_LITE
+    lv_draw_vg_lite_init(false);
 #endif
 
     /*Test if the IDE has UTF-8 encoding*/
@@ -409,7 +409,9 @@ void lv_deinit(void)
     lv_draw_vglite_deinit();
 #endif
 
-#if LV_USE_DRAW_VG_LITE
+#if LV_USE_ACTIONS
+    lv_draw_actions_deinit();
+#elif LV_USE_DRAW_VG_LITE
     lv_draw_vg_lite_deinit();
 #endif
 

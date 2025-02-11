@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "../../font_mempool.h"
+#include "../../../font_mempool.h"
 #include "freetype_font_api.h"
 #ifndef CONFIG_SIMULATOR
 #include <os_common_api.h>

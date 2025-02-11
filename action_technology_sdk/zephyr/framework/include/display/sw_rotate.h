@@ -129,6 +129,28 @@ void sw_transform_rgb565_over_rgb565(void *dst, const void *src,
 		const sw_matrix_t *matrix);
 
 /*
+ * @brief rotate an rgb565 image over argb8565 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_w width in pixels of src image
+ * @param src_h height in pixels of src image
+ * @param x x coordinate of the draw area in the display coordinate
+ * @param y y coordinate of the draw area in the display coordinate
+ * @param w width in pixels of the draw area
+ * @param h height in pixels of the draw area
+ * @param matrix matrix generated in func sw_transform_config()
+ *
+ * @retval N/A
+ */
+void sw_transform_rgb565_over_argb8565(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix);
+
+/*
  * @brief rotate an rgb565 image over rg888 image
  *
  * @param dst address of dst image
@@ -192,6 +214,30 @@ void sw_transform_rgb565_over_argb8888(void *dst, const void *src,
  * @retval N/A
  */
 void sw_transform_rgb565a8_over_rgb565(void *dst, const void *src, const void *src_opa,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_opa_pitch,
+		uint16_t src_w, uint16_t src_h, int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix);
+
+/*
+ * @brief rotate an rgb565a8 image over argb8565 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_opa address of src opa image
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_opa_pitch stride in bytes of src opa image
+ * @param src_w width in pixels of src image
+ * @param src_h height in pixels of src image
+ * @param x x coordinate of the draw area in the display coordinate
+ * @param y y coordinate of the draw area in the display coordinate
+ * @param w width in pixels of the draw area
+ * @param h height in pixels of the draw area
+ * @param matrix matrix generated in func sw_transform_config()
+ *
+ * @retval N/A
+ */
+void sw_transform_rgb565a8_over_argb8565(void *dst, const void *src, const void *src_opa,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_opa_pitch,
 		uint16_t src_w, uint16_t src_h, int16_t x, int16_t y, uint16_t w, uint16_t h,
 		const sw_matrix_t *matrix);
@@ -267,6 +313,28 @@ void sw_transform_argb8565_over_rgb565(void *dst, const void *src,
 		const sw_matrix_t *matrix);
 
 /*
+ * @brief rotate an argb8565 image over argb8565 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_w width in pixels of src image
+ * @param src_h height in pixels of src image
+ * @param x x coordinate of the draw area in the display coordinate
+ * @param y y coordinate of the draw area in the display coordinate
+ * @param w width in pixels of the draw area
+ * @param h height in pixels of the draw area
+ * @param matrix matrix generated in func sw_transform_config()
+ *
+ * @retval N/A
+ */
+void sw_transform_argb8565_over_argb8565(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix);
+
+/*
  * @brief rotate an argb8565 image over rgb888 image
  *
  * @param dst address of dst image
@@ -328,6 +396,28 @@ void sw_transform_argb8565_over_argb8888(void *dst, const void *src,
  * @retval N/A
  */
 void sw_transform_argb6666_over_rgb565(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix);
+
+/*
+ * @brief rotate an argb6666 image over argb8565 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_w width in pixels of src image
+ * @param src_h height in pixels of src image
+ * @param x x coordinate of the draw area in the display coordinate
+ * @param y y coordinate of the draw area in the display coordinate
+ * @param w width in pixels of the draw area
+ * @param h height in pixels of the draw area
+ * @param matrix matrix generated in func sw_transform_config()
+ *
+ * @retval N/A
+ */
+void sw_transform_argb6666_over_argb8565(void *dst, const void *src,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
 		int16_t x, int16_t y, uint16_t w, uint16_t h,
 		const sw_matrix_t *matrix);
@@ -399,6 +489,28 @@ void sw_transform_argb8888_over_rgb565(void *dst, const void *src,
 		const sw_matrix_t *matrix);
 
 /*
+ * @brief rotate an argb8888 image over argb8565 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_w width in pixels of src image
+ * @param src_h height in pixels of src image
+ * @param x x coordinate of the draw area in the display coordinate
+ * @param y y coordinate of the draw area in the display coordinate
+ * @param w width in pixels of the draw area
+ * @param h height in pixels of the draw area
+ * @param matrix matrix generated in func sw_transform_config()
+ *
+ * @retval N/A
+ */
+void sw_transform_argb8888_over_argb8565(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix);
+
+/*
  * @brief rotate an argb8888 image over rgb888 image
  *
  * @param dst address of dst image
@@ -461,6 +573,29 @@ void sw_transform_argb8888_over_argb8888(void *dst, const void *src,
  * @retval N/A
  */
 void sw_transform_xrgb8888_over_rgb565(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix);
+
+/*
+ * @brief rotate an xrgb888 image over argb8565 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_w width in pixels of src image
+ * @param src_h height in pixels of src image
+ * @param x x coordinate of the draw area in the display coordinate
+ * @param y y coordinate of the draw area in the display coordinate
+ * @param w width in pixels of the draw area
+ * @param h height in pixels of the draw area
+ * @param color color of src image
+ * @param matrix matrix generated in func sw_transform_config()
+ *
+ * @retval N/A
+ */
+void sw_transform_xrgb8888_over_argb8565(void *dst, const void *src,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
 		int16_t x, int16_t y, uint16_t w, uint16_t h,
 		const sw_matrix_t *matrix);
@@ -535,6 +670,29 @@ void sw_transform_rgb888_over_rgb565(void *dst, const void *src,
 		const sw_matrix_t *matrix);
 
 /*
+ * @brief rotate an rgb888 image over argb8565 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_w width in pixels of src image
+ * @param src_h height in pixels of src image
+ * @param x x coordinate of the draw area in the display coordinate
+ * @param y y coordinate of the draw area in the display coordinate
+ * @param w width in pixels of the draw area
+ * @param h height in pixels of the draw area
+ * @param color color of src image
+ * @param matrix matrix generated in func sw_transform_config()
+ *
+ * @retval N/A
+ */
+void sw_transform_rgb888_over_argb8565(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix);
+
+/*
  * @brief rotate an rgb888 image over rgb888 image
  *
  * @param dst address of dst image
@@ -599,6 +757,29 @@ void sw_transform_rgb888_over_argb8888(void *dst, const void *src,
  * @retval N/A
  */
 void sw_transform_a8_over_rgb565(void *dst, const void *src, uint32_t src_color,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix);
+
+/*
+ * @brief rotate an a8 image over argb8565 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_color color of src image
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_w width in pixels of src image
+ * @param src_h height in pixels of src image
+ * @param x x coordinate of the draw area in the display coordinate
+ * @param y y coordinate of the draw area in the display coordinate
+ * @param w width in pixels of the draw area
+ * @param h height in pixels of the draw area
+ * @param matrix matrix generated in func sw_transform_config()
+ *
+ * @retval N/A
+ */
+void sw_transform_a8_over_argb8565(void *dst, const void *src, uint32_t src_color,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
 		int16_t x, int16_t y, uint16_t w, uint16_t h,
 		const sw_matrix_t *matrix);
@@ -673,6 +854,29 @@ void sw_transform_index8_over_rgb565(void *dst, const void *src, const uint32_t 
 		const sw_matrix_t *matrix);
 
 /*
+ * @brief rotate an index8 image over argb8565 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_clut address of src clut (ARGB8888 color lookup table)
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_w width in pixels of src image
+ * @param src_h height in pixels of src image
+ * @param x x coordinate of the draw area in the display coordinate
+ * @param y y coordinate of the draw area in the display coordinate
+ * @param w width in pixels of the draw area
+ * @param h height in pixels of the draw area
+ * @param matrix matrix generated in func sw_transform_config()
+ *
+ * @retval N/A
+ */
+void sw_transform_index8_over_argb8565(void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix);
+
+/*
  * @brief rotate an index8 image over rgb888 image
  *
  * @param dst address of dst image
@@ -737,6 +941,29 @@ void sw_transform_index8_over_argb8888(void *dst, const void *src, const uint32_
  * @retval N/A
  */
 void sw_transform_index4_over_rgb565(void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix);
+
+/*
+ * @brief rotate an index4 (big endian) image over argb8565 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_clut address of src clut (ARGB8888 color lookup table)
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_w width in pixels of src image
+ * @param src_h height in pixels of src image
+ * @param x x coordinate of the draw area in the display coordinate
+ * @param y y coordinate of the draw area in the display coordinate
+ * @param w width in pixels of the draw area
+ * @param h height in pixels of the draw area
+ * @param matrix matrix generated in func sw_transform_config()
+ *
+ * @retval N/A
+ */
+void sw_transform_index4_over_argb8565(void *dst, const void *src, const uint32_t *src_clut,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
 		int16_t x, int16_t y, uint16_t w, uint16_t h,
 		const sw_matrix_t *matrix);
@@ -811,6 +1038,29 @@ void sw_transform_index2_over_rgb565(void *dst, const void *src, const uint32_t 
 		const sw_matrix_t *matrix);
 
 /*
+ * @brief rotate an index2 (big endian) image over argb8565 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_clut address of src clut (ARGB8888 color lookup table)
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_w width in pixels of src image
+ * @param src_h height in pixels of src image
+ * @param x x coordinate of the draw area in the display coordinate
+ * @param y y coordinate of the draw area in the display coordinate
+ * @param w width in pixels of the draw area
+ * @param h height in pixels of the draw area
+ * @param matrix matrix generated in func sw_transform_config()
+ *
+ * @retval N/A
+ */
+void sw_transform_index2_over_argb8565(void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix);
+
+/*
  * @brief rotate an index2 (big endian) image over rgb888 image
  *
  * @param dst address of dst image
@@ -875,6 +1125,29 @@ void sw_transform_index2_over_argb8888(void *dst, const void *src, const uint32_
  * @retval N/A
  */
 void sw_transform_index1_over_rgb565(void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix);
+
+/*
+ * @brief rotate an index1 (big endian) image over argb8565 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_clut address of src clut (ARGB8888 color lookup table)
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_w width in pixels of src image
+ * @param src_h height in pixels of src image
+ * @param x x coordinate of the draw area in the display coordinate
+ * @param y y coordinate of the draw area in the display coordinate
+ * @param w width in pixels of the draw area
+ * @param h height in pixels of the draw area
+ * @param matrix matrix generated in func sw_transform_config()
+ *
+ * @retval N/A
+ */
+void sw_transform_index1_over_argb8565(void *dst, const void *src, const uint32_t *src_clut,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
 		int16_t x, int16_t y, uint16_t w, uint16_t h,
 		const sw_matrix_t *matrix);

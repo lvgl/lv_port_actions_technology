@@ -101,6 +101,7 @@
 #define BT_MAX_RF_POWER_POS_2 				0x25		/* tws_max_pwr_lvl */
 #define BT_CFG_WAKEUP_ADVANCE_POS			0x26
 #define BT_BLE_RF_POWER_POS   				0x29		/* le_tx_pwr_lvl */
+#define BT_BLE_ADV_RF_POWER_POS				0xbf		/* le_adv_pwr_lvl */
 #define BT_DUT_MODE							0x2b
 #define BT_CFG_FIX_MAX_PWR_POS				0x40
 #define BT_CFG_FIX_MAX_PWR_BIT				0x3
@@ -344,6 +345,9 @@ static void ipmsg_btc_update_bt_table(void *table_addr)
 		bttbl_set_value_u8t(start, BT_BLE_RF_POWER_POS, btc_set_param.ble_rf_tx_power);
 		printk("ble rf tx power %d\n", start[BT_BLE_RF_POWER_POS]);
 	}
+#ifdef CONFIG_BT_BLE_IPS
+	bttbl_set_value_u8t(start, BT_BLE_ADV_RF_POWER_POS, 42); // ble ADV force 12dbm.
+#endif
 
 #ifdef CONFIG_BT_3M
 	bttbl_clear_bit(start, BT_CFG_DISABLE_3M_POS, BT_CFG_DISABLE_3M_BIT);

@@ -22,8 +22,48 @@ config LV_Z_USE_FILESYSTEM
 	help
 	  Enable LVGL file system
 
+menu "Rendering Configuration"
+	config LV_USE_ACTIONS
+		default y
+
+	config LV_USE_DRAW_ACTS2D
+		default y if DMA2D_HAL
+
+	config LV_USE_DRAW_VG_LITE
+		default y if VG_LITE
+
+	if LV_USE_DRAW_VG_LITE
+		config LV_VG_LITE_COMMAND_BUFFER_SIZE
+			int "Command buffer size in kilobytes for VG-Lite."
+			default 32
+
+		config LV_VG_LITE_USE_GPU_INIT
+			default y
+
+		config LV_VG_LITE_FLUSH_MAX_COUNT
+			default 4
+
+		config LV_VG_LITE_GRAD_CACHE_CNT
+			default 2
+
+		config LV_VG_LITE_STROKE_CACHE_CNT
+			default 1
+
+		config LV_VG_LITE_BUFFER_ADDR_START
+			default 0x2ff30000 if SOC_SERIES_LEOPARD
+
+		config LV_VG_LITE_BUFFER_ADDR_END
+			default 0x3fffffff if SOC_SERIES_LEOPARD
+
+		config LV_USE_VECTOR_GRAPHIC
+			default y
+	endif #LV_USE_DRAW_VG_LITE
+
+	config LV_DRAW_BUF_ALIGN
+		default 64 if LV_USE_DRAW_VG_LITE
+endmenu
+
 rsource "../Kconfig"
-rsource "Kconfig.gpu"
 rsource "Kconfig.memory"
 
 endif #LVGL

@@ -65,8 +65,9 @@
 
 #define _ACT_S2_NOT_SAVE_SECTION_NAME			.act_s2_not_save_mem
 #define _ACT_SLEEP_DATA_SECTION_NAME			.sleep.data
-
-
+#ifdef CONFIG_USING_OPULINKS_LIB
+#define _WIFI_DATA_SECTION_NAME     .wifi.data
+#endif
 #define _STM32_BACKUP_SRAM_SECTION_NAME	.stm32_backup_sram
 
 #ifdef CONFIG_NOCACHE_MEMORY

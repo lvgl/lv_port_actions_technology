@@ -29,6 +29,7 @@ typedef struct {
 	uint8_t rebound : 1;
 	uint8_t transforming : 1;
 	uint8_t serial_load_paused : 1;
+	uint8_t scrl_cb_registered : 1;
 	int8_t main_idx; /* focused main idx in vlist */
 	int8_t focus_idx; /* focused idx also considering cross_vlist */
 	int8_t load_idx; /* the index that is loading */
@@ -112,7 +113,7 @@ static int _view_cache_load(uint8_t idx, uint8_t create_flags)
 	view_id = _view_cache_get_view_id(idx);
 	if (view_id != VIEW_INVALID_ID) {
 		view_cache_ctx.stat |= (1 << idx);
-		create_flags |= _view_cache_get_create_flags(idx);
+		create_flags |= _view_cache_get_create_flags(idx) | UI_CREATE_FLAG_SCROLLABLE;
 		return ui_view_create(view_id, _view_cache_get_presenter(idx), create_flags);
 	}
 
@@ -489,6 +490,11 @@ static void _view_cache_monitor_cb(uint16_t view_id, uint8_t msg_id, void *msg_d
 		if (dsc->monitor_cb)
 			dsc->monitor_cb(view_id, msg_id);
 	} else if (msg_id == MSG_VIEW_LAYOUT) {
+		if (!view_cache_ctx.scrl_cb_registered) {
+			view_cache_ctx.scrl_cb_registered = 1;
+			ui_manager_set_scroll_callback(_view_cache_scroll_cb);
+		}
+
 		if (view_cache_ctx.load_idx >= 0) {
 			if (view_cache_ctx.transforming) {
 				SYS_LOG_INF("view serial load paused after %d\n", view_id);
@@ -599,27 +605,24 @@ int view_cache_init2(const view_cache_dsc_t *dsc,
 	view_cache_ctx.init_main_idx = main_idx;
 	view_cache_ctx.init_focus_idx = (cross_idx >= 0) ? cross_idx : main_idx;
 	view_cache_ctx.last_focus_view = VIEW_INVALID_ID;
+	view_cache_ctx.load_idx = dsc->num + 1;
+	view_cache_ctx.main_idx = main_idx;
 
-	ui_manager_set_scroll_callback(_view_cache_scroll_cb);
 	ui_manager_set_monitor_callback(_view_cache_monitor_cb);
 
 #ifdef CONFIG_VIEW_SCROLL_MEM_LOWEST
 	ui_manager_set_max_buffer_count(1);
 #endif
 
-	view_cache_ctx.load_idx = dsc->num + 1;
-	view_cache_ctx.main_idx = main_idx;
-
 	/* load focused view */
 	if (cross_idx < 0) {
-		_view_cache_load(main_idx, UI_CREATE_FLAG_SHOW);
-		if (view_cache_ctx.rebound && (main_idx == 0 || main_idx == view_cache_ctx.dsc->num - 1))
+		res = _view_cache_load(main_idx, UI_CREATE_FLAG_SHOW);
+		if (!res && view_cache_ctx.rebound && (main_idx == 0 || main_idx == view_cache_ctx.dsc->num - 1))
 			_view_cache_set_attr_main(main_idx, UI_DRAG_SNAPEDGE, true);
-	} else if (!_view_cache_load(cross_idx, UI_CREATE_FLAG_SHOW)) {
-		//_view_cache_set_attr(cross_idx, _view_cache_decide_attr_cross(cross_idx), true, true);
+	} else {
+		res = _view_cache_load(cross_idx, UI_CREATE_FLAG_SHOW);
 	}
 
-	res = 0;
 out_unlock:
 	SYS_LOG_INF("view_cache: init %u, main %u (res=%d)", init_focus_view, init_main_view, res);
 	os_mutex_unlock(&view_cache_mutex);
@@ -641,8 +644,10 @@ int view_cache_deinit(void)
 		return EALREADY;
 	}
 
-	ui_manager_set_scroll_callback(NULL);
-	ui_gesture_stop_scroll();
+	if (view_cache_ctx.scrl_cb_registered) {
+		ui_manager_set_scroll_callback(NULL);
+		ui_gesture_stop_scroll();
+	}
 
 	/**
 	 * If view_cache_ctx.focus_idx >= 0, the current view cache must have

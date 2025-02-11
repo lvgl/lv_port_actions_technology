@@ -25,9 +25,9 @@
 
 /** Color depth: 1 (I1), 8 (L8), 16 (RGB565), 24 (RGB888), 32 (XRGB8888) */
 #ifdef CONFIG_LV_COLOR_DEPTH_32
-#  define LV_COLOR_DEPTH 32
+    #define LV_COLOR_DEPTH 32
 #else
-#  define LV_COLOR_DEPTH 16
+    #define LV_COLOR_DEPTH 16
 #endif
 
 /*=========================
@@ -82,18 +82,6 @@
         #undef LV_MEM_POOL_INCLUDE
         #undef LV_MEM_POOL_ALLOC
     #endif
-
-#elif defined(CONFIG_UI_SERVICE)
-    #define LV_MEM_CUSTOM_INCLUDE                  "ui_mem.h"
-    #define LV_MEM_CUSTOM_ALLOC(size, ...)          ui_mem_alloc(MEM_GUI, size, ##__VA_ARGS__)
-    #define LV_MEM_CUSTOM_FREE(ptr, ...)            ui_mem_free(MEM_GUI, ptr)
-    #define LV_MEM_CUSTOM_REALLOC(ptr, size, ...)   ui_mem_realloc(MEM_GUI, ptr, size, ##__VA_ARGS__)
-
-#else       /*LV_MEM_CUSTOM*/
-    #define LV_MEM_CUSTOM_INCLUDE <stdlib.h>   /*Header for the dynamic memory function*/
-    #define LV_MEM_CUSTOM_ALLOC   malloc
-    #define LV_MEM_CUSTOM_FREE    free
-    #define LV_MEM_CUSTOM_REALLOC realloc
 #endif  /*LV_USE_STDLIB_MALLOC == LV_STDLIB_BUILTIN*/
 
 /*====================
@@ -129,8 +117,8 @@
  * RENDERING CONFIGURATION
  *========================*/
 
-/** Initialize custom gpu */
-#define LV_USE_DRAW_CUSTOM_GPU_INIT             1
+/** Initialize Actions render */
+#define LV_USE_ACTIONS                          1
 
 /** Align stride of all layers and images to this bytes */
 #define LV_DRAW_BUF_STRIDE_ALIGN                1

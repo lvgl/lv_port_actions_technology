@@ -56,10 +56,14 @@
 
 #ifdef CONFIG_GLYPHIX
 #include "glyphix_ats.h"
+#include "gx_lvgx.h"
 #endif
 
 #ifdef CONFIG_USING_AICXTEK_LIB 
 extern void aic_srv_init(void);
+#endif
+#ifdef CONFIG_AWK_LIB
+extern int awk_service_start(void);
 #endif
 
 /*share stack for app thread */
@@ -202,6 +206,9 @@ void main_msg_proc(void *parama1, void *parama2, void *parama3)
 			alipay_ui_init();
 			wxpay_ui_init();
 		#endif
+		#ifdef CONFIG_AWK_LIB
+			awk_service_start();
+		#endif
 
 		#ifdef CONFIG_SENSOR_MANAGER
 			sensor_manager_enable(ALGO_ACTIVITY_OUTPUT, 0);
@@ -218,7 +225,7 @@ void main_msg_proc(void *parama1, void *parama2, void *parama3)
 				send_async_msg(app_manager_get_current_app(), &msg);
 				boot_sys_event = SYS_EVENT_NONE;
 			}
-			
+
 			#ifdef CONFIG_SPP_TEST_SUPPORT
 			spp_test_app_init();
 			#endif
@@ -334,10 +341,6 @@ int main(void)
 
 	system_event_map_init();
 
-#ifdef CONFIG_GLYPHIX
-	glyphix_ats_init();
-#endif
-
 #ifdef CONFIG_PLAYTTS
 	if (!ota_is_already_done()) {
 #ifndef CONFIG_BT_FCC_TEST
@@ -383,9 +386,14 @@ int main(void)
 		#endif
 		}
 	}
-
-
+//	move glyphix init after cardreader mode avoid file access error
 	system_ready();
+
+#ifdef CONFIG_GLYPHIX
+        glyphix_ats_init();
+        lvgx_set_applet_view(GLYPHIX_APPLET_VIEW);
+        lvgx_view_system_init();
+#endif
 
 #ifdef CONFIG_OTA_BACKEND_SDCARD
 	ota_app_init_sdcard();

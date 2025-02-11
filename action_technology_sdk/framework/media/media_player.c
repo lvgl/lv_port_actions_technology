@@ -34,6 +34,7 @@ static OS_MUTEX_DEFINE(media_srv_mutex);
 
 static int media_player_ref_cnt;
 static bool force_disable_player = false;
+static bool g_wlock_lock = false;
 
 static media_player_t *current_media_dumpable_player;
 static media_player_t *current_media_main_player;
@@ -62,6 +63,9 @@ static int _media_player_get_dvfs_level(int stream_type, int format, bool is_tws
 	case AUDIO_STREAM_VOICE:
 		dvfs_level = DVFS_LEVEL_PERFORMANCE;
 		break;
+	case AUDIO_STREAM_LE_AUDIO:
+		dvfs_level = DVFS_LEVEL_HIGH_PERFORMANCE;
+		break;
 	case AUDIO_STREAM_LOCAL_MUSIC:
 		dvfs_level = DVFS_LEVEL_MID_PERFORMANCE;
 		if (format == FLA_TYPE || format == APE_TYPE || format == M4A_TYPE) {
@@ -76,6 +80,9 @@ static int _media_player_get_dvfs_level(int stream_type, int format, bool is_tws
 		break;
 	case AUDIO_STREAM_AI:
 		dvfs_level = DVFS_LEVEL_PERFORMANCE;
+		break;
+	case AUDIO_STREAM_DEFAULT:
+		dvfs_level = DVFS_LEVEL_HIGH_PERFORMANCE;
 		break;
 	}
 
@@ -110,6 +117,7 @@ static int _media_player_check_audio_effect(media_player_t *handle, int stream_t
 
 	switch (stream_type) {
 	case AUDIO_STREAM_VOICE:
+	case AUDIO_STREAM_LE_AUDIO:
 	#ifndef CONFIG_VOICE_EFFECT
 		effect_enable = false;
 	#endif
@@ -301,6 +309,7 @@ media_player_t *media_player_open(media_init_param_t *init_param)
 
 #ifdef CONFIG_SYS_WAKELOCK
 	sys_wake_lock_ext(PARTIAL_WAKE_LOCK, MEDIA_WAKE_LOCK_USER);
+	g_wlock_lock = true;
 #endif
 
 	os_mutex_unlock(&media_srv_mutex);
@@ -379,6 +388,15 @@ int media_player_pause(media_player_t *handle)
 	if (ret)
 		_notify_player_lifecycle_changed(handle, PLAYER_EVENT_PAUSE, NULL, 0);
 
+#ifdef CONFIG_SYS_WAKELOCK
+	os_mutex_lock(&media_srv_mutex, OS_FOREVER);
+	if (g_wlock_lock) {
+		sys_wake_unlock_ext(PARTIAL_WAKE_LOCK,MEDIA_WAKE_LOCK_USER);
+		g_wlock_lock = false;
+	}
+	os_mutex_unlock(&media_srv_mutex);
+#endif
+
 	return !ret;
 }
 
@@ -397,6 +415,15 @@ int media_player_resume(media_player_t *handle)
 	ret = send_async_msg(MEDIA_SERVICE_NAME, &msg);
 	if (ret)
 		_notify_player_lifecycle_changed(handle, PLAYER_EVENT_RESUNE, NULL, 0);
+
+#ifdef CONFIG_SYS_WAKELOCK
+	os_mutex_lock(&media_srv_mutex, OS_FOREVER);
+	if (!g_wlock_lock) {
+		sys_wake_lock_ext(PARTIAL_WAKE_LOCK,MEDIA_WAKE_LOCK_USER);
+		g_wlock_lock = true;
+	}
+	os_mutex_unlock(&media_srv_mutex);
+#endif
 
 	return !ret;
 }
@@ -648,7 +675,10 @@ int media_player_close(media_player_t *handle)
 		current_media_main_player = NULL;
 
 #ifdef CONFIG_SYS_WAKELOCK
-	sys_wake_unlock_ext(PARTIAL_WAKE_LOCK,MEDIA_WAKE_LOCK_USER);
+	if(g_wlock_lock) {
+		sys_wake_unlock_ext(PARTIAL_WAKE_LOCK,MEDIA_WAKE_LOCK_USER);
+		g_wlock_lock = false;
+	}
 #endif
 
 	media_player_ref_cnt--;
@@ -737,15 +767,31 @@ int media_player_set_lifecycle_notifier(media_srv_event_notify_t notify)
 	return 0;
 }
 
-void media_player_force_stop(void)
+void media_player_set_force_stop_cb(media_player_t * player, void *stop_handle, force_stop_callback cb)
+{
+	os_mutex_lock(&media_srv_mutex, OS_FOREVER);
+	if (player) {
+		player->stop_cb = cb;
+		player->stop_handle = stop_handle;
+	}
+	os_mutex_unlock(&media_srv_mutex);
+}
+
+void media_player_force_stop(bool disable)
 {
 	os_mutex_lock(&media_srv_mutex, OS_FOREVER);
 	media_player_t * player = media_player_get_current_main_player();
-	if (player) {
-		media_player_stop(player);
-		media_player_close(player);
-	}
-	force_disable_player = true;
+	if(player) {
+		if (player->stop_cb) {
+			os_mutex_unlock(&media_srv_mutex);
+			player->stop_cb(player->stop_handle);
+			os_mutex_lock(&media_srv_mutex, OS_FOREVER);
+		} else {
+			media_player_stop(player);
+			media_player_close(player);
+		}
+	} 
+	force_disable_player = disable;
 	os_mutex_unlock(&media_srv_mutex);
 }
 

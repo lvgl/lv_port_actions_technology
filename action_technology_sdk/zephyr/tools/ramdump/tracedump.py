@@ -48,6 +48,8 @@ typedef struct traced_data_s {
 TRACED_MAGIC = 0x44435254  #TRCD
 TRACED_HDR_SIZE = 32
 TRACED_INFO_SIZE = 48
+TRACED_DAT1_OFF = 1
+TRACED_DAT2_OFF = 2
 TRACED_FUNC_OFF = 3
 TRACED_FUNC_CNT = 9
 
@@ -87,6 +89,8 @@ def tracedump(elf_file, bin_file, out_file):
 
         addr_list = []
         func_list = []
+        dat1_dict = {}
+        dat2_dict = {}
         f1.seek(TRACED_HDR_SIZE + start_idx * TRACED_INFO_SIZE, 0)
 
         while cur_cnt > 0:
@@ -106,12 +110,13 @@ def tracedump(elf_file, bin_file, out_file):
             for addr in result[TRACED_FUNC_OFF:]:
                 func_list.append(hex(addr))
             if len(func_list) >= 256 * TRACED_FUNC_CNT or cur_cnt == 0:
-                result = addr2line(elf_file, func_list)
+                backtrace = addr2line(elf_file, func_list)
                 line_cnt = 0
-                for line in result.splitlines():
+                for line in backtrace.splitlines():
                     if line[0] != " " and (line_cnt % TRACED_FUNC_CNT) == 0:
                         item_idx = line_cnt // TRACED_FUNC_CNT
                         f2.write("\n" + "=" * 132 + "\n")
+                        f2.write("type        uid      dat1       dat2     func\n")
                         f2.write("[tracedump] %s\n\n" %(addr_list[item_idx]))
                     if line[:10] != "0x00000000":
                         f2.write(line + "\n")
@@ -121,6 +126,32 @@ def tracedump(elf_file, bin_file, out_file):
                         line_cnt = line_cnt + 1
                 addr_list = []
                 func_list = []
+
+            dat1 = result[TRACED_DAT1_OFF]
+            if not dat1 in dat1_dict:
+                dat1_dict[dat1] = 0
+            if dat1 > 0:
+                dat1_dict[dat1] = dat1_dict[dat1] + 1
+            else:
+                dat1_dict[dat1] = dat1_dict[dat1] - 1
+            dat2 = result[TRACED_DAT2_OFF]
+            if not dat2 in dat2_dict:
+                dat2_dict[dat2] = 0
+            if dat2 > 0:
+                dat2_dict[dat2] = dat2_dict[dat2] + 1
+            else:
+                dat2_dict[dat2] = dat2_dict[dat2] - 1
+
+        f2.write("\n" + "=" * 132 + "\n")
+        f2.write("[dat1 count]:\n")
+        sorted1_dict = dict(sorted(dat1_dict.items(), key=lambda item:item[1], reverse=True))
+        for k in sorted1_dict:
+            f2.write("    [%s] = %d\n" %(hex(k), sorted1_dict[k]))
+        f2.write("\n" + "=" * 132 + "\n")
+        f2.write("[dat2 count]:\n")
+        sorted2_dict = dict(sorted(dat2_dict.items(), key=lambda item:item[1], reverse=True))
+        for k in sorted2_dict:
+            f2.write("    [%s] = %d\n" %(hex(k), sorted2_dict[k]))
 
 def main(argv):
     parser = argparse.ArgumentParser(

@@ -30,12 +30,12 @@ static void _update_indev_period(uint32_t period);
 
 void lvx_refr_set_manual(lv_display_t * disp)
 {
-    if (disp) {
+    if(disp) {
         lv_display_delete_refr_timer(disp);
     }
     else {
         disp = lv_display_get_next(NULL);
-        while (disp) {
+        while(disp) {
             lv_display_delete_refr_timer(disp);
             disp = lv_display_get_next(disp);
         }
@@ -58,10 +58,10 @@ void lvx_refr_display(lv_display_t * disp)
 {
     lv_anim_refr_now();
 
-    if (disp) {
+    if(disp) {
         lv_display_t *disp_def = lv_display_get_default();
         lv_timer_t *refr_timer = lv_display_get_refr_timer(disp);
-        if (refr_timer) {
+        if(refr_timer) {
             lv_display_refr_timer(refr_timer);
         }
         else {
@@ -73,9 +73,9 @@ void lvx_refr_display(lv_display_t * disp)
     else {
         lv_display_t *disp_def = lv_display_get_default();
         disp = lv_display_get_next(NULL);
-        while (disp) {
+        while(disp) {
             lv_timer_t *refr_timer = lv_display_get_refr_timer(disp);
-            if (refr_timer) {
+            if(refr_timer) {
                 lv_display_refr_timer(refr_timer);
             }
             else {
@@ -91,12 +91,12 @@ void lvx_refr_display(lv_display_t * disp)
 
 void lvx_refr_indev(lv_indev_t * indev)
 {
-    if (indev) {
+    if(indev) {
         lv_indev_read_timer_cb(lv_indev_get_read_timer(indev));
     }
     else {
         indev = lv_indev_get_next(NULL);
-        while (indev) {
+        while(indev) {
             lv_indev_read_timer_cb(lv_indev_get_read_timer(indev));
             indev = lv_indev_get_next(indev);
         }
@@ -105,14 +105,14 @@ void lvx_refr_indev(lv_indev_t * indev)
 
 void lvx_refr_finish_layer(lv_display_t * disp, lv_layer_t * layer)
 {
-    if (disp == NULL)
+    if(disp == NULL)
         disp = lv_refr_get_disp_refreshing();
 
-    while (layer->draw_task_head) {
+    while(layer->draw_task_head) {
         lv_draw_dispatch_wait_for_request();
 
         bool task_dispatched = lv_draw_dispatch_layer(disp, layer);
-        if (!task_dispatched) {
+        if(!task_dispatched) {
             lv_draw_wait_for_finish();
             lv_draw_dispatch_request();
         }
@@ -150,7 +150,7 @@ void lvx_refr_set_period(uint32_t period)
 static void _set_display_ready(void)
 {
     lv_display_t *disp = lv_display_get_next(NULL);
-    while (disp) {
+    while(disp) {
         lv_timer_ready(lv_display_get_refr_timer(disp));
         disp = lv_display_get_next(disp);
     }
@@ -162,9 +162,9 @@ static void _set_display_ready(void)
 static void _pause_display(void)
 {
     lv_display_t *disp = lv_display_get_next(NULL);
-    while (disp) {
+    while(disp) {
         lv_timer_t *timer = lv_display_get_refr_timer(disp);
-        if (timer) lv_timer_pause(timer);
+        if(timer) lv_timer_pause(timer);
 
         disp = lv_display_get_next(disp);
     }
@@ -176,9 +176,9 @@ static void _pause_display(void)
 static void _resume_display(void)
 {
     lv_display_t *disp = lv_display_get_next(NULL);
-    while (disp) {
+    while(disp) {
         lv_timer_t *timer = lv_display_get_refr_timer(disp);
-        if (timer) lv_timer_resume(timer);
+        if(timer) lv_timer_resume(timer);
 
         disp = lv_display_get_next(disp);
     }
@@ -190,9 +190,9 @@ static void _resume_display(void)
 static void _update_display_period(uint32_t period)
 {
     lv_display_t *disp = lv_display_get_next(NULL);
-    while (disp) {
+    while(disp) {
         lv_timer_t *timer = lv_display_get_refr_timer(disp);
-        if (timer) lv_timer_set_period(timer, period);
+        if(timer) lv_timer_set_period(timer, period);
 
         disp = lv_display_get_next(disp);
     }
@@ -204,7 +204,7 @@ static void _update_display_period(uint32_t period)
 static void _set_indev_ready(void)
 {
     lv_indev_t *indev = lv_indev_get_next(NULL);
-    while (indev) {
+    while(indev) {
         lv_timer_ready(lv_indev_get_read_timer(indev));
         indev = lv_indev_get_next(indev);
     }
@@ -213,7 +213,7 @@ static void _set_indev_ready(void)
 static void _pause_indev(void)
 {
     lv_indev_t *indev = lv_indev_get_next(NULL);
-    while (indev) {
+    while(indev) {
         lv_timer_pause(lv_indev_get_read_timer(indev));
         indev = lv_indev_get_next(indev);
     }
@@ -222,7 +222,7 @@ static void _pause_indev(void)
 static void _resume_indev(void)
 {
     lv_indev_t *indev = lv_indev_get_next(NULL);
-    while (indev) {
+    while(indev) {
         lv_timer_resume(lv_indev_get_read_timer(indev));
         indev = lv_indev_get_next(indev);
     }
@@ -231,7 +231,7 @@ static void _resume_indev(void)
 static void _update_indev_period(uint32_t period)
 {
     lv_indev_t *indev = lv_indev_get_next(NULL);
-    while (indev) {
+    while(indev) {
         lv_timer_set_period(lv_indev_get_read_timer(indev), period);
         indev = lv_indev_get_next(indev);
     }

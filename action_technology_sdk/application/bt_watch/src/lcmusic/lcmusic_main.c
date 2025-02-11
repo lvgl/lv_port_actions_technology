@@ -254,6 +254,37 @@ void lcmusic_stop(void)
 	send_async_msg(app_manager_get_current_app(), &msg);
 }
 
+static void msg_default_callback(struct app_msg *msg, int result, void *reply)
+{
+	if (msg->sync_sem) {
+		os_sem_give((os_sem *)msg->sync_sem);
+	}
+}
+
+void lcmusic_force_stop_cb_sync(void *handle)
+{
+	os_sem return_notify;
+	struct app_msg msg = {
+		.type = MSG_INPUT_EVENT,
+		.cmd = MSG_LCMPLAYER_PLAY_PAUSE,
+		.reserve = LCMUSIC_PLAYER,
+		.callback = msg_default_callback,
+		.sync_sem = &return_notify,
+	};
+
+	os_sem_init(&return_notify, 0, 1);
+
+	if (!p_local_music)
+		return;
+
+	SYS_LOG_INF("music_state=%d\n", p_local_music->music_state);
+
+	send_async_msg(app_manager_get_current_app(), &msg);
+
+	if (os_sem_take(&return_notify, OS_FOREVER) != 0) {
+	}
+}
+
 void lcmusic_play_or_pause(void)
 {
 	struct app_msg msg = {

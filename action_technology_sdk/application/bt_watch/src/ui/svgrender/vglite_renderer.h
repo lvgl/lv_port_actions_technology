@@ -31,6 +31,11 @@ extern "C" {
 
 struct NSVGimage;
 
+struct NSVGImageDecoder {
+	int (*decode)(const struct NSVGImageDecoder *decoder, vg_lite_buffer_t *buffer, const char *filename);
+	int (*release)(const struct NSVGImageDecoder *decoder, vg_lite_buffer_t *buffer);
+};
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -84,6 +89,19 @@ int renderSVGImage(struct NSVGimage *image, vg_lite_buffer_t *fb, vg_lite_matrix
  * @revtal N/A.
  */
 void deleteSVGImage(struct NSVGimage *image);
+
+/**
+ * @brief Set SVG image decoder callback
+ *
+ * Important note: string will be changed.
+ *
+ * @param input SVG file stream appended with a null terminated char as string format
+ * @param pwidth store the width of SVG image
+ * @param pheight store the height of SVG image
+ *
+ * @revtal SVG image as paths.
+ */
+void setSVGImageDecoder(const struct NSVGImageDecoder *decoder);
 
 /**********************
  *      MACROS

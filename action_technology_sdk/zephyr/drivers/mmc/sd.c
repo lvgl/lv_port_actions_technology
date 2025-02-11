@@ -158,6 +158,7 @@ static void sd_sem_give(struct k_sem *sem)
 
 static int sd_check_rw_env(void)
 {
+#ifdef CONFIG_ACTIONS_PRINTK_DMA
 	extern int check_panic_exe(void);
 
 	/* sd read/write is forbidden in irq environment */
@@ -166,6 +167,7 @@ static int sd_check_rw_env(void)
 		k_panic();
 		return 1;
 	}
+#endif
 
 	return 0;
 }

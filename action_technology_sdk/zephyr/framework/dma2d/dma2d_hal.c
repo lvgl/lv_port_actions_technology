@@ -263,6 +263,7 @@ int hal_dma2d_init(hal_dma2d_handle_t *hdma2d, uint32_t preferred_modes)
 	/* Open the DMA2D device instance */
 	hdma2d->instance = display_engine_open(hdma2d->device, 0);
 	if (hdma2d->instance < 0) {
+		hdma2d->device = NULL;
 		return -EBUSY;
 	}
 
@@ -287,7 +288,7 @@ int hal_dma2d_init(hal_dma2d_handle_t *hdma2d, uint32_t preferred_modes)
 int hal_dma2d_deinit(hal_dma2d_handle_t *hdma2d)
 {
 	/* Check the DMA2D peripheral State */
-	if (hdma2d == NULL || hdma2d->device == NULL || hdma2d->instance < 0) {
+	if (hdma2d == NULL || hdma2d->device == NULL) {
 		return -EINVAL;
 	}
 
@@ -445,7 +446,7 @@ int hal_dma2d_transform_start(hal_dma2d_handle_t *hdma2d, uint32_t src_address, 
 	int res = 0;
 
 	/* Check the peripheral existence */
-	if (!is_dma2d_device_ready(hdma2d->device) || hdma2d->instance < 0) {
+	if (!is_dma2d_device_ready(hdma2d->device)) {
 		return -ENODEV;
 	}
 
@@ -506,7 +507,7 @@ __de_func int hal_dma2d_clut_load_start(hal_dma2d_handle_t *hdma2d, uint16_t lay
 	int res = 0;
 
 	/* Check the peripheral existence */
-	if (!is_dma2d_device_ready(hdma2d->device) || hdma2d->instance < 0) {
+	if (!is_dma2d_device_ready(hdma2d->device)) {
 		return -ENODEV;
 	}
 
@@ -537,7 +538,7 @@ int hal_dma2d_poll_transfer(hal_dma2d_handle_t *hdma2d, int32_t timeout)
  	int status = 0;
 
 	/* Check the peripheral existence */
-	if (hdma2d->device == NULL || hdma2d->instance < 0) {
+	if (hdma2d->device == NULL) {
 		return -ENODEV;
 	}
 
@@ -764,8 +765,13 @@ int hal_dma2d_config_transform(hal_dma2d_handle_t *hdma2d)
  */
 hal_dma2d_state_e hal_dma2d_get_state(hal_dma2d_handle_t *hdma2d)
 {
-	return (atomic_get(&hdma2d->xfer_count) > 0) ?
-			HAL_DMA2D_STATE_BUSY : HAL_DMA2D_STATE_READY;
+	if (!global_en || hdma2d == NULL || hdma2d->device == NULL) {
+		return HAL_DMA2D_STATE_RESET;
+	} else if (atomic_get(&hdma2d->xfer_count) > 0) {
+		return HAL_DMA2D_STATE_BUSY;
+	} else {
+		return HAL_DMA2D_STATE_READY;
+	}
 }
 
 /**
@@ -776,10 +782,14 @@ hal_dma2d_state_e hal_dma2d_get_state(hal_dma2d_handle_t *hdma2d)
  */
 uint32_t hal_dma2d_get_error(hal_dma2d_handle_t *hdma2d)
 {
-	uint32_t error_code = hdma2d->error_code;
+	uint32_t error_code = HAL_DMA2D_ERROR_NONE;
 
-	/* clear the error code */
-	hdma2d->error_code = 0;
+	if (hdma2d) {
+		error_code = hdma2d->error_code;
+
+		/* clear the error code */
+		hdma2d->error_code = 0;
+	}
 
 	return error_code;
 }
@@ -838,7 +848,7 @@ __de_func static int dma2d_set_config(hal_dma2d_handle_t *hdma2d, uint32_t fg_ad
 	int res = 0;
 
 	/* Check the peripheral existence */
-	if (!is_dma2d_device_ready(hdma2d->device) || hdma2d->instance < 0) {
+	if (!is_dma2d_device_ready(hdma2d->device)) {
 		return -ENODEV;
 	}
 

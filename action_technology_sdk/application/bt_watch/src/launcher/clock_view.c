@@ -14,6 +14,10 @@
 #include "clock_view.h"
 #include "m_effect.h"
 #include "ui_coder/ui_coder.h"
+#include <widgets/text_arc.h>
+
+#define POINTER_LUNETTE_GESTURE_LIMIT    5
+#define LUNETTE_MAIN_ZOOM	225
 
 //LOG_MODULE_DECLARE(clock);
 
@@ -66,6 +70,8 @@ typedef struct clock_view_data {
 	lv_obj_t *obj_clock;
 	lv_obj_t *obj_info[NUM_INFO];
 
+	lv_obj_t *text_arc;
+
 	lv_font_t font;
 	lv_style_t sty_text[2];
 
@@ -89,6 +95,12 @@ typedef struct clock_view_data {
 	lvgl_res_picregion_t prg_anim;
 	lvgl_res_group_t grp_weather;
 	lvgl_res_scene_t scene;
+
+	/* lunette gesture */
+	lv_point_t st_click;
+	uint16_t lunette_zoom;
+	uint8_t lunette_state	:	1;
+	uint8_t gesture_lock_state	:	1;
 
 	/* click event */
 	uint32_t pressing_start;
@@ -252,10 +264,8 @@ static int _clock_view_load_resource(clock_view_data_t *data, clock_view_tmp_res
 	lvgl_res_load_strings_from_scene(&data->scene, str_ids, data->res_str, ARRAY_SIZE(str_ids));
 
 	if (first_layout) {
-		if (data->res_str[0].width > 0) {
-			if (LVGL_FONT_OPEN_DEFAULT(&data->font, DEF_FONT_SIZE_SMALL) < 0) {
-				return -ENOENT;
-			}
+		if (LVGL_FONT_OPEN_DEFAULT(&data->font, DEF_FONT_SIZE_SMALL) < 0) {
+			return -ENOENT;
 		}
 	}
 	return 0;
@@ -268,9 +278,7 @@ static void _clock_view_unload_resource(clock_view_data_t *data, bool deleting)
 
 	if (data) {
 		if (deleting) {
-			if (data->res_str[0].width > 0) {
-				LVGL_FONT_CLOSE(&data->font);
-			}
+			LVGL_FONT_CLOSE(&data->font);
 		}
 		_unload_pictures(&data->img_tm_hour, data->is_digital ? 10 : 1, deleting);
 		_unload_pictures(&data->img_tm_min, data->is_digital ? 10 : 1, deleting);
@@ -317,6 +325,34 @@ static int _clock_view_preload(view_data_t *view_data, bool update)
 	return lvgl_res_preload_scene_compact_default(sp_clock_dsc->scene, CLOCK_VIEW, update, 0);
 }
 
+static void _lunette_anim(void * var, int32_t v)
+{
+	clock_view_data_t *data = (clock_view_data_t *)var;
+	lv_obj_set_style_transform_scale(data->obj_clock, v, LV_PART_MAIN);
+	if(v == LUNETTE_MAIN_ZOOM)
+		lv_obj_clear_flag(data->text_arc, LV_OBJ_FLAG_HIDDEN);
+	else
+		lv_obj_add_flag(data->text_arc, LV_OBJ_FLAG_HIDDEN);
+	data->lunette_zoom = v;
+	lv_obj_invalidate(lv_obj_get_parent(data->obj_clock));
+}
+
+static void lunette_anim_begin(clock_view_data_t *data, bool in_out)
+{
+	lv_anim_del(data, _lunette_anim);
+	uint16_t end_zoom = LV_SCALE_NONE;
+	if(in_out)
+		end_zoom = LUNETTE_MAIN_ZOOM;
+	lv_anim_t a;
+	lv_anim_init(&a);
+	lv_anim_set_var(&a, data);
+	lv_anim_set_time(&a, 200);
+	lv_anim_set_values(&a, data->lunette_zoom, end_zoom);
+	lv_anim_set_exec_cb(&a, _lunette_anim);
+	lv_anim_set_path_cb(&a, lv_anim_path_ease_out);
+	lv_anim_start(&a);
+}
+
 static void _clock_event_handler(lv_event_t * e)
 {
 	lv_event_code_t event = lv_event_get_code(e);
@@ -324,14 +360,45 @@ static void _clock_event_handler(lv_event_t * e)
 	clock_view_data_t *data = view_data->user_data;
 	const clock_view_presenter_t *presenter = view_get_presenter(view_data);
 	uint32_t pressing_duration = 0;
-
+	lv_indev_t *indev = lv_indev_get_act();
 	if (data->preview_invoked)
 		return;
 
 	if (event == LV_EVENT_PRESSED) {
+		lv_indev_get_point(indev, &data->st_click);
 		data->pressing_start = os_uptime_get_32();
 	} else if (event == LV_EVENT_RELEASED || event == LV_EVENT_PRESSING) {
 		pressing_duration = os_uptime_get_32() - data->pressing_start;
+		if(event == LV_EVENT_PRESSING) {
+			lv_point_t now_click;
+			lv_indev_get_point(indev, &now_click);
+			lv_coord_t diff_x = now_click.x - data->st_click.x;
+			lv_coord_t diff_y = now_click.y - data->st_click.y;
+			if(data->lunette_state) {
+				if(diff_x > POINTER_LUNETTE_GESTURE_LIMIT && diff_y < -POINTER_LUNETTE_GESTURE_LIMIT) {
+					lunette_anim_begin(data, false);
+					data->lunette_state = false;
+					if(!data->gesture_lock_state) {
+						ui_manager_gesture_lock_scroll();
+						data->gesture_lock_state = true;
+					}
+				}
+			} else {
+				if(diff_x < -POINTER_LUNETTE_GESTURE_LIMIT && diff_y > POINTER_LUNETTE_GESTURE_LIMIT) {
+					lunette_anim_begin(data, true);
+					data->lunette_state = true;
+					if(!data->gesture_lock_state) {
+						ui_manager_gesture_lock_scroll();
+						data->gesture_lock_state = true;
+					}
+				}
+			}
+		} else {
+			if(data->gesture_lock_state) {
+				ui_manager_gesture_unlock_scroll();
+				data->gesture_lock_state = false;
+			}
+		}
 	}
 
 	if (pressing_duration > CLOCK_SWITCH_PRESSING_TIME) {
@@ -347,6 +414,27 @@ static void _clock_btn_event_handler(lv_event_t * e)
 	{
 		go_to_m_effect();
 		lv_obj_remove_event_cb(lv_event_get_user_data(e),_clock_btn_event_handler);
+	}
+}
+
+static void text_arc_tuning_cb(uint32_t letter, int16_t *st_angle, int16_t *end_angle)
+{
+	char tuning_str[8] = {"creow。"};
+	uint32_t ofs_1 = 0;
+	if(letter == lv_text_encoded_next(tuning_str, &ofs_1)) {
+		*st_angle -= 1;
+	} else if(letter == lv_text_encoded_next(tuning_str, &ofs_1)) {
+		*st_angle -= 1;
+	} else if(letter == lv_text_encoded_next(tuning_str, &ofs_1)) {
+		*st_angle -= 1;
+	} else if(letter == lv_text_encoded_next(tuning_str, &ofs_1)) {
+		*st_angle -= 1;
+		*end_angle -= 1;
+	} else if(letter == lv_text_encoded_next(tuning_str, &ofs_1)) {
+		*st_angle -= 1;
+		*end_angle -= 1;
+	} else if(letter == lv_text_encoded_next(tuning_str, &ofs_1)) {
+		*st_angle += 2;
 	}
 }
 
@@ -404,11 +492,28 @@ static int _clock_view_layout_update(view_data_t *view_data, bool first_layout)
 		lv_obj_set_style_bg_image_opa(data->obj_clock, LV_OPA_COVER, LV_PART_MAIN);
 	} else {
 		lv_obj_set_style_bg_color(data->obj_clock, data->scene.background, LV_PART_MAIN);
-		lv_obj_set_style_bg_opa(data->obj_clock, LV_OPA_COVER, LV_PART_MAIN);
 	}
+	lv_obj_set_style_bg_opa(data->obj_clock, LV_OPA_COVER, LV_PART_MAIN);
 	lv_obj_set_user_data(data->obj_clock, view_data);
 	lv_obj_add_event_cb(data->obj_clock, _clock_event_handler, LV_EVENT_ALL, view_data);
 	lv_obj_add_event_cb(data->obj_clock, _clock_btn_event_handler, LV_EVENT_SHORT_CLICKED, data->obj_clock);
+
+	lv_obj_set_style_transform_pivot_x(data->obj_clock, 68, LV_PART_MAIN);
+	lv_obj_set_style_transform_pivot_y(data->obj_clock, DEF_UI_HEIGHT - 68, LV_PART_MAIN);
+	data->lunette_zoom = LV_SCALE_NONE;
+
+	data->text_arc = text_arc_create(scr);
+	lv_obj_set_size(data->text_arc,440,440);
+	text_arc_set_radian(data->text_arc, 220, 45, 3);
+	text_arc_set_center(data->text_arc, true);
+	text_arc_set_tuning_cb(data->text_arc, text_arc_tuning_cb);
+	lv_obj_set_style_text_font(data->text_arc, &data->font, LV_PART_MAIN);
+	lv_obj_set_style_text_color(data->text_arc, lv_color_white(), LV_PART_MAIN);
+	text_arc_set_text(data->text_arc,"检票口A2");
+	lv_obj_center(data->text_arc);
+	text_arc_refresh(data->text_arc);
+	lv_obj_clear_flag(data->text_arc, LV_OBJ_FLAG_CLICKABLE);
+	lv_obj_add_flag(data->text_arc, LV_OBJ_FLAG_HIDDEN);
 
 	if (data->is_digital) {
 		lv_area_t area;
@@ -588,13 +693,17 @@ out_exit:
 static int _clock_view_delete(view_data_t *view_data)
 {
 	clock_view_data_t *data = view_data->user_data;
-	int i;
 
 	if (data) {
-		lv_obj_delete(data->obj_clock);
-		for (i = 0; i < ARRAY_SIZE(data->sty_text); i++) {
-			lv_style_reset(&data->sty_text[i]);
-		}
+		lv_anim_delete(data, _lunette_anim);
+
+		if(data->gesture_lock_state)
+			ui_manager_gesture_unlock_scroll();
+
+		lv_obj_t *scr = lv_disp_get_scr_act(view_data->display);
+		lv_obj_clean(scr);
+
+		lvgl_style_array_reset(data->sty_text, ARRAY_SIZE(data->sty_text));
 	}
 
 	_clock_view_unload_resource(data, true);

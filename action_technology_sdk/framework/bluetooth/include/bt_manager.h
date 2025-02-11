@@ -1767,6 +1767,15 @@ int bt_manager_trs_a2dp_get_codecid(void);
 int bt_manager_trs_a2dp_get_sample_rate(void);
 
 /**
+ * @brief bt manager transfer get a2dp bit rate, only support aac
+ *
+ * This routine for transfer get a2dp bit rate
+ *
+ * @return int Bit rate, unit: kbps.
+ */
+uint16_t bt_manager_trs_a2dp_bit_rate(void);
+
+/**
  * @brief bt manager transfer start connect player
  *
  * This routine for transfer start connect player

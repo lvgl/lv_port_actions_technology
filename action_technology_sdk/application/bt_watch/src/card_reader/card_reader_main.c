@@ -161,6 +161,7 @@ int card_reader_deinit(void)
 #endif
 
 #ifdef CONFIG_FS_MANAGER
+	fs_manager_disk_check(CONFIG_APP_FAT_DISK);
 	fs_manager_disk_init(CONFIG_APP_FAT_DISK);
 #endif
 
@@ -253,21 +254,11 @@ int card_reader_mode_check(void)
 						#ifdef CONFIG_USB_MASS_STORAGE
                            usb_mass_storage_remove_lun();
                   		#endif
-						#ifdef CONFIG_SEG_LED_MANAGER
-							if (card_read_init_ok) {
-								seg_led_display_icon(SLED_SD, false);
-							}
-						#endif
 							card_reader->card_plugin = 0;
 							break;
 					}
 				} else if (msg.value == HOTPLUG_IN) {
 					if (msg.cmd == HOTPLUG_SDCARD) {
-					#ifdef CONFIG_SEG_LED_MANAGER
-						if (card_read_init_ok) {
-							seg_led_display_icon(SLED_SD, true);
-						}
-					#endif
 					#ifdef CONFIG_USB_MASS_STORAGE
 						usb_mass_storage_add_lun(MSC_DISK_SD);
 					#endif
@@ -318,3 +309,132 @@ int card_reader_mode_check(void)
 	return res;
 
 }
+#ifdef CONFIG_CARD_READER_RUNTIME
+static void _card_reader_app_exit(void)
+{
+	app_manager_thread_exit(APP_ID_CARD_READER);
+}
+
+void _card_reader_app_loop(void *p1, void *p2, void *p3)
+{
+	struct app_msg msg = {0};
+	int result = 0;
+
+	bool terminaltion = false;
+	bool exit_by_stub = false;
+	struct cardreader_app_t *card_reader = NULL;
+	SYS_LOG_INF("_card_reader_app_loop  enter \n");
+	if (!usb_hotplug_device_mode()) {
+		goto exit;
+	}
+
+	card_reader = app_mem_malloc(sizeof(struct cardreader_app_t));
+	if (!card_reader) {
+		goto exit;
+	}
+	if (usb_hotplug_get_otgstate() == OTG_STATE_B_PERIPHERAL) {
+#ifdef CONFIG_UI_MANAGER
+		card_reader_view_init();
+#endif
+		if (!card_reader_init()) {
+			card_read_init_ok = true;
+		}
+#ifdef CONFIG_THREAD_TIMER
+		thread_timer_init(&card_reader->monitor_timer, card_reader_moditor_handle, card_reader);
+		thread_timer_start(&card_reader->monitor_timer, 400, 400);
+#endif
+	} else if (usb_hotplug_get_otgstate() == OTG_STATE_B_WAIT_ACON){
+#ifdef CONFIG_THREAD_TIMER
+		thread_timer_init(&card_reader->monitor_timer, card_reader_init_handle, card_reader);
+		thread_timer_start(&card_reader->monitor_timer, 1000, 0);
+#endif
+	}
+
+#ifdef CONFIG_SYS_WAKELOCK
+	sys_wake_lock(FULL_WAKE_LOCK);
+#endif
+
+#ifdef CONFIG_HOTPLUG
+	if (hotplug_manager_get_state(HOTPLUG_SDCARD) == HOTPLUG_IN) {
+		card_reader->card_plugin = 1;
+	}
+#endif
+
+	while (!terminaltion) {
+		if (receive_msg(&msg, thread_timer_next_timeout())) {
+			switch (msg.type) {
+			case MSG_EXIT_APP:
+				terminaltion = true;
+				break;
+            case MSG_KEY_INPUT:
+				if (msg.value == (KEY_POWER | KEY_TYPE_SHORT_UP)
+					|| msg.value == (KEY_MENU | KEY_TYPE_SHORT_UP)) {
+					if (!card_reader_monitor->card_write_flag) {
+						terminaltion = true;
+					}
+				}
+				break;
+			case MSG_HOTPLUG_EVENT:
+				if (msg.value == HOTPLUG_OUT) {
+					switch (msg.cmd) {
+						case HOTPLUG_USB_DEVICE:
+							terminaltion = true;
+							break;
+						case HOTPLUG_SDCARD:
+						#ifdef CONFIG_USB_MASS_STORAGE
+							usb_mass_storage_remove_lun();
+						#endif
+							card_reader->card_plugin = 0;
+							break;
+					}
+				} else if (msg.value == HOTPLUG_IN) {
+					if (msg.cmd == HOTPLUG_SDCARD) {
+					#ifdef CONFIG_USB_MASS_STORAGE
+						usb_mass_storage_add_lun(MSC_DISK_SD);
+					#endif
+						card_reader->card_plugin = 1;
+					} else if (msg.cmd == HOTPLUG_USB_STUB) {
+						terminaltion = true;
+						app_switch_remove_app(APP_ID_USOUND);
+						exit_by_stub = true;
+					}
+				}
+				break;
+			default:
+				SYS_LOG_ERR("error type: 0x%x! \n", msg.type);
+				continue;
+			}
+			if (msg.callback != NULL)
+				msg.callback(&msg, result, NULL);
+		}
+		thread_timer_handle_expired();
+	}
+
+	if (card_read_init_ok) {
+		card_reader_deinit();
+	}
+
+	thread_timer_stop(&card_reader->monitor_timer);
+	if (card_reader_monitor) {
+		thread_timer_stop(&card_reader_monitor->monitor_timer);
+	}
+
+#ifdef CONFIG_UI_MANAGER
+	card_reader_view_deinit();
+#endif
+	app_mem_free(card_reader);
+
+#ifdef CONFIG_SYS_WAKELOCK
+	sys_wake_unlock(FULL_WAKE_LOCK);
+#endif
+
+exit:
+	_card_reader_app_exit();
+	SYS_LOG_INF(APP_ID_CARD_READER" exit--------------\n");
+	return;
+}
+
+APP_DEFINE(card_reader, share_stack_area, sizeof(share_stack_area),
+		CONFIG_APP_PRIORITY, FOREGROUND_APP, NULL, NULL, NULL,
+	   _card_reader_app_loop, NULL);
+#endif

@@ -154,6 +154,13 @@ struct bt_hci_rp_acts_vs_read_bt_us_cnt {
 	uint32_t cnt;
 } __packed;
 
+#define BT_HCI_EVT_VENDOR_SYNC_PERIOR_ADV			BT_OP(BT_OGF_VS, 0x0035)
+struct bt_hci_cp_sync_perior_adv_params {
+	uint16_t sync_handle;
+	uint8_t sync_enable;
+	uint8_t rsv;
+}__packed;
+
 /* Events */
 
 #define BT_HCI_EVT_VS_READ_BB_REG_REPORT		0x80

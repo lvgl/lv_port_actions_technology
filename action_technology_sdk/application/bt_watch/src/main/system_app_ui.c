@@ -104,10 +104,6 @@ int system_app_ui_init(void)
 	lvgl_freetype_font_init();
 //	lvgl_freetype_font_cache_preset((void *)ft_font_cache_preset, ARRAY_SIZE(ft_font_cache_preset));
 #endif
-#if CONFIG_GLYPHIX
-  lvgx_set_applet_view(GLYPHIX_APPLET_VIEW);
-  lvgx_view_system_init();
-#endif
 #endif
 
   view_stack_init();

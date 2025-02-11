@@ -59,6 +59,13 @@ static io_stream_t _bt_player_create_inputstream(void)
 	return	input_stream;
 }
 
+static void bt_player_stop_play(void);
+
+static void bt_player_force_stop_cb(void *handle)
+{
+	bt_player_stop_play();
+}
+
 static int bt_player_start_play(void)
 {
 	struct bt_player *btplayer = &g_bt_player;
@@ -86,6 +93,8 @@ static int bt_player_start_play(void)
 #ifdef CONFIG_PLAYTTS
 	tts_manager_wait_finished(false);
 #endif
+
+	media_player_force_stop(false);
 
 	SYS_LOG_INF("btmusic: codec_id: %d sample_rate %d\n", codec_id, sample_rate);
 
@@ -128,6 +137,8 @@ static int bt_player_start_play(void)
 		btplayer->bt_stream = NULL;
 		return -EINVAL;
 	}
+
+	media_player_set_force_stop_cb(btplayer->player, btplayer, bt_player_force_stop_cb);
 
 	bt_manager_set_codec(codec_id);
 	bt_manager_set_stream(STREAM_TYPE_A2DP, btplayer->bt_stream);

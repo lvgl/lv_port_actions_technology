@@ -2303,6 +2303,7 @@ int bt_vs_enable_tws_int_new(uint8_t enable, uint8_t index);
 int bt_vs_read_bt_us_cnt(uint32_t *cnt);
 int bt_vs_set_apll_temp_comp(uint8_t enable);
 int bt_vs_do_apll_temp_comp(void);
+int bt_le_per_adv_sync_comp_set(struct bt_le_per_adv_sync *per_adv_sync, uint8_t sync_enable, uint8_t rsv);
 
 /* Actions add end */
 

@@ -53,7 +53,7 @@ extern "C" {
 
 #define VGLITE_API_VERSION_3_0      VGLITE_MAKE_VERSION(3, 0, 0)
 
-#define VGLITE_RELEASE_VERSION      VGLITE_MAKE_VERSION(4,0,93)
+#define VGLITE_RELEASE_VERSION      VGLITE_MAKE_VERSION(4,0,106)
 
 #define VGL_FALSE                   0
 #define VGL_TRUE                    1
@@ -231,9 +231,12 @@ typedef unsigned int        vg_lite_color_t;
         gcFEATURE_BIT_TILED_MODE,
         gcFEATURE_BIT_VG_SRC_ADDRESS_16BYTES_ALIGNED,
         gcFEATURE_BIT_VG_SRC_ADDRESS_64BYTES_ALIGNED,
+        gcFEATURE_BIT_VG_SRC_ADDRESS_DETAIL_ALIGNED,
+        gcFEATURE_BIT_VG_SRC_ADDRESS_DETAIL_ALIGNED_1,
         gcFEATURE_BIT_VG_SRC_TILE_4PIXELS_ALIGNED,
         gcFEATURE_BIT_VG_SRC_BUF_ALINGED,
         gcFEATURE_BIT_VG_DST_ADDRESS_64BYTES_ALIGNED,
+        gcFEATURE_BIT_VG_DST_ADDRESS_DETAIL_ALIGNED,
         gcFEATURE_BIT_VG_DST_TILE_4PIXELS_ALIGNED,
         gcFEATURE_BIT_VG_DST_BUF_ALIGNED,
         gcFEATURE_BIT_VG_DST_24BIT_PLANAR_ALIGNED,
@@ -241,6 +244,7 @@ typedef unsigned int        vg_lite_color_t;
         gcFEATURE_BIT_VG_FORMAT_SUPPORT_CHECK,
         gcFEATURE_BIT_VG_YUV_ALIGNED_CHECK,
         gcFEATURE_BIT_VG_512_PARALLEL_PATHS,
+        gcFEATURE_BIT_VG_DEC_COMPRESS_2_1,
         gcFEATURE_COUNT
     } vg_lite_feature_t;
 
@@ -267,7 +271,7 @@ typedef unsigned int        vg_lite_color_t;
     {
         /* The following OPENVG_* enums are defined corresponding to OpenVG
          * VGImageFormat enums so VGLite API can take OpenVG VGImageFormat enums directly.
-         * 
+         *
          * Note: The bits for each color channel are stored within a machine word
          * from MSB to LSB in the order indicated by the pixel format name.
          * This is opposite of VG_LITE_* formats (from LSB to MSB).
@@ -339,7 +343,7 @@ typedef unsigned int        vg_lite_color_t;
         OPENVG_lABGR_8888_PRE                           =  9 | (1 << 6) | (1 << 7),
 
         /* The following VG_LITE_* enums are original VGLite API image format enums.
-         * 
+         *
          * Note: The bits for each color channel are stored within a machine word
          * from LSB to MSB in the order indicated by the pixel format name.
          * This is opposite of OPENVG VG_* formats (from MSB to LSB).
@@ -477,7 +481,7 @@ typedef unsigned int        vg_lite_color_t;
                                                             /*!  A:   (Sa + Da*(1 - Sa))                         !*/
         VG_LITE_BLEND_ADDITIVE_LVGL             = 12,       /*!  RGB: (S + D)*Sa + D*(1 - Sa)                    !*/
                                                             /*!  A:   0xFF                                       !*/
-        VG_LITE_BLEND_SUBTRACT_LVGL             = 13,       /*!  RGB: (S - D)*Sa + D*(1 - Sa)                    !*/
+        VG_LITE_BLEND_SUBTRACT_LVGL             = 13,       /*!  RGB: (D - S)*Sa + D*(1 - Sa)                    !*/
                                                             /*!  A:   0xFF                                       !*/
         VG_LITE_BLEND_MULTIPLY_LVGL             = 14,       /*!  RGB: (S*D)*Sa + D*(1 - Sa)                      !*/
                                                             /*!  A:   0xFF                                       !*/
@@ -623,7 +627,7 @@ typedef unsigned int        vg_lite_color_t;
     typedef enum vg_lite_index_endian
     {
         VG_LITE_INDEX_LITTLE_ENDIAN,            /*! Parse the index pixel from low to high,
-                                                 *! when using index1, the parsing order is bit0~bit7. 
+                                                 *! when using index1, the parsing order is bit0~bit7.
                                                  *! when using index2, the parsing order is bit0:1,bit2:3,bit4:5.bit6:7.
                                                  *! when using index4, the parsing order is bit0:3,bit4:7.
                                                  */
@@ -647,6 +651,8 @@ typedef unsigned int        vg_lite_color_t;
         VG_LITE_GPU_IDLE_STATE,                 /*! count must be 1 for GPU idle state TRUE or FALSE */
         VG_LITE_SCISSOR_RECT,                   /*! count must be 4n for x, y, right, bottom */
         VG_LITE_HARDWARE_RUNNING_TIME,          /*! count must be 1 */
+        VG_LITE_SRC_BUF_ALIGNED_CHECK,
+        VG_LITE_DST_BUF_ALIGNED_CHECK,
     } vg_lite_param_type_t;
 
     /* Vg lite buffer type */
@@ -668,6 +674,14 @@ typedef unsigned int        vg_lite_color_t;
     {
         VG_LITE_FRAME_END_FLAG = 1,
     } vg_lite_frame_flag_t;
+
+    typedef enum vg_lite_cmdcache_operation
+    {
+        VG_LITE_CMDCACHE_START   = 0,
+        VG_LITE_CMDCACHE_END     = 1,
+        VG_LITE_CMDCACHE_CLEAR   = 3,
+        VG_LITE_CMDCACHE_EXECUTE = 4,
+    } vg_lite_cmdcache_operation_t;
 
 /* VGLite API Structures ******************************************************************************************************************/
 
@@ -914,6 +928,7 @@ typedef unsigned int        vg_lite_color_t;
         vg_lite_uint8_t apply_premult;          /*! Need to apply alpha-premultiply */
         struct vg_lite_buffer *lvgl_buffer;     /*! Buffer for SW LVGL blending support */
         vg_lite_color_t bg_color;               /*! Background for edge filter */
+        vg_lite_uint8_t screen_copy;            /*! Flag to optimize bandwidth when enable dec and copy image to full dst buffer without blending */
     } vg_lite_buffer_t;
 
     /* Path info for drawing command. */
@@ -1016,9 +1031,9 @@ typedef unsigned int        vg_lite_color_t;
         vg_lite_uint8_t low_g;                  /*! The G chanel of low_rgb. */
         vg_lite_uint8_t low_b;                  /*! The B chanel of low_rgb. */
         vg_lite_uint8_t alpha;                  /*! The alpha channel to replace destination pixel alpha channel.*/
-        vg_lite_uint8_t hign_r;                 /*! The R chanel of hign_rgb. */
-        vg_lite_uint8_t hign_g;                 /*! The G chanel of hign_rgb. */
-        vg_lite_uint8_t hign_b;                 /*! The B chanel of hign_rgb. */
+        vg_lite_uint8_t high_r;                 /*! The R chanel of high_rgb. */
+        vg_lite_uint8_t high_g;                 /*! The G chanel of high_rgb. */
+        vg_lite_uint8_t high_b;                 /*! The B chanel of high_rgb. */
     } vg_lite_color_key_t;
 
     /* Four colorkey definition.
@@ -1313,7 +1328,7 @@ typedef unsigned int        vg_lite_color_t;
     /* Rotate a matrix. */
     vg_lite_error_t vg_lite_rotate(vg_lite_float_t degrees, vg_lite_matrix_t *matrix);
 
-    /* Set and enable a scissor rectangle for render target. */
+    /* Set and enable a scissor rectangle for render target. Call vg_lite_set_scissor(-1,-1,-1,-1)to disable scissor. */
     vg_lite_error_t vg_lite_set_scissor(vg_lite_int32_t x, vg_lite_int32_t y, vg_lite_int32_t right, vg_lite_int32_t bottom);
 
     /* Set scissor rectangles on mask layer. Scissor rects are enabled/disabled by following APIs. */
@@ -1479,6 +1494,21 @@ typedef unsigned int        vg_lite_color_t;
      * An interrupt will be received to indicate that GPU is idle.
      */
     vg_lite_error_t vg_lite_frame_delimiter(vg_lite_frame_flag_t flag);
+
+    /* Using this API should set gcFEATURE_VG_COMMAND_BUFFER_CACHE to 1 in VGLite\vg_lite_options.h,
+     * and set gcdVG_ENABLE_COMMAND_BUFFER_CACHE to 1 in VGLiteKernel\vg_lite_option.h.
+     * VGLite command buffers can be saved and re-executed by application.
+     */
+    vg_lite_error_t vg_lite_cache_command(vg_lite_cmdcache_operation_t operation);
+
+    /* This optional API is for enabling/disabling the path-spliting workaround for specific VG cores.
+     */
+    vg_lite_error_t vg_lite_split_path(vg_lite_uint32_t endis);
+
+    /* Using this API should set DUMP_API to 1 in VGLite\vg_lite_context.h.
+     * This API can control whether function 'dump api' is enabled or disabled.
+     */
+    vg_lite_error_t vg_lite_set_dump_api(vg_lite_char flag);
 
 #endif /* VGLITE_VERSION_3_0 */
 

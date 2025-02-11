@@ -32,6 +32,8 @@ extern "C" {
  *      DEFINES
  *********************/
 
+#define VG_LITE_DRAW_PREFERENCE_SCORE 80
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -42,7 +44,7 @@ extern "C" {
 
 void lv_draw_buf_vg_lite_init_handlers(void);
 
-void lv_draw_vg_lite_init(void);
+lv_draw_unit_t * lv_draw_vg_lite_init(bool subunit);
 
 void lv_draw_vg_lite_deinit(void);
 

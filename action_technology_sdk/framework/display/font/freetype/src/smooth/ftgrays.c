@@ -553,7 +553,7 @@ typedef ptrdiff_t  FT_PtrDist;
     }
     if ( ras.num_cells >= ras.max_cells )
     {
-      ft_longjmp( ras.jump_buffer, 1 );
+      ft_longjmp( ras.jump_buffer, FT_GRAY_CELL_OVERFLOW );
     }
     /* insert new cell */
     cell        = ras.cells + ras.num_cells++;

@@ -174,8 +174,10 @@ bool vglite_buf_is_valid(vg_lite_buffer_t *vgbuf)
 int vglite_buf_map(vg_lite_buffer_t *vgbuf, void *data, uint16_t width, uint16_t height,
 			uint16_t stride, vg_lite_buffer_format_t format)
 {
-	if ((uintptr_t)data & (VGLITE_MEM_ALIGNMENT - 1))
-		return -EINVAL;
+	/* Some source buffer format does not require 64 bytes alignment */
+	if ((uintptr_t)data & (VGLITE_MEM_ALIGNMENT - 1)) {
+		SYS_LOG_DBG("vgbuf %p not %d aligned", data, VGLITE_MEM_ALIGNMENT);
+	}
 
 	if (format == VG_LITE_RGBA8888_ETC2_EAC && (stride & 0x3))
 		return -EINVAL;
@@ -292,6 +294,22 @@ void matrix_rotate(float rx, float ry, float rz, uint8_t order, vg_lite_matrix_t
 
 	if (order < NUM_ROT_ORDERS)
 		rotate_vtbl[order](rx, ry, rz, matrix);
+}
+
+void matrix_rotate_axis(float x, float y, float z, float angle, vg_lite_matrix_t *matrix)
+{
+	float c = cos(angle);
+	float s = sin(angle);
+
+	matrix->m[0][0] = (1 - c) * x * x + c;
+	matrix->m[0][1] = (1 - c) * x * y - s * z;
+	matrix->m[0][2] = (1 - c) * x * z + s * y;
+	matrix->m[1][0] = (1 - c) * x * y + s * z;
+	matrix->m[1][1] = (1 - c) * y * y + c;
+	matrix->m[1][2] = (1 - c) * y * z - s * x;
+	matrix->m[2][0] = (1 - c) * x * z - s * y;
+	matrix->m[2][1] = (1 - c) * y * z + s * x;
+	matrix->m[2][2] = (1 - c) * z * z + c;
 }
 
 void matrix_multiply(const vg_lite_matrix_t *matrix_left, const vg_lite_matrix_t *matrix_right, vg_lite_matrix_t *result)
@@ -598,6 +616,17 @@ static void matrix_rotate_xzy(float rx, float ry, float rz, vg_lite_matrix_t *ma
 	matrix->m[2][0] = sin(rx) * sin(rz) * cos(ry) - cos(rx) * sin(ry);
 	matrix->m[2][1] = sin(rx) * cos(rz);
 	matrix->m[2][2] = sin(rx) * sin(rz) * sin(ry) + cos(rx) * cos(ry);
+}
+
+void vector_normalize(float *x, float *y, float *z)
+{
+	float s2 = (*x) * (*x) + (*y) * (*y) + (*z) * (*z);
+	if (s2 > 0.0f && s2 != 1.0f) {
+		float s = sqrtf(s2);
+		*x = (*x) / s;
+		*y = (*y) / s;
+		*z = (*z) / s;
+	}
 }
 
 #endif /* CONFIG_VG_LITE*/

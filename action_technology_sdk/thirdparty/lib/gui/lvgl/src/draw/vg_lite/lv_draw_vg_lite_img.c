@@ -25,6 +25,8 @@
  *      DEFINES
  *********************/
 
+#define LV_VG_LITE_USE_DRAW_PATTERN 0
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -119,6 +121,7 @@ void lv_draw_vg_lite_img(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t *
     bool no_transform = lv_matrix_is_identity_or_translation((const lv_matrix_t *)&matrix);
     vg_lite_filter_t filter = no_transform ? VG_LITE_FILTER_POINT : VG_LITE_FILTER_BI_LINEAR;
 
+#if LV_VG_LITE_USE_DRAW_PATTERN
     /* If clipping is not required, blit directly */
     if(lv_area_is_in(&image_tf_area, draw_unit->clip_area, false) && dsc->clip_radius <= 0) {
         /* The image area is the coordinates relative to the image itself */
@@ -140,6 +143,33 @@ void lv_draw_vg_lite_img(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t *
                                    filter));
         LV_PROFILER_END_TAG("vg_lite_blit_rect");
     }
+#else
+    if(dsc->clip_radius <= 0) {
+        lv_layer_t * layer = draw_unit->target_layer;
+        lv_area_t image_tf_area_clip;
+        lv_area_intersect(&image_tf_area_clip, &image_tf_area, &layer->buf_area);
+
+        bool need_scissor = !lv_area_is_in(&image_tf_area_clip, draw_unit->clip_area, 0);
+        if(need_scissor) {
+            lv_area_move(&clip_area, -layer->buf_area.x1, -layer->buf_area.y1);
+            lv_vg_lite_set_scissor_area(&clip_area);
+        }
+
+        LV_PROFILER_BEGIN_TAG("vg_lite_blit");
+        LV_VG_LITE_CHECK_ERROR(vg_lite_blit(
+                                    &u->target_buffer,
+                                    &src_buf,
+                                    &matrix,
+                                    blend,
+                                    color,
+                                    filter));
+        LV_PROFILER_END_TAG("vg_lite_blit");
+
+        if(need_scissor) {
+            lv_vg_lite_disable_scissor();
+        }
+    }
+#endif /* LV_VG_LITE_USE_DRAW_PATTERN */
     else {
         lv_vg_lite_path_t * path = lv_vg_lite_path_get(u, VG_LITE_FP32);
 

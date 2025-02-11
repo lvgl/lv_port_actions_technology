@@ -26,6 +26,21 @@ LIMITATION
 CHANGES
 =======
 
+December 2024: vglite_4_0_106
+-------------------------
+
+    1. Fix memory leak of stroke pathdata.
+    2. Add driver support for the new gcFEATURE_VG_USE_DST.
+    3. Add alignment rules and refine original alignment rules.
+    4. Define vg_lite_set_scissor(-1,-1,-1,-1) as disable set_scissor.
+    5. Fix gradient drawing rendering errors,keep configuration consistent with vg_lite_draw.
+    6. Fix Gaussian filter accurary issue.
+	7. Add driver support for the new gcFEATURE_VG_DEC_COMPRESS_2_1.
+    8. Add gcFEATURE_VG_SPLIT_PATH_ENDISABLE and vg_lite_set_split.
+	9. Fix vg_lite_get_parameter alignment check.
+	10. Add gcFEATURE_VG_SCREEN_COPY_FIX for screen copy issue.
+	11. Add gcFEATURE_VG_PE_PREFETCH and gcFEATURE_VG_TILE_PE_LINEAR to refine tiled setting.
+	
 July 2024: vglite_4_0_90
 -------------------------
 

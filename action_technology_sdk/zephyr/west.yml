@@ -83,10 +83,34 @@ manifest:
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_APPLICATION_BT_WATCH
     revision: ZS308B_dev_lvgl_v9
     path: application/bt_watch
+  - name: bt_watch_no_psram
+    url: ssh://192.168.4.4:29418/ZH/actions/BT_WATCH_NO_PSRAM
+    revision: ZS308B_dev_v2.7
+    path: application/bt_watch_no_psram
+  - name: bt_watch_qc
+    url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_APPLICATION_BT_WATCH_QC
+    revision: ZS308B_dev_v2.7
+    path: application/bt_watch_qc
   - name: app_demo
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_APPLICATION_DEMO
     revision: ZS308B_dev_lvgl_v9
     path: application/app_demo
+  - name: glyphix_demo
+    url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_APPLICATION_GLYPHIX_DEMO
+    revision: ZS308B_dev_v2.7
+    path: application/glyphix_demo
+  - name: glyphix
+    url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_GLYPHIX
+    revision: ZS308B_dev_v2.7
+    path: thirdparty/lib/glyphix
+  - name: cherryusb
+    url: ssh://192.168.4.4:29418/CD/actions/ZSDK_LIB_USB
+    revision: 1.4_FALCON_PLAT_3.4
+    path: thirdparty/lib/CherryUSB
+  - name: awk
+    url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_AMAP
+    revision: ZS308B_dev_v2.7
+    path: thirdparty/lib/awk_map
   self:
     path: zephyr
     west-commands: scripts/west-commands.yml

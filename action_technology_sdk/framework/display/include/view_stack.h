@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "view_cache.h"
+#include "ui_effects/switch_effect.h"
 
 /**
  * @defgroup view_stack_apis View Stack APIs
@@ -211,6 +212,15 @@ int view_stack_jump_view(uint16_t view_id, const void *presenter);
  * @retval N/A.
  */
 void view_stack_dump(void);
+
+/**
+ * @brief Dump the view stack
+ *
+ * @param type type of switch effect
+ *
+ * @retval N/A.
+ */
+void view_stack_set_switch_effect(uint8_t type);
 
 /**
  * @brief View group change focused view index

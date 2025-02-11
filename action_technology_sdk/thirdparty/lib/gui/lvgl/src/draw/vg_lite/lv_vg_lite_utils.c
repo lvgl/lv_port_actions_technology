@@ -169,9 +169,12 @@ const char * lv_vg_lite_feature_string(vg_lite_feature_t feature)
             FEATURE_ENUM_TO_STRING(TILED_LIMIT);
             FEATURE_ENUM_TO_STRING(SRC_ADDRESS_16BYTES_ALIGNED);
             FEATURE_ENUM_TO_STRING(SRC_ADDRESS_64BYTES_ALIGNED);
+            FEATURE_ENUM_TO_STRING(SRC_ADDRESS_DETAIL_ALIGNED);
+            FEATURE_ENUM_TO_STRING(SRC_ADDRESS_DETAIL_ALIGNED_1);
             FEATURE_ENUM_TO_STRING(SRC_TILE_4PIXELS_ALIGNED);
             FEATURE_ENUM_TO_STRING(SRC_BUF_ALINGED);
             FEATURE_ENUM_TO_STRING(DST_ADDRESS_64BYTES_ALIGNED);
+            FEATURE_ENUM_TO_STRING(DST_ADDRESS_DETAIL_ALIGNED);
             FEATURE_ENUM_TO_STRING(DST_TILE_4PIXELS_ALIGNED);
             FEATURE_ENUM_TO_STRING(DST_BUF_ALIGNED);
             FEATURE_ENUM_TO_STRING(DST_24BIT_PLANAR_ALIGNED);
@@ -179,6 +182,7 @@ const char * lv_vg_lite_feature_string(vg_lite_feature_t feature)
             FEATURE_ENUM_TO_STRING(FORMAT_SUPPORT_CHECK);
             FEATURE_ENUM_TO_STRING(YUV_ALIGNED_CHECK);
             FEATURE_ENUM_TO_STRING(512_PARALLEL_PATHS);
+            FEATURE_ENUM_TO_STRING(DEC_COMPRESS_2_1);
 
         case gcFEATURE_BIT_TILED_MODE:
             return "TILED_MODE";
@@ -891,80 +895,9 @@ vg_lite_blend_t lv_vg_lite_blend_mode(lv_blend_mode_t blend_mode, bool has_pre_m
 
 bool lv_vg_lite_buffer_check(const vg_lite_buffer_t * buffer, bool is_src)
 {
-    //uint32_t mul;
-    //uint32_t div;
-    //uint32_t align;
-    //int32_t stride;
-
-    if(!buffer) {
-        LV_LOG_ERROR("buffer is NULL");
-        return false;
-    }
-
-    if(buffer->width < 1) {
-        LV_LOG_ERROR("buffer width(%d) < 1", (int)buffer->width);
-        return false;
-    }
-
-    if(buffer->height < 1) {
-        LV_LOG_ERROR("buffer height(%d) < 1", (int)buffer->height);
-        return false;
-    }
-
-    if(!(buffer->tiled == VG_LITE_LINEAR || buffer->tiled == VG_LITE_TILED)) {
-        LV_LOG_ERROR("buffer tiled(%d) is invalid", (int)buffer->tiled);
-        return false;
-    }
-
-    if(buffer->memory == NULL) {
-        LV_LOG_ERROR("buffer memory is NULL");
-        return false;
-    }
-
-    if(is_src && buffer->width != (vg_lite_int32_t)lv_vg_lite_width_align(buffer->width)) {
-        LV_LOG_ERROR("buffer width(%d) is not aligned", (int)buffer->width);
-        return false;
-    }
-
-    if(!LV_VG_LITE_IS_ALIGNED(buffer->memory, LV_DRAW_BUF_ALIGN)) {
-        LV_LOG_ERROR("buffer address(%p) is not aligned to %d", buffer->memory, LV_DRAW_BUF_ALIGN);
-        return false;
-    }
-
-#if 0
-    lv_vg_lite_buffer_format_bytes(buffer->format, &mul, &div, &align);
-    stride = LV_VG_LITE_ALIGN((buffer->width * mul / div), align);
-
-    if(buffer->stride != stride) {
-        LV_LOG_ERROR("buffer stride(%d) != %d", (int)buffer->stride, (int)stride);
-        return false;
-    }
-#endif
-
-    switch(buffer->image_mode) {
-        case VG_LITE_ZERO:
-        case VG_LITE_NORMAL_IMAGE_MODE:
-        case VG_LITE_MULTIPLY_IMAGE_MODE:
-        case VG_LITE_STENCIL_MODE:
-        case VG_LITE_NONE_IMAGE_MODE:
-        case VG_LITE_RECOLOR_MODE:
-            break;
-        default:
-            LV_LOG_ERROR("buffer image_mode(%d) is invalid", (int)buffer->image_mode);
-            return false;
-    }
-
-    switch(buffer->transparency_mode) {
-        case VG_LITE_IMAGE_OPAQUE:
-        case VG_LITE_IMAGE_TRANSPARENT:
-            break;
-        default:
-            LV_LOG_ERROR("buffer transparency_mode(%d) is invalid",
-                         (int)buffer->transparency_mode);
-            return false;
-    }
-
-    return true;
+    vg_lite_param_type_t type = is_src ? VG_LITE_SRC_BUF_ALIGNED_CHECK : VG_LITE_DST_BUF_ALIGNED_CHECK;
+    vg_lite_error_t error = vg_lite_get_parameter(type, sizeof(*buffer), (vg_lite_pointer)buffer);
+    return (error == VG_LITE_SUCCESS) ? true : false;
 }
 
 bool lv_vg_lite_path_check(const vg_lite_path_t * path)
@@ -1185,11 +1118,7 @@ void lv_vg_lite_set_scissor_area(const lv_area_t * area)
 void lv_vg_lite_disable_scissor(void)
 {
     /* Restore full screen scissor */
-    LV_VG_LITE_CHECK_ERROR(vg_lite_set_scissor(
-                               0,
-                               0,
-                               INT32_MAX,
-                               INT32_MAX));
+    LV_VG_LITE_CHECK_ERROR(vg_lite_set_scissor(-1, -1, -1, -1));
 }
 
 void lv_vg_lite_flush(struct _lv_draw_vg_lite_unit_t * u)

@@ -58,6 +58,7 @@ uint8_t ipmsg_btc_get_ic_pkt(void);
 #define sl_dbg(...)
 #endif
 
+#define __DSP_PRESENT           1
 #define __FPU_PRESENT			1
 #define __MPU_PRESENT           1
 #define CHIP_LEOPARD            1

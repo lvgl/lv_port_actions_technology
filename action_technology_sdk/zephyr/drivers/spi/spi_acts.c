@@ -153,6 +153,8 @@ struct acts_spi_config {
 struct acts_spi_data {
     struct spi_context ctx;
     const struct device *dma_dev;
+	spi_callback_t   call_back;
+	bool  b_stop_send;
     struct k_sem dma_sync;
     uint8_t rxdma_chan;
     uint8_t txdma_chan;
@@ -200,10 +202,9 @@ static void dma_done_callback(const struct device *dev, void *callback_data, uin
 
     //if (type != DMA_IRQ_TC)
         //return;
-
     LOG_DBG("spi dma transfer is done");
-
     k_sem_give(&data->dma_sync);
+
 }
 
 static int spi_acts_start_dma(const struct acts_spi_config *cfg,
@@ -242,7 +243,7 @@ static int spi_acts_start_dma(const struct acts_spi_config *cfg,
     }
 
     if(len < 8)//data length is too short
-    dma_cfg.source_burst_length = 1;
+        dma_cfg.source_burst_length = 1;
 
     if (dma_config(data->dma_dev, dma_chan, &dma_cfg)) {
         LOG_ERR("dma%d config error", dma_chan);
@@ -276,18 +277,22 @@ static int spi_acts_read_data_by_dma(const struct acts_spi_config *cfg,
             SPI_CTL_WR_MODE_READ | SPI_CTL_CLK_SEL_DMA |
             SPI_CTL_RX_DRQ_EN;
 
-    if(len < 8)
+    if(len < 8){
         spi->ctrl |=  SPI_CTL_DMS_SINGLE;
-
+    }
+	k_sem_reset(&data->dma_sync);
     ret = spi_acts_start_dma(cfg, data, data->rxdma_chan, buf, len,
                  false, dma_done_callback);
     if (ret) {
         LOG_ERR("faield to start dma chan 0x%x\n", data->rxdma_chan);
         goto out;
     }
-
+	if(data->call_back)
+		data->call_back(SPI_STAGE_PREPARE);
     /* wait until dma transfer is done */
     k_sem_take(&data->dma_sync, K_FOREVER);
+	if(data->call_back)
+		data->call_back(SPI_STAGE_FINSHED);
 
 out:
     spi_acts_stop_dma(cfg, data, data->rxdma_chan);
@@ -308,9 +313,10 @@ static int spi_acts_write_data_by_dma(const struct acts_spi_config *cfg,
             SPI_CTL_WR_MODE_WRITE | SPI_CTL_CLK_SEL_DMA |
             SPI_CTL_TX_DRQ_EN;
 
-    if(len < 8)
+    if(len < 8){
         spi->ctrl |=  SPI_CTL_DMS_SINGLE;
-
+    }
+    k_sem_reset(&data->dma_sync);
     ret = spi_acts_start_dma(cfg, data, data->txdma_chan, (uint8_t *)buf, len,
                  true, dma_done_callback);
     if (ret) {
@@ -318,13 +324,18 @@ static int spi_acts_write_data_by_dma(const struct acts_spi_config *cfg,
         goto out;
     }
 
+    if(data->call_back)
+        data->call_back(SPI_STAGE_PREPARE);
     /* wait until dma transfer is done */
 
     k_sem_take(&data->dma_sync, K_FOREVER);
 
     /* wait until TX FIFO empty */
-
-    while(!(spi->status & SPI_STATUS_TX_EMPTY));
+    if(!data->b_stop_send){
+        while(!(spi->status & SPI_STATUS_TX_EMPTY));
+    }
+    if(data->call_back)
+        data->call_back(SPI_STAGE_FINSHED);
 
 out:
     spi_acts_stop_dma(cfg, data, data->txdma_chan);
@@ -345,9 +356,11 @@ int spi_acts_write_read_data_by_dma(const struct acts_spi_config *cfg,
             SPI_CTL_WR_MODE_READ_WRITE | SPI_CTL_CLK_SEL_DMA |
             SPI_CTL_TX_DRQ_EN | SPI_CTL_RX_DRQ_EN;
 
-    if(len < 8)
+    if(len < 8){
         spi->ctrl |=  SPI_CTL_DMS_SINGLE;
+    }
 
+    k_sem_reset(&data->dma_sync);
     ret = spi_acts_start_dma(cfg, data, data->rxdma_chan, rx_buf, len,
                  false, dma_done_callback);
     if (ret) {
@@ -361,10 +374,12 @@ int spi_acts_write_read_data_by_dma(const struct acts_spi_config *cfg,
         LOG_ERR("faield to start dma tx chan 0x%x\n", data->txdma_chan);
         goto out;
     }
-
+    if(data->call_back)
+        data->call_back(SPI_STAGE_PREPARE);
     /* wait until dma transfer is done */
-
     k_sem_take(&data->dma_sync, K_FOREVER);
+    if(data->call_back)
+        data->call_back(SPI_STAGE_FINSHED);
 
 out:
     spi_acts_stop_dma(cfg, data, data->rxdma_chan);
@@ -529,7 +544,7 @@ int spi_acts_transfer_data(const struct acts_spi_config *cfg, struct acts_spi_da
         ret = spi_acts_read_data(cfg, data, ctx->rx_buf, chunk_size);
         spi_context_update_rx(ctx, 1, chunk_size);
     }
-    if (!ret) {
+    if (!ret && !data->b_stop_send) {
         spi_acts_wait_tx_complete(spi);
         if (spi->status & SPI_STATUS_ERR_MASK) {
             ret = -EIO;
@@ -629,7 +644,7 @@ int transceive(const struct device *dev,
     struct acts_spi_controller *spi = cfg->spi;
     int ret;
 
-	if ((tx_bufs && !tx_bufs->count) && (rx_bufs && !rx_bufs->count)){
+    if ((tx_bufs && !tx_bufs->count) && (rx_bufs && !rx_bufs->count)){
         return 0;
     }
 
@@ -640,7 +655,7 @@ int transceive(const struct device *dev,
     if (ret) {
         goto out;
     }
-
+    data->b_stop_send = false;
     /* Set buffers info */
 
     spi_context_buffers_setup(&data->ctx, tx_bufs, rx_bufs, 1);
@@ -652,6 +667,9 @@ int transceive(const struct device *dev,
         } else {
             spi->ctrl &= ~SPI_CTL_SS;
         }
+        data->call_back = NULL;
+    }else{
+        data->call_back = config->call_back;
     }
     do {
         ret = spi_acts_transfer_data(cfg, data);
@@ -664,6 +682,9 @@ int transceive(const struct device *dev,
             spi->ctrl |= SPI_CTL_SS;
         }
     }
+
+	if(data->b_stop_send)// clear fifo
+		spi->ctrl &= ~(SPI_CTL_RX_FIFO_EN | SPI_CTL_TX_FIFO_EN);
 
 out:
     spi_context_release(&data->ctx, ret);
@@ -698,7 +719,12 @@ static int spi_acts_release(const struct device *dev,
                const struct spi_config *config)
 {
     struct acts_spi_data *data = dev->data;
-    spi_context_unlock_unconditionally(&data->ctx);
+    if (SPI_OP_MODE_SLAVE == SPI_OP_MODE_GET(config->operation)){
+        data->b_stop_send = true;
+        k_sem_give(&data->dma_sync);
+    }else{
+        spi_context_unlock_unconditionally(&data->ctx);
+    }
     return 0;
 }
 

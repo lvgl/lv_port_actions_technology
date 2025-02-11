@@ -80,6 +80,11 @@ int spng_load_file(vg_lite_buffer_t * buffer, const char * path)
 	int fmt = SPNG_FMT_RGBA8;
 
 	spng_get_ihdr(ctx, &ihdr);
+	if (ihdr.width == 0 || ihdr.height == 0) {
+		rc = -EINVAL;
+		goto out_free_ctx;
+	}
+
 	if (ihdr.color_type == SPNG_COLOR_TYPE_GRAYSCALE && ihdr.bit_depth <= 8) {
 		buffer->format = VG_LITE_L8;
 		buffer->stride = ihdr.width;
@@ -132,6 +137,11 @@ int spng_load_memory(vg_lite_buffer_t * buffer, const void * png_bytes, size_t p
 	int fmt = SPNG_FMT_RGBA8;
 
 	spng_get_ihdr(ctx, &ihdr);
+	if (ihdr.width == 0 || ihdr.height == 0) {
+		rc = -EINVAL;
+		goto out_free_ctx;
+	}
+
 	if (ihdr.color_type == SPNG_COLOR_TYPE_GRAYSCALE && ihdr.bit_depth <= 8) {
 		buffer->format = VG_LITE_L8;
 		buffer->stride = ihdr.width;

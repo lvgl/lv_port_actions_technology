@@ -86,6 +86,8 @@ extern __printf_like(3, 0) int vsnprintk(char *str, size_t size,
 void trace_set_panic(void);
 void printk_dma_switch(int sw_dma);
 int uart_dma_send_buf(const uint8_t *buf, int len);
+int check_panic_exe(void);
+void set_panic_exe(int panic);
 #endif
 
 

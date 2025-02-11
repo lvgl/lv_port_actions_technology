@@ -450,11 +450,15 @@ menu "LVGL configuration"
 			default 32
 			depends on LV_USE_DRAW_VG_LITE
 
-		config LV_USE_DRAW_CUSTOM_GPU_INIT
-			bool "Use custom GPU external 'lv_draw_custom_gpu_init()' function"
-			default n
-			help
-				Enable init custorm GPU using external lv_draw_custom_gpu_init().
+		config LV_VG_LITE_BUFFER_ADDR_START
+			hex "VG-Lite buffer access start address."
+			default 0
+			depends on LV_USE_DRAW_VG_LITE
+
+		config LV_VG_LITE_BUFFER_ADDR_END
+			hex "VG-Lite buffer access start address."
+			default 0xffffffff
+			depends on LV_USE_DRAW_VG_LITE
 
 		config LV_USE_VECTOR_GRAPHIC
 			bool "Use Vector Graphic APIs"
@@ -462,6 +466,16 @@ menu "LVGL configuration"
 			select LV_USE_MATRIX
 			help
 				Enable drawing support vector graphic APIs.
+
+		config LV_USE_ACTIONS
+			bool "Draw on Actions Technology's platforms"
+			default n
+
+		config LV_USE_DRAW_ACTS2D
+			bool "Use Actions Technology's 2D GPU"
+			depends on LV_USE_ACTIONS
+			default n
+
 	endmenu
 
 	menu "Feature Configuration"

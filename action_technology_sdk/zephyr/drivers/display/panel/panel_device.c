@@ -926,7 +926,7 @@ static int _panel_pm_early_suspend(const struct device *dev, bool in_turnoff)
 	LOG_INF("panel early-suspend");
 
 	_panel_cancel_esd_check_work(data);
-	_panel_pm_notify(data, PM_DEVICE_ACTION_EARLY_SUSPEND);
+	_panel_pm_notify(data, in_turnoff ? PM_DEVICE_ACTION_TURN_OFF : PM_DEVICE_ACTION_EARLY_SUSPEND);
 	_panel_power_off(dev, in_turnoff);
 
 	data->pm_state = PM_DEVICE_STATE_SUSPENDED;

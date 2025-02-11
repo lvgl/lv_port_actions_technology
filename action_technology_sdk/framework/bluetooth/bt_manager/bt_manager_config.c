@@ -82,6 +82,15 @@ bool bt_manager_config_support_a2dp_aac(void)
 #endif
 }
 
+bool bt_manager_config_support_a2dp_trs_aac(void)
+{
+#ifdef CONFIG_BT_A2DP_TRS_AAC
+	return true;
+#else
+	return false;
+#endif
+}
+
 bool bt_manager_config_pts_test(void)
 {
 #ifdef  CONFIG_BT_PTS_TEST

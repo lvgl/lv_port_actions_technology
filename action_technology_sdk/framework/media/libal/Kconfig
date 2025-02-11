@@ -303,6 +303,22 @@ config ENCODER_OPUS_HW_ACCELERATION
 	help
 	This option enables the opus dsp hw acceleration .
 
+config ENCODER_AAC
+	bool
+	prompt "support aac encoder"
+	depends on ACTIONS_ENCODER
+	default n
+	help
+	This option enables the aac encoder.
+
+config ENCODER_AAC_HW_ACCELERATION
+	bool
+	prompt "support aac dsp hw acceleration encoder"
+	depends on ENCODER_AAC
+	default y
+	help
+	This option enables the aac dsp hw acceleration .
+
 config ENCODER_PCM
 	bool
 	prompt "support pcm encoder"

@@ -10,6 +10,9 @@
 
 #ifndef __TTS_MANAGER_H__
 #define __TTS_MANAGER_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @defgroup tts_manager_apis App tts Manager APIs
@@ -282,6 +285,8 @@ const char* tip_manager_get_playing_filename(void);
 /**
  * @} end defgroup tts_manager_apis
  */
-
+#ifdef __cplusplus
+}
+#endif
 #endif
 

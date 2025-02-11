@@ -90,5 +90,16 @@ static const  struct id_nor_delaychain_tbl chipid_dl_tbl[] = {
 			{1200, 46},
 		},
 	},
+	{
+		.chip_id = 0x19405e,	/*ZB25Q256A*/
+		.max_clk = CONFIG_SPI_FLASH_FREQ_MHZ,
+		.tbl = {
+			{950, 36},
+			{1000, 38},
+			{1100, 43},
+			{1150, 45},
+			{1200, 47},
+		},
+	},
 };
 

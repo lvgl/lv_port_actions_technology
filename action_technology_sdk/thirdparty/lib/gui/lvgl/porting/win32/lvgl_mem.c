@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/*********************
+ *      INCLUDES
+ *********************/
+
 #include "../../src/stdlib/lv_mem.h"
 
 #if LV_USE_STDLIB_MALLOC == LV_STDLIB_CUSTOM
@@ -38,10 +42,8 @@
 
 void lv_mem_init(void)
 {
-#if defined(CONFIG_UI_MEMORY_MANAGER)
-#  if !defined(CONFIG_UI_SERVICE)
+#if defined(CONFIG_UI_MEMORY_MANAGER) && !defined(CONFIG_UI_SERVICE)
     ui_mem_init();
-#  endif
 #endif
 }
 

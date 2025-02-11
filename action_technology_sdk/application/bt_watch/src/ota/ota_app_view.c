@@ -182,7 +182,7 @@ static int _ota_view_layout(view_data_t *view_data)
 	lv_obj_add_flag(data->obj_ota_bg, LV_OBJ_FLAG_CLICKABLE);
 	lv_obj_remove_flag(data->obj_ota_bg, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_GESTURE_BUBBLE);
 	/* hidden left and right view to receive callback function when BMP_VOL_BG was draw */
-	ui_manager_gesture_set_dir(0);
+	ui_gesture_lock_scroll();
 
 	ret = _create_progress_bar(data, data->obj_ota_bg);
 	if (ret)
@@ -229,8 +229,8 @@ static int _ota_view_delete(view_data_t *view_data)
 		SYS_LOG_INF("ok\n");
 	}
 
-	ui_manager_gesture_wait_release();
-	ui_manager_gesture_set_dir(GESTURE_ALL_BITFIELD);
+	ui_gesture_wait_release();
+	ui_gesture_unlock_scroll();
 	lv_indev_wait_release(lv_indev_get_act());
 
 	p_ota_view_data = NULL;

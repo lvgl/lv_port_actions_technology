@@ -1331,4 +1331,6 @@ int hostif_bt_le_ext_adv_stop(struct bt_le_ext_adv *adv);
 
 int hostif_bt_le_ext_adv_delete(struct bt_le_ext_adv *adv);
 
+int hostif_bt_le_per_adv_sync_comp_set(struct bt_le_per_adv_sync *per_adv_sync, uint8_t sync_enable, uint8_t rsv);
+
 #endif /* __HOST_INTERFACE_H */

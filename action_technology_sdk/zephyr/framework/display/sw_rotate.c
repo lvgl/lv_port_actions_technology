@@ -246,6 +246,64 @@ next_line:
 #endif /* CONFIG_GUI_API_BROM_LEOPARD */
 }
 
+void sw_transform_rgb565_over_argb8565(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	uint8_t * dst8 = dst;
+	uint16_t src_bytes_per_pixel = 2;
+	int32_t src_coord_x = matrix->tx +
+			y * matrix->shx + x * matrix->sx;
+	int32_t src_coord_y = matrix->ty +
+			y * matrix->sy + x * matrix->shy;
+
+	for (int j = h; j > 0; j--) {
+		int32_t p_x = src_coord_x;
+		int32_t p_y = src_coord_y;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		int x1 = 0, x2 = w - 1;
+
+		sw_transform_compoute_x_range(&x1, &x2, src_w, src_h,
+				p_x, p_y, matrix->sx, matrix->shy);
+		if (x1 > x2) {
+			goto next_line;
+		} else if (x1 > 0) {
+			p_x += matrix->sx * x1;
+			p_y += matrix->shy * x1;
+			tmp_dst += x1 * 3;
+		}
+
+		for (int i = x2 - x1; i >= 0; i--) {
+			int x = FLOOR_FIXEDPOINT16(p_x);
+			int y = FLOOR_FIXEDPOINT16(p_y);
+			int x_frac = p_x - FIXEDPOINT16(x);
+			int y_frac = p_y - FIXEDPOINT16(y);
+			uint8_t *src1 = (uint8_t *)src + y * src_pitch + x * src_bytes_per_pixel;
+			uint8_t *src2 = src1 + src_bytes_per_pixel;
+			uint8_t *src3 = src1 + src_pitch;
+			uint8_t *src4 = src2 + src_pitch;
+
+			uint16_t dst16 = bilinear_rgb565_fast_m6(*(uint16_t*)src1,
+					*(uint16_t*)src2, *(uint16_t*)src3, *(uint16_t*)src4,
+					x_frac >> 10, y_frac >> 10, 6);
+			tmp_dst[0] = dst16 & 0xff;
+			tmp_dst[1] = dst16 >> 8;
+			tmp_dst[2] = 0xff;
+			tmp_dst += 3;
+
+			p_x += matrix->sx;
+			p_y += matrix->shy;
+		}
+
+next_line:
+		src_coord_x += matrix->shx;
+		src_coord_y += matrix->sy;
+		dst8 += dst_pitch;
+	}
+}
+
 void sw_transform_rgb565_over_rgb888(void *dst, const void *src,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
 		int16_t x, int16_t y, uint16_t w, uint16_t h,
@@ -424,6 +482,70 @@ void sw_transform_rgb565a8_over_rgb565(void *dst, const void *src, const void *s
 			*tmp_dst = blend_argb8565_over_rgb565(*tmp_dst, (uint8_t *)&col24);
 
 			tmp_dst += 1;
+			p_x += matrix->sx;
+			p_y += matrix->shy;
+		}
+
+next_line:
+		src_coord_x += matrix->shx;
+		src_coord_y += matrix->sy;
+		dst8 += dst_pitch;
+	}
+}
+
+void sw_transform_rgb565a8_over_argb8565(void *dst, const void *src, const void *src_opa,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_opa_pitch,
+		uint16_t src_w, uint16_t src_h, int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	uint8_t * dst8 = dst;
+	uint16_t src_bytes_per_pixel = 2;
+	int32_t src_coord_x = matrix->tx +
+			y * matrix->shx + x * matrix->sx;
+	int32_t src_coord_y = matrix->ty +
+			y * matrix->sy + x * matrix->shy;
+
+	for (int j = h; j > 0; j--) {
+		int32_t p_x = src_coord_x;
+		int32_t p_y = src_coord_y;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		int x1 = 0, x2 = w - 1;
+
+		sw_transform_compoute_x_range(&x1, &x2, src_w, src_h,
+				p_x, p_y, matrix->sx, matrix->shy);
+		if (x1 > x2) {
+			goto next_line;
+		} else if (x1 > 0) {
+			p_x += matrix->sx * x1;
+			p_y += matrix->shy * x1;
+			tmp_dst += x1 * 3;
+		}
+
+		for (int i = x2 - x1; i >= 0; i--) {
+			int x = FLOOR_FIXEDPOINT16(p_x);
+			int y = FLOOR_FIXEDPOINT16(p_y);
+			int x_frac = p_x - FIXEDPOINT16(x);
+			int y_frac = p_y - FIXEDPOINT16(y);
+			uint8_t *src1 = (uint8_t *)src + y * src_pitch + x * src_bytes_per_pixel;
+			uint8_t *src2 = src1 + src_bytes_per_pixel;
+			uint8_t *src3 = src1 + src_pitch;
+			uint8_t *src4 = src2 + src_pitch;
+			uint8_t *src_a1 = (uint8_t *)src_opa + y * src_opa_pitch + x;
+			uint8_t *src_a2 = src1 + 1;
+			uint8_t *src_a3 = src1 + src_opa_pitch;
+			uint8_t *src_a4 = src2 + src_opa_pitch;
+			sw_color16a8_t col24;
+
+			col24.rgb = bilinear_rgb565_fast_m6(*(uint16_t*)src1,
+					*(uint16_t*)src2, *(uint16_t*)src3, *(uint16_t*)src4,
+					x_frac >> 10, y_frac >> 10, 6);
+			col24.a = bilinear_a8_fast_m8(*src_a1, *src_a2, *src_a3, *src_a4,
+					x_frac >> 8, y_frac >> 8, 8);
+
+			blend_argb8565_over_argb8565(tmp_dst, (uint8_t *)&col24);
+
+			tmp_dst += 3;
 			p_x += matrix->sx;
 			p_y += matrix->shy;
 		}
@@ -634,6 +756,63 @@ next_line:
 #endif /* CONFIG_GUI_API_BROM_LEOPARD */
 }
 
+void sw_transform_argb8565_over_argb8565(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	uint8_t * dst8 = dst;
+	uint16_t src_bytes_per_pixel = 3;
+	int32_t src_coord_x = matrix->tx +
+			y * matrix->shx + x * matrix->sx;
+	int32_t src_coord_y = matrix->ty +
+			y * matrix->sy + x * matrix->shy;
+
+	for (int j = h; j > 0; j--) {
+		int32_t p_x = src_coord_x;
+		int32_t p_y = src_coord_y;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		int x1 = 0, x2 = w - 1;
+
+		sw_transform_compoute_x_range(&x1, &x2, src_w, src_h,
+				p_x, p_y, matrix->sx, matrix->shy);
+		if (x1 > x2) {
+			goto next_line;
+		} else if (x1 > 0) {
+			p_x += matrix->sx * x1;
+			p_y += matrix->shy * x1;
+			tmp_dst += x1 * 3;
+		}
+
+		for (int i = x2 - x1; i >= 0; i--) {
+			int x = FLOOR_FIXEDPOINT16(p_x);
+			int y = FLOOR_FIXEDPOINT16(p_y);
+			int x_frac = p_x - FIXEDPOINT16(x);
+			int y_frac = p_y - FIXEDPOINT16(y);
+			uint8_t *src1 = (uint8_t *)src + y * src_pitch + x * src_bytes_per_pixel;
+			uint8_t *src2 = src1 + src_bytes_per_pixel;
+			uint8_t *src3 = src1 + src_pitch;
+			uint8_t *src4 = src2 + src_pitch;
+			uint8_t result[3];
+
+			bilinear_argb8565_fast_m6(result, src1, src2, src3, src4,
+					x_frac >> 10, y_frac >> 10, 6);
+
+			blend_argb8565_over_argb8565(tmp_dst, result);
+
+			tmp_dst += 3;
+			p_x += matrix->sx;
+			p_y += matrix->shy;
+		}
+
+next_line:
+		src_coord_x += matrix->shx;
+		src_coord_y += matrix->sy;
+		dst8 += dst_pitch;
+	}
+}
+
 void sw_transform_argb8565_over_rgb888(void *dst, const void *src,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
 		int16_t x, int16_t y, uint16_t w, uint16_t h,
@@ -822,6 +1001,63 @@ next_line:
 		dst8 += dst_pitch;
 	}
 #endif /* CONFIG_GUI_API_BROM_LEOPARD */
+}
+
+void sw_transform_argb6666_over_argb8565(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	uint8_t * dst8 = dst;
+	uint16_t src_bytes_per_pixel = 3;
+	int32_t src_coord_x = matrix->tx +
+			y * matrix->shx + x * matrix->sx;
+	int32_t src_coord_y = matrix->ty +
+			y * matrix->sy + x * matrix->shy;
+
+	for (int j = h; j > 0; j--) {
+		int32_t p_x = src_coord_x;
+		int32_t p_y = src_coord_y;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		int x1 = 0, x2 = w - 1;
+
+		sw_transform_compoute_x_range(&x1, &x2, src_w, src_h,
+				p_x, p_y, matrix->sx, matrix->shy);
+		if (x1 > x2) {
+			goto next_line;
+		} else if (x1 > 0) {
+			p_x += matrix->sx * x1;
+			p_y += matrix->shy * x1;
+			tmp_dst += x1 * 3;
+		}
+
+		for (int i = x2 - x1; i >= 0; i--) {
+			int x = FLOOR_FIXEDPOINT16(p_x);
+			int y = FLOOR_FIXEDPOINT16(p_y);
+			int x_frac = p_x - FIXEDPOINT16(x);
+			int y_frac = p_y - FIXEDPOINT16(y);
+			uint8_t *src1 = (uint8_t *)src + y * src_pitch + x * src_bytes_per_pixel;
+			uint8_t *src2 = src1 + src_bytes_per_pixel;
+			uint8_t *src3 = src1 + src_pitch;
+			uint8_t *src4 = src2 + src_pitch;
+			uint8_t result[3];
+
+			bilinear_argb6666_fast_m6(result, src1, src2, src3, src4,
+					x_frac >> 10, y_frac >> 10, 6);
+
+			blend_argb6666_over_argb8565(tmp_dst, result);
+
+			tmp_dst += 3;
+			p_x += matrix->sx;
+			p_y += matrix->shy;
+		}
+
+next_line:
+		src_coord_x += matrix->shx;
+		src_coord_y += matrix->sy;
+		dst8 += dst_pitch;
+	}
 }
 
 void sw_transform_argb6666_over_rgb888(void *dst, const void *src,
@@ -1022,6 +1258,63 @@ next_line:
 #endif /* CONFIG_GUI_API_BROM_LEOPARD */
 }
 
+void sw_transform_argb8888_over_argb8565(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	uint8_t * dst8 = dst;
+	uint16_t src_bytes_per_pixel = 4;
+	int32_t src_coord_x = matrix->tx +
+			y * matrix->shx + x * matrix->sx;
+	int32_t src_coord_y = matrix->ty +
+			y * matrix->sy + x * matrix->shy;
+
+	for (int j = h; j > 0; j--) {
+		int32_t p_x = src_coord_x;
+		int32_t p_y = src_coord_y;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		int x1 = 0, x2 = w - 1;
+
+		sw_transform_compoute_x_range(&x1, &x2, src_w, src_h,
+				p_x, p_y, matrix->sx, matrix->shy);
+		if (x1 > x2) {
+			goto next_line;
+		} else if (x1 > 0) {
+			p_x += matrix->sx * x1;
+			p_y += matrix->shy * x1;
+			tmp_dst += x1 * 3;
+		}
+
+		for (int i = x2 - x1; i >= 0; i--) {
+			int x = FLOOR_FIXEDPOINT16(p_x);
+			int y = FLOOR_FIXEDPOINT16(p_y);
+			int x_frac = p_x - FIXEDPOINT16(x);
+			int y_frac = p_y - FIXEDPOINT16(y);
+			uint8_t *src1 = (uint8_t *)src + y * src_pitch + x * src_bytes_per_pixel;
+			uint8_t *src2 = src1 + src_bytes_per_pixel;
+			uint8_t *src3 = src1 + src_pitch;
+			uint8_t *src4 = src2 + src_pitch;
+
+			uint32_t color = bilinear_argb8888_fast_m8(*(uint32_t*)src1,
+					*(uint32_t*)src2, *(uint32_t*)src3, *(uint32_t*)src4,
+					x_frac >> 8, y_frac >> 8, 8);
+
+			blend_argb8888_over_argb8565(tmp_dst, color);
+
+			tmp_dst += 3;
+			p_x += matrix->sx;
+			p_y += matrix->shy;
+		}
+
+next_line:
+		src_coord_x += matrix->shx;
+		src_coord_y += matrix->sy;
+		dst8 += dst_pitch;
+	}
+}
+
 void sw_transform_argb8888_over_rgb888(void *dst, const void *src,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
 		int16_t x, int16_t y, uint16_t w, uint16_t h,
@@ -1214,6 +1507,65 @@ next_line:
 	}
 }
 
+void sw_transform_xrgb8888_over_argb8565(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	uint8_t * dst8 = dst;
+	uint16_t src_bytes_per_pixel = 4;
+	int32_t src_coord_x = matrix->tx +
+			y * matrix->shx + x * matrix->sx;
+	int32_t src_coord_y = matrix->ty +
+			y * matrix->sy + x * matrix->shy;
+
+	for (int j = h; j > 0; j--) {
+		int32_t p_x = src_coord_x;
+		int32_t p_y = src_coord_y;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		int x1 = 0, x2 = w - 1;
+
+		sw_transform_compoute_x_range(&x1, &x2, src_w, src_h,
+				p_x, p_y, matrix->sx, matrix->shy);
+		if (x1 > x2) {
+			goto next_line;
+		} else if (x1 > 0) {
+			p_x += matrix->sx * x1;
+			p_y += matrix->shy * x1;
+			tmp_dst += x1 * 3;
+		}
+
+		for (int i = x2 - x1; i >= 0; i--) {
+			int x = FLOOR_FIXEDPOINT16(p_x);
+			int y = FLOOR_FIXEDPOINT16(p_y);
+			int x_frac = p_x - FIXEDPOINT16(x);
+			int y_frac = p_y - FIXEDPOINT16(y);
+			uint8_t *src1 = (uint8_t *)src + y * src_pitch + x * src_bytes_per_pixel;
+			uint8_t *src2 = src1 + src_bytes_per_pixel;
+			uint8_t *src3 = src1 + src_pitch;
+			uint8_t *src4 = src2 + src_pitch;
+
+			uint32_t color = bilinear_argb8888_fast_m8(*(uint32_t*)src1,
+					*(uint32_t*)src2, *(uint32_t*)src3, *(uint32_t*)src4,
+					x_frac >> 8, y_frac >> 8, 8);
+
+			tmp_dst[0] = ((color & 0xf8) >> 3) | ((color & 0x1c00) >> 5);
+			tmp_dst[1] = ((color & 0xe000) >> 13) | ((color & 0xf80000) >> 16);
+			tmp_dst[2] = 0xff;
+			tmp_dst += 3;
+
+			p_x += matrix->sx;
+			p_y += matrix->shy;
+		}
+
+next_line:
+		src_coord_x += matrix->shx;
+		src_coord_y += matrix->sy;
+		dst8 += dst_pitch;
+	}
+}
+
 void sw_transform_xrgb8888_over_rgb888(void *dst, const void *src,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
 		int16_t x, int16_t y, uint16_t w, uint16_t h,
@@ -1375,6 +1727,63 @@ void sw_transform_rgb888_over_rgb565(void *dst, const void *src,
 					((color & 0x0000f8) >> 3);
 
 			tmp_dst += 1;
+			p_x += matrix->sx;
+			p_y += matrix->shy;
+		}
+
+next_line:
+		src_coord_x += matrix->shx;
+		src_coord_y += matrix->sy;
+		dst8 += dst_pitch;
+	}
+}
+
+void sw_transform_rgb888_over_argb8565(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	uint8_t * dst8 = dst;
+	uint16_t src_bytes_per_pixel = 3;
+	int32_t src_coord_x = matrix->tx +
+			y * matrix->shx + x * matrix->sx;
+	int32_t src_coord_y = matrix->ty +
+			y * matrix->sy + x * matrix->shy;
+
+	for (int j = h; j > 0; j--) {
+		int32_t p_x = src_coord_x;
+		int32_t p_y = src_coord_y;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		int x1 = 0, x2 = w - 1;
+
+		sw_transform_compoute_x_range(&x1, &x2, src_w, src_h,
+				p_x, p_y, matrix->sx, matrix->shy);
+		if (x1 > x2) {
+			goto next_line;
+		} else if (x1 > 0) {
+			p_x += matrix->sx * x1;
+			p_y += matrix->shy * x1;
+			tmp_dst += x1 * 3;
+		}
+
+		for (int i = x2 - x1; i >= 0; i--) {
+			int x = FLOOR_FIXEDPOINT16(p_x);
+			int y = FLOOR_FIXEDPOINT16(p_y);
+			int x_frac = p_x - FIXEDPOINT16(x);
+			int y_frac = p_y - FIXEDPOINT16(y);
+			uint8_t *src1 = (uint8_t *)src + y * src_pitch + x * src_bytes_per_pixel;
+			uint8_t *src2 = src1 + src_bytes_per_pixel;
+			uint8_t *src3 = src1 + src_pitch;
+			uint8_t *src4 = src2 + src_pitch;
+
+			uint32_t color = bilinear_rgb888_fast_m8(src1,
+					src2, src3, src4, x_frac >> 8, y_frac >> 8, 8);
+			tmp_dst[0] = ((color & 0xf8) >> 3) | ((color & 0x1c00) >> 5);
+			tmp_dst[1] = ((color & 0xe000) >> 13) | ((color & 0xf80000) >> 16);
+			tmp_dst[2] = 0xff;
+			tmp_dst += 3;
+
 			p_x += matrix->sx;
 			p_y += matrix->shy;
 		}
@@ -1549,6 +1958,68 @@ void sw_transform_a8_over_rgb565(void *dst, const void *src, uint32_t src_color,
 			*tmp_dst = blend_argb8888_over_rgb565(*tmp_dst, src_color);
 
 			tmp_dst += 1;
+			p_x += matrix->sx;
+			p_y += matrix->shy;
+		}
+
+next_line:
+		src_coord_x += matrix->shx;
+		src_coord_y += matrix->sy;
+		dst8 += dst_pitch;
+	}
+}
+
+void sw_transform_a8_over_argb8565(void *dst, const void *src, uint32_t src_color,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	uint8_t * dst8 = dst;
+	uint8_t src_opa = src_color >> 24;
+	uint16_t src_bytes_per_pixel = 1;
+	int32_t src_coord_x = matrix->tx +
+			y * matrix->shx + x * matrix->sx;
+	int32_t src_coord_y = matrix->ty +
+			y * matrix->sy + x * matrix->shy;
+
+	for (int j = h; j > 0; j--) {
+		int32_t p_x = src_coord_x;
+		int32_t p_y = src_coord_y;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		int x1 = 0, x2 = w - 1;
+
+		sw_transform_compoute_x_range(&x1, &x2, src_w, src_h,
+				p_x, p_y, matrix->sx, matrix->shy);
+		if (x1 > x2) {
+			goto next_line;
+		} else if (x1 > 0) {
+			p_x += matrix->sx * x1;
+			p_y += matrix->shy * x1;
+			tmp_dst += x1 * 3;
+		}
+
+		for (int i = x2 - x1; i >= 0; i--) {
+			int x = FLOOR_FIXEDPOINT16(p_x);
+			int y = FLOOR_FIXEDPOINT16(p_y);
+			int x_frac = p_x - FIXEDPOINT16(x);
+			int y_frac = p_y - FIXEDPOINT16(y);
+			uint8_t *src1 = (uint8_t *)src + y * src_pitch + x * src_bytes_per_pixel;
+			uint8_t *src2 = src1 + src_bytes_per_pixel;
+			uint8_t *src3 = src1 + src_pitch;
+			uint8_t *src4 = src2 + src_pitch;
+
+			uint32_t opa = bilinear_a8_fast_m8(*src1,
+					*src2, *src3, *src4, x_frac >> 8, y_frac >> 8, 8);
+
+			if (src_opa < 255)
+				opa = (opa * src_opa) >> 8;
+
+			src_color = (src_color & 0xffffff) | (opa << 24);
+
+			blend_argb8888_over_argb8565(tmp_dst, src_color);
+
+			tmp_dst += 3;
 			p_x += matrix->sx;
 			p_y += matrix->shy;
 		}
@@ -1737,6 +2208,63 @@ void sw_transform_index8_over_rgb565(void *dst, const void *src, const uint32_t 
 			*tmp_dst = blend_argb8888_over_rgb565(*tmp_dst, color);
 
 			tmp_dst += 1;
+			p_x += matrix->sx;
+			p_y += matrix->shy;
+		}
+
+next_line:
+		src_coord_x += matrix->shx;
+		src_coord_y += matrix->sy;
+		dst8 += dst_pitch;
+	}
+}
+
+void sw_transform_index8_over_argb8565(void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	uint8_t * dst8 = dst;
+	uint16_t src_bytes_per_pixel = 1;
+	int32_t src_coord_x = matrix->tx +
+			y * matrix->shx + x * matrix->sx;
+	int32_t src_coord_y = matrix->ty +
+			y * matrix->sy + x * matrix->shy;
+
+	for (int j = h; j > 0; j--) {
+		int32_t p_x = src_coord_x;
+		int32_t p_y = src_coord_y;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		int x1 = 0, x2 = w - 1;
+
+		sw_transform_compoute_x_range(&x1, &x2, src_w, src_h,
+				p_x, p_y, matrix->sx, matrix->shy);
+		if (x1 > x2) {
+			goto next_line;
+		} else if (x1 > 0) {
+			p_x += matrix->sx * x1;
+			p_y += matrix->shy * x1;
+			tmp_dst += x1 * 3;
+		}
+
+		for (int i = x2 - x1; i >= 0; i--) {
+			int x = FLOOR_FIXEDPOINT16(p_x);
+			int y = FLOOR_FIXEDPOINT16(p_y);
+			int x_frac = p_x - FIXEDPOINT16(x);
+			int y_frac = p_y - FIXEDPOINT16(y);
+			uint8_t *src1 = (uint8_t *)src + y * src_pitch + x * src_bytes_per_pixel;
+			uint8_t *src2 = src1 + src_bytes_per_pixel;
+			uint8_t *src3 = src1 + src_pitch;
+			uint8_t *src4 = src2 + src_pitch;
+
+			uint32_t color = bilinear_argb8888_fast_m8(src_clut[*src1],
+					src_clut[*src2], src_clut[*src3], src_clut[*src4],
+					x_frac >> 8, y_frac >> 8, 8);
+
+			blend_argb8888_over_argb8565(tmp_dst, color);
+
+			tmp_dst += 3;
 			p_x += matrix->sx;
 			p_y += matrix->shy;
 		}
@@ -1938,6 +2466,75 @@ next_line:
 	}
 }
 
+static void sw_transform_index124_over_argb8565(
+		void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		uint8_t src_bpp, int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	uint8_t * dst8 = dst;
+	int32_t src_coord_x = matrix->tx +
+			y * matrix->shx + x * matrix->sx;
+	int32_t src_coord_y = matrix->ty +
+			y * matrix->sy + x * matrix->shy;
+	const uint8_t src_bmask = (1 << src_bpp) - 1;
+	const uint8_t src_bofs_max = 8 - src_bpp;
+
+	for (int j = h; j > 0; j--) {
+		int32_t p_x = src_coord_x;
+		int32_t p_y = src_coord_y;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		int x1 = 0, x2 = w - 1;
+
+		sw_transform_compoute_x_range(&x1, &x2, src_w, src_h,
+				p_x, p_y, matrix->sx, matrix->shy);
+		if (x1 > x2) {
+			goto next_line;
+		} else if (x1 > 0) {
+			p_x += matrix->sx * x1;
+			p_y += matrix->shy * x1;
+			tmp_dst += x1 * 3;
+		}
+
+		for (int i = x2 - x1; i >= 0; i--) {
+			int x = FLOOR_FIXEDPOINT16(p_x);
+			int y = FLOOR_FIXEDPOINT16(p_y);
+			int x_frac = p_x - FIXEDPOINT16(x);
+			int y_frac = p_y - FIXEDPOINT16(y);
+			uint16_t x_ofs1 = x * src_bpp;
+			uint16_t x_ofs2 = x * src_bpp + src_bpp;
+			uint8_t *src1 = (uint8_t *)src + y * src_pitch + (x_ofs1 >> 3);
+			uint8_t *src2 = (uint8_t *)src + y * src_pitch + (x_ofs2 >> 3);
+			uint8_t *src3 = src1 + src_pitch;
+			uint8_t *src4 = src2 + src_pitch;
+
+			x_ofs1 = src_bofs_max - (x_ofs1 & 0x7);
+			x_ofs2 = src_bofs_max - (x_ofs2 & 0x7);
+
+			uint8_t src1_idx = (*src1 >> x_ofs1) & src_bmask;
+			uint8_t src2_idx = (*src2 >> x_ofs2) & src_bmask;
+			uint8_t src3_idx = (*src3 >> x_ofs1) & src_bmask;
+			uint8_t src4_idx = (*src4 >> x_ofs2) & src_bmask;
+
+			uint32_t color = bilinear_argb8888_fast_m8(src_clut[src1_idx],
+					src_clut[src2_idx], src_clut[src3_idx], src_clut[src4_idx],
+					x_frac >> 8, y_frac >> 8, 8);
+
+			blend_argb8888_over_argb8565(tmp_dst, color);
+
+			tmp_dst += 3;
+			p_x += matrix->sx;
+			p_y += matrix->shy;
+		}
+
+next_line:
+		src_coord_x += matrix->shx;
+		src_coord_y += matrix->sy;
+		dst8 += dst_pitch;
+	}
+}
+
 static void sw_transform_index124_over_rgb888(
 		void *dst, const void *src, const uint32_t *src_clut,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
@@ -2094,6 +2691,16 @@ void sw_transform_index4_over_rgb565(
 			src_w, src_h, 4, x, y, w, h, matrix);
 }
 
+void sw_transform_index4_over_argb8565(
+		void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	sw_transform_index124_over_argb8565(dst, src, src_clut, dst_pitch, src_pitch,
+			src_w, src_h, 4, x, y, w, h, matrix);
+}
+
 void sw_transform_index4_over_rgb888(
 		void *dst, const void *src, const uint32_t *src_clut,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
@@ -2124,6 +2731,16 @@ void sw_transform_index2_over_rgb565(
 			src_w, src_h, 2, x, y, w, h, matrix);
 }
 
+void sw_transform_index2_over_argb8565(
+		void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	sw_transform_index124_over_argb8565(dst, src, src_clut, dst_pitch, src_pitch,
+			src_w, src_h, 2, x, y, w, h, matrix);
+}
+
 void sw_transform_index2_over_rgb888(
 		void *dst, const void *src, const uint32_t *src_clut,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
@@ -2151,6 +2768,16 @@ void sw_transform_index1_over_rgb565(
 		const sw_matrix_t *matrix)
 {
 	sw_transform_index124_over_rgb565(dst, src, src_clut, dst_pitch, src_pitch,
+			src_w, src_h, 1, x, y, w, h, matrix);
+}
+
+void sw_transform_index1_over_argb8565(
+		void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t src_w, uint16_t src_h,
+		int16_t x, int16_t y, uint16_t w, uint16_t h,
+		const sw_matrix_t *matrix)
+{
+	sw_transform_index124_over_argb8565(dst, src, src_clut, dst_pitch, src_pitch,
 			src_w, src_h, 1, x, y, w, h, matrix);
 }
 

@@ -182,6 +182,10 @@ void msg_pool_dump(void(*dump_fn)(os_tid_t sender, os_tid_t receiver,
 {
 	struct msg_pool *pool = &globle_msg_pool;
 
+#ifdef CONFIG_ACTIONS_PRINTK_DMA
+	printk_dma_switch(0);
+#endif
+
 	printk("mbox free msg cnt %d/%d\n", msg_pool_get_free_msg_num(), pool->pool_size);
 	for (uint8_t i = 0 ; i < pool->pool_size; i++) {
 		struct msg_info * msg_content = &pool->pool[i];
@@ -213,6 +217,10 @@ void msg_pool_dump(void(*dump_fn)(os_tid_t sender, os_tid_t receiver,
 #endif
 		}
 	}
+
+#ifdef CONFIG_ACTIONS_PRINTK_DMA
+	printk_dma_switch(1);
+#endif
 }
 
 int os_send_async_msg_discardable(void *receiver, void *msg, int msg_size)

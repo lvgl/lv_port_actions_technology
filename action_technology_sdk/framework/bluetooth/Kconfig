@@ -215,6 +215,15 @@ config BT_A2DP_TRS
     help
     This option enables a2dp trs.
 
+config BT_A2DP_TRS_AAC
+    bool
+    prompt "bt manager Support a2dp trs, use AAC"
+	depends on BT_MANAGER
+	depends on BT_A2DP_TRS
+    default n
+    help
+    This option enables a2dp trs aac.
+
 config BT_A2DP_SINK
     bool
     prompt "bt manager Support a2dp sink"

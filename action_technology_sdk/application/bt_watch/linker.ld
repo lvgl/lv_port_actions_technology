@@ -50,7 +50,7 @@ MEMORY
 	SRAM                  (wx) : ORIGIN = CONFIG_SRAM_BASE_ADDRESS,                 LENGTH = RAM_SIZE
 	PSRAM                 (wx) : ORIGIN = CONFIG_PSRAM_BASE_ADDRESS,                LENGTH = CONFIG_PSRAM_SIZE * 1K
 	SHARE_RAM             (wx) : ORIGIN = 0x2FF1AE00,                               LENGTH = 0x51FF
-	DSP_SRAM              (wx) : ORIGIN = 0x30044000,                               LENGTH = 0x14000
+	DSP_SRAM              (wx) : ORIGIN = 0x30018000,                               LENGTH = 0x40000
 
     /* Used by and documented in include/linker/intlist.ld */
 	IDT_LIST  (wx)      : ORIGIN = (RAM_ADDR + RAM_SIZE), LENGTH = 2K
@@ -326,6 +326,9 @@ SECTIONS
 	{
 		. = ALIGN(4);
 		 *(.sleep.data*)
+#ifdef CONFIG_USING_OPULINKS_LIB
+		 *(.wifi.data*)
+#endif
 	}GROUP_DATA_LINK_IN(SRAM, ROMABLE_REGION)
 	_sram_data_end = .;
 	_sram_data_ram_size = _sram_data_end - _sram_data_start;

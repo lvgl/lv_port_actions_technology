@@ -14,23 +14,25 @@
 #include <drivers/input/input_dev.h>
 #include <utils/acts_ringbuf.h>
 #ifdef CONFIG_DVFS
-#include <dvfs.h>
+    #include <dvfs.h>
 #endif
 #include <board.h>
 #include "lvgl_inner.h"
 
 #ifndef CONFIG_ACTS_RING_BUFFER
-#  error "CONFIG_ACTS_RING_BUFFER is required"
+    #error "CONFIG_ACTS_RING_BUFFER is required"
 #endif
 
 /*********************
  *      DEFINES
  *********************/
+
 #define CONFIG_LVGL_POINTER_COUNT 8
 
 /**********************
  *      TYPEDEFS
  **********************/
+
 typedef struct lvgl_pointer_user_data {
     const struct device *input_dev;    /* display device */
     struct k_work input_work;
@@ -45,6 +47,7 @@ typedef struct lvgl_pointer_user_data {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
+
 static void _pointer_input_work_handler(struct k_work *work);
 static void _lvgl_pointer_read_cb(lv_indev_t * indev, lv_indev_data_t *data);
 
@@ -55,6 +58,7 @@ static void _pointer_input_boost_work_handler(struct k_work *work);
 /**********************
  *  STATIC VARIABLES
  **********************/
+
 static lv_indev_data_t s_pointer_scan_buf_mem[CONFIG_LVGL_POINTER_COUNT];
 static ACTS_RINGBUF_DEFINE(s_pointer_scan_buf, s_pointer_scan_buf_mem, sizeof(s_pointer_scan_buf_mem));
 
@@ -63,11 +67,12 @@ static lvgl_pointer_user_data_t s_pointer_data;
 /**********************
  *   GLOBAL FUNCTIONS
  **********************/
+
 void lv_port_indev_pointer_scan(void)
 {
     lvgl_pointer_user_data_t *pointer_data = &s_pointer_data;
 
-    if (pointer_data->input_dev) {
+    if(pointer_data->input_dev) {
         k_work_submit(&pointer_data->input_work);
     }
 }
@@ -76,7 +81,7 @@ int lv_port_indev_pointer_init(void)
 {
     lvgl_pointer_user_data_t *pointer_data = &s_pointer_data;
     pointer_data->input_dev = device_get_binding(CONFIG_TPKEY_DEV_NAME);
-    if (pointer_data->input_dev == NULL) {
+    if(pointer_data->input_dev == NULL) {
         LV_LOG_ERROR("Failed to get input device " CONFIG_TPKEY_DEV_NAME);
         return -ENODEV;
     }
@@ -87,7 +92,7 @@ int lv_port_indev_pointer_init(void)
 #endif
 
     lv_indev_t *indev = lv_indev_create();
-    if (indev == NULL) {
+    if(indev == NULL) {
         LV_LOG_ERROR("Failed to create input pointer.");
         return -ENOMEM;
     }
@@ -117,21 +122,21 @@ static void _pointer_input_boost_work_handler(struct k_work *work)
 
 static void _pointer_input_boost(lvgl_pointer_user_data_t *pointer_data, bool boosted)
 {
-    if (boosted == pointer_data->boost_requested)
+    if(boosted == pointer_data->boost_requested)
         return;
 
     pointer_data->boost_requested = boosted;
 
-    if (boosted) {
+    if(boosted) {
         k_delayed_work_cancel(&pointer_data->boost_work);
 
-        if (!pointer_data->is_boosted) {
+        if(!pointer_data->is_boosted) {
             LV_LOG_INFO("input boost start");
             pointer_data->is_boosted = true;
             dvfs_set_level(DVFS_LEVEL_HIGH_PERFORMANCE, "lv_input");
         }
     }
-    else if (pointer_data->is_boosted) {
+    else if(pointer_data->is_boosted) {
         k_delayed_work_submit(&pointer_data->boost_work, K_MSEC(2000));
     }
 }
@@ -155,19 +160,19 @@ static void _pointer_input_work_handler(struct k_work *work)
     indev_data.state = (val.point.pessure_value == 1) ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED;
 
     /* drop redundant released point */
-    if (indev_data.state == LV_INDEV_STATE_RELEASED && prev_state == LV_INDEV_STATE_RELEASED) {
+    if(indev_data.state == LV_INDEV_STATE_RELEASED && prev_state == LV_INDEV_STATE_RELEASED) {
         goto out_boost;
     }
 
-    if (acts_ringbuf_put(&s_pointer_scan_buf, &indev_data, sizeof(indev_data)) != sizeof(indev_data)) {
+    if(acts_ringbuf_put(&s_pointer_scan_buf, &indev_data, sizeof(indev_data)) != sizeof(indev_data)) {
         drop_cnt++;
     }
     else {
         prev_state = indev_data.state;
     }
 
-    if (++put_cnt == 0) { /* about 4s for LCD refresh-rate 60 Hz */
-        if (drop_cnt > 0) {
+    if(++put_cnt == 0) { /* about 4s for LCD refresh-rate 60 Hz */
+        if(drop_cnt > 0) {
             LV_LOG_WARN("%u pointer dropped\n", drop_cnt);
             drop_cnt = 0;
         }
@@ -191,7 +196,7 @@ static void _lvgl_pointer_read_cb(lv_indev_t * indev, lv_indev_data_t *data)
 
     lv_indev_data_t curr;
 
-    if (acts_ringbuf_get(&s_pointer_scan_buf, &curr, sizeof(curr)) == sizeof(curr)) {
+    if(acts_ringbuf_get(&s_pointer_scan_buf, &curr, sizeof(curr)) == sizeof(curr)) {
         prev = curr;
     }
 

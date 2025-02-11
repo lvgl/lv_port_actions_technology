@@ -209,9 +209,9 @@ uint32_t lv_anim_speed_clamped(uint32_t speed, uint32_t min_time, uint32_t max_t
         LV_LOG_WARN("min_time is truncated to 10000 (was %"LV_PRIu32")", min_time);
         min_time = 10230;
     }
-    if(max_time > 10000) {
-        LV_LOG_WARN("max_time is truncated to 10000 (was %"LV_PRIu32")", max_time);
-        max_time = 10230;
+    if(max_time > 20000) {
+        LV_LOG_WARN("max_time is truncated to 100000 (was %"LV_PRIu32")", max_time);
+        max_time = 20470;
     }
 
     /*Lower the resolution to fit the 0.1023 range*/
@@ -227,7 +227,7 @@ uint32_t lv_anim_speed_clamped(uint32_t speed, uint32_t min_time, uint32_t max_t
 
 uint32_t lv_anim_speed(uint32_t speed)
 {
-    return lv_anim_speed_clamped(speed, 0, 10000);
+    return lv_anim_speed_clamped(speed, 0, 20000);
 }
 
 uint32_t lv_anim_speed_to_time(uint32_t speed, int32_t start, int32_t end)
@@ -654,7 +654,7 @@ static uint32_t convert_speed_to_time(uint32_t speed_or_time, int32_t start, int
     uint32_t d    = LV_ABS(start - end);
     uint32_t speed = speed_or_time & 0x3FF;
     uint32_t time = (d * 100) / speed; /*Speed is in 10 units per sec*/
-    uint32_t max_time = (speed_or_time >> 20) & 0x3FF;
+    uint32_t max_time = (speed_or_time >> 20) & 0x7FF;
     uint32_t min_time = (speed_or_time >> 10) & 0x3FF;
 
     return LV_CLAMP(min_time * 10, time, max_time * 10);

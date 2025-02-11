@@ -61,6 +61,7 @@ typedef struct applist_view_presenter {
 #ifdef CONFIG_THIRD_PARTY_APP
 	void (*open_third_party_app)(void);
 #endif
+	void (*open_awk_map)(void);
 } applist_view_presenter_t;
 extern const applist_view_presenter_t applist_view_presenter;
 

@@ -67,4 +67,6 @@ bool bt_transmit_check_dev_connected(uint8_t *addr);
 
 int bt_transmit_sync_vol_to_remote(void);
 
+int bt_transmit_need_effect(void);
+
 #endif  /* _MPLAYER_H */

@@ -90,6 +90,10 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\lv_image_decoder.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\lv_image_decoder_private.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\lv_image_dsc.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_acts_decoder.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_draw_actions.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_draw_acts2d.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_draw_actsw.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\nxp\pxp\lv_draw_pxp.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\nxp\pxp\lv_pxp_cfg.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\nxp\pxp\lv_pxp_osa.h" />
@@ -467,8 +471,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\widgets\tileview\lv_tileview_private.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\widgets\win\lv_win.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\widgets\win\lv_win_private.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lvgl_decoder.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lvgl_gpu.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\lvgl_port.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\lvgl_utils.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\win32\lv_conf.h" />
@@ -499,6 +501,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\lv_draw_triangle.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\lv_draw_vector.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\lv_image_decoder.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_acts_decoder.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_draw_actions.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_draw_acts2d.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_draw_actsw.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\nxp\pxp\lv_draw_buf_pxp.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\nxp\pxp\lv_draw_pxp.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\nxp\pxp\lv_draw_pxp_fill.c" />
@@ -837,10 +843,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\widgets\textarea\lv_textarea.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\widgets\tileview\lv_tileview.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\widgets\win\lv_win.c" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lvgl_decoder.c" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lvgl_gpu.c" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lvgl_gpu_dma2d.c" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lvgl_gpu_sw.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\lvgl_port.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\lvgl_utils.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\win32\lvgl.c" />

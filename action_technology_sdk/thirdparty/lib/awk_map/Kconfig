@@ -1,0 +1,30 @@
+# Kconfig - awk library
+
+#
+# Copyright (c) 2016 Actions Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+config AWK_LIB
+	bool
+	prompt "Enable awk library"
+    default n
+    help
+    This option enable awk library
+	
+config AWK_MEM_POOL_SIZE
+	int
+	prompt "Set memory pool size for awk lib"
+	depends on AWK_LIB
+	default 153600
+	help
+	This option set memory pool size for awk lib
+
+config AWK_FAST_MEM_POOL_SIZE
+	int
+	prompt "Set memory pool size for awk lib"
+	depends on AWK_LIB
+	default 1894400
+	help
+	This option set memory pool size for awk lib

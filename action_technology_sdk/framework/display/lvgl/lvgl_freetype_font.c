@@ -7,14 +7,14 @@
 #include <lvgl/src/draw/vg_lite/lv_draw_vg_lite_type.h>
 #include <math.h>
 
-static int force_bitmap_output = 0;
-
-static const lv_font_fmt_txt_dsc_t g_freetype_font_dsc = {
 #if CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH
+static const lv_font_fmt_txt_dsc_t g_freetype_svgfont_dsc = {
 	.bpp = LV_FONT_GLYPH_FORMAT_VECTOR,
-#else
-	.bpp = CONFIG_FREETYPE_FONT_BITMAP_BPP,
+};
 #endif
+
+static const lv_font_fmt_txt_dsc_t g_freetype_bmpfont_dsc = {
+	.bpp = CONFIG_FREETYPE_FONT_BITMAP_BPP,
 };
 
 static lv_draw_buf_t glyf_draw_buf;
@@ -71,7 +71,7 @@ bool freetype_font_get_glyph_dsc_cb(const lv_font_t * lv_font, lv_font_glyph_dsc
 	{
 		//tstart = os_cycle_get_32();
 #if CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH
-		if(force_bitmap_output)
+		if(lv_font->dsc == &g_freetype_bmpfont_dsc)
 		{
 			metric = freetype_font_get_glyph_dsc(dsc->font, dsc->cache, unicode);
 		}
@@ -125,7 +125,6 @@ bool freetype_font_get_glyph_dsc_cb(const lv_font_t * lv_font, lv_font_glyph_dsc
 
 	//use scale to compute metrics is not accurate, just load metric from freetype
 #if CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH
-	//if(force_bitmap_output || unicode >= 0x1F300)
 	if(unicode >= 0x1F300)
 	{
 		dsc_out->adv_w = (uint16_t)(metric->advance);
@@ -163,7 +162,7 @@ bool freetype_font_get_glyph_dsc_cb(const lv_font_t * lv_font, lv_font_glyph_dsc
 	}
 
 #if CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH
-	if(force_bitmap_output)
+	if(lv_font->dsc == &g_freetype_bmpfont_dsc)
 	{
 		dsc_out->format = (lv_font_glyph_format_t)dsc->font->bpp; 		/*Bit per pixel: 1/2/4/8*/
 	}
@@ -221,7 +220,7 @@ static const void * freetype_font_get_glyph_bitmap_cb(lv_font_glyph_dsc_t *glyph
 #endif		
 	{		
 #if CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH
-		if(force_bitmap_output)
+		if(font->dsc == &g_freetype_bmpfont_dsc)
 		{
 			metric = freetype_font_get_glyph_dsc(font_dsc->font, font_dsc->cache, unicode);
 			data = freetype_font_get_bitmap(font_dsc->font, font_dsc->cache, unicode);
@@ -314,7 +313,12 @@ int lvgl_freetype_font_open(lv_font_t* font, const char * font_path, uint32_t fo
 	SYS_LOG_INF("dsc->font %p\n", dsc->font);
 	//dsc->font_size = font_size;
 
-	font->dsc = &g_freetype_font_dsc;
+#if CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH
+	font->dsc = &g_freetype_svgfont_dsc;
+#else
+	font->dsc = &g_freetype_bmpfont_dsc;
+#endif
+
 	font->get_glyph_dsc = freetype_font_get_glyph_dsc_cb; 	   /*Set a callback to get info about gylphs*/
 	font->get_glyph_bitmap = freetype_font_get_glyph_bitmap_cb;  /*Set a callback to get bitmap of a glyp*/
 
@@ -517,7 +521,16 @@ int lvgl_freetype_font_cache_preset(freetype_font_cache_preset_t* preset, int co
     return freetype_font_cache_preset(preset, count);
 }
 
-void lvgl_freetype_force_bitmap(lv_font_t* font, int enable)
+int lvgl_freetype_force_bitmap(lv_font_t* font, int enable)
 {
-	force_bitmap_output = enable;
+	int prev_en = 0;
+
+#if CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH
+	if (font->get_glyph_dsc == freetype_font_get_glyph_dsc_cb) {
+		prev_en = (font->dsc == &g_freetype_bmpfont_dsc);
+		font->dsc = enable ? &g_freetype_bmpfont_dsc : &g_freetype_svgfont_dsc;
+	}
+#endif
+
+	return prev_en;
 }

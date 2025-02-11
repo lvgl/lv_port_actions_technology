@@ -383,6 +383,19 @@ static void draw_letter_acts_outline(lv_draw_vg_lite_unit_t * u, const lv_draw_g
         return;
     }
 
+    lv_layer_t * layer = u->base_unit.target_layer;
+    lv_area_t path_clip_area;
+    lv_area_intersect(&path_clip_area, &layer->buf_area, dsc->letter_coords);
+
+    bool need_scissor = !lv_area_is_in(&path_clip_area, u->base_unit.clip_area, 0);
+    if(need_scissor) {
+        path_clip_area.x1 = u->base_unit.clip_area->x1 - layer->buf_area.x1;
+        path_clip_area.y1 = u->base_unit.clip_area->y1 - layer->buf_area.y1;
+        path_clip_area.x2 = u->base_unit.clip_area->x2 - layer->buf_area.x1;
+        path_clip_area.y2 = u->base_unit.clip_area->y2 - layer->buf_area.y1;
+        lv_vg_lite_set_scissor_area(&path_clip_area);
+    }
+
     LV_PROFILER_BEGIN;
 
     lvx_vg_lite_glyph_format_dsc_t * outline = (lvx_vg_lite_glyph_format_dsc_t *)dsc->glyph_data;
@@ -413,6 +426,10 @@ static void draw_letter_acts_outline(lv_draw_vg_lite_unit_t * u, const lv_draw_g
                                &u->target_buffer, &path, VG_LITE_FILL_NON_ZERO,
                                &draw_matrix, VG_LITE_BLEND_PREMULTIPLY_SRC_OVER, lv_vg_lite_color(dsc->color, dsc->opa, false)));
     LV_PROFILER_END_TAG("vg_lite_draw");
+
+    if(need_scissor) {
+        lv_vg_lite_disable_scissor();
+    }
 
     vg_lite_clear_path(&path);
 

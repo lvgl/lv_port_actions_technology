@@ -688,6 +688,9 @@ struct btsrv_a2dp_start_param {
 	uint8_t *trs_sbc_codec;
 	uint8_t trs_sbc_endpoint_num;
 	btsrv_a2dp_callback trs_cb;
+
+	uint8_t *trs_aac_codec;
+	uint8_t trs_aac_endpoint_num;
 #endif
 };
 

@@ -44,6 +44,7 @@
 //#define DS35Q2GBS
 //#define F35SQA512M
 //#define F35SQB002G
+//#define F35SQB004G
 //#define KANY1D4S2WD
 #define GD5F1GM7UEYIG
 #define GD5F2GM7UE
@@ -693,6 +694,48 @@ static const struct FlashChipInfo FlashChipInfoTbl[] =
         0x14,                                               /* writeMode 0x10*/
         FLASH_CHIP_INFO_VERSION,
         "F35SQB002G",
+        21,                                                 /* delaychain */
+        {0},                                                /* Reserved, 12Bytes */
+    },
+#endif
+#ifdef F35SQB004G
+    /* F35SQB004G 4KB PageSize, 512MB SPINand */
+    {
+        {0xcd, 0x53, 0x53, 0xcd, 0xff, 0xff, 0xff, 0xff},   /* ChipID */
+        1,                                                  /* ChipCnt */
+        1,                                                  /* DieCntPerChip */
+        1,                                                  /* PlaneCntPerDie */
+        8,                                                  /* SectNumPerPPage */
+        16,                                                 /* SpareBytesPerSector */
+        90,                                                 /* Frequence */
+        64,                                                 /* PageNumPerPBlk */
+        2048,                                                /* BlkNumPerDie */
+        984,                                                /* DefaultLBlkNumPer1024PBlk */
+        4096,                                               /* userMetaOffset*/
+        16,                                                 /* userMetaShift*/
+        4,                                                  /* userMetaSize*/
+        1,                                                  /* ECCBits */
+        0x70,                                               /* eccStatusMask*/
+        0x70,                                               /* eccStatusErrVal*/
+        16,                                                 /* readAddressBits*/
+        /**
+         * read mode:
+         * 0x0:1xIO(0x03), cpu trans; 0x10:1xIO(0x03), dma trans;
+         * 0x1:2xIO-quad(0xbb), cpu trans; 0x11:2xIO-quad(0xbb), dma trans;
+         * 0x2:2xIO-dual(0x3b), cpu trans; 0x12:2xIO-dual(0x3b), dma trans;
+         * 0x4:4xIO-quad(0x6b), cpu trans; 0x14:4xIO-quad(0x6b), dma trans;
+         * 0x8:4xIO-dual(0xeb), cpu trans; 0x18:4xIO-dual(0xeb), dma trans. the most fast.
+         */
+
+        0x14,                                               /* readMode 0x10*/
+        /**
+         * write mode:
+         * 0x0:1xIO(0x02), cpu trans; 0x10:1xIO(0x02), dma trans;
+         * 0x4:4xIO-quad(0x32), cpu trans; 0x14:4xIO-quad(0x32), dma trans;
+         */
+        0x14,                                               /* writeMode 0x10*/
+        FLASH_CHIP_INFO_VERSION,
+        "F35SQB004G",
         21,                                                 /* delaychain */
         {0},                                                /* Reserved, 12Bytes */
     },

@@ -17,6 +17,7 @@
 
 #include <assert.h>
 #include <soc.h>
+#include <zephyr.h>
 #include <device.h>
 #include <spicache.h>
 #include <board_cfg.h>
@@ -25,10 +26,9 @@
 #if defined(CONFIG_CPU_CORTEX_M)
 #  include <arch/arm/aarch32/cortex_m/cmsis.h>
 #endif
-#include <zephyr.h>
 
 #include <logging/log.h>
-LOG_MODULE_REGISTER(GPU, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(VGLite, LOG_LEVEL_INF);
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -190,13 +190,12 @@ const char *vg_lite_hal_Status2Name(vg_lite_error_t status)
 vg_lite_error_t vg_lite_hal_allocate(uint32_t size, void **memory)
 {
     struct vg_lite_dev_data *data = gp_dev_data;
-    vg_lite_error_t error = VG_LITE_SUCCESS;
     k_spinlock_key_t key;
 
     assert(data != NULL);
 
     if (size == 0 || NULL == memory) {
-        ONERROR(VG_LITE_INVALID_ARGUMENT);
+        return VG_LITE_INVALID_ARGUMENT;
     }
 
     key = k_spin_lock(&data->heap_lock);
@@ -204,11 +203,10 @@ vg_lite_error_t vg_lite_hal_allocate(uint32_t size, void **memory)
     k_spin_unlock(&data->heap_lock, key);
 
     if (NULL == *memory) {
-        ONERROR(VG_LITE_OUT_OF_MEMORY);
+        return VG_LITE_OUT_OF_MEMORY;
     }
 
-on_error:
-    return error;
+    return VG_LITE_SUCCESS;
 }
 
 vg_lite_error_t vg_lite_hal_free(void *memory)
@@ -246,7 +244,7 @@ vg_lite_error_t vg_lite_hal_allocate_contiguous(unsigned long size,
     k_spin_unlock(&data->heap_lock, key);
 
     if (*node == NULL) {
-        LOG_ERR("gpu alloc %lu bytes failed!\n", size);
+        vg_lite_hal_print("VGLite alloc %lu bytes failed\n", size);
         return VG_LITE_OUT_OF_MEMORY;
     }
 

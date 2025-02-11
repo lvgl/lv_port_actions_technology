@@ -71,7 +71,7 @@ static int gesture_scroll_begin(input_dev_t * pointer_dev)
 	runtime->view_id = view_manager_get_draggable_view(runtime->scroll_dir, &towards_screen);
 
 	focus_id = view_manager_get_focused_view();
-	if (focus_id == VIEW_INVALID_ID) {
+	if (focus_id == VIEW_INVALID_ID || !view_is_scrollable(focus_id)) {
 		return -1;
 	}
 

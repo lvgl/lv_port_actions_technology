@@ -1,6 +1,9 @@
 #pragma once
 
 #include "lvgl/lvgl.h"
+#if LV_VERSION_CHECK(9, 0, 0)
+#include "lvgl/src/lvgl_private.h"
+#endif
 #include "msg_manager.h"
 
 #ifdef __cplusplus

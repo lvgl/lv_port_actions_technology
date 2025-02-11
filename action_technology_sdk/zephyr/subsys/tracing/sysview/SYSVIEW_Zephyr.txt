@@ -240,7 +240,7 @@ TaskState 0xBF 1=dummy, 2=Waiting, 4=New, 8=Terminated, 16=Suspended, 32=Termina
 252 View_CB_Keyevent             view=%u, event=%x                                   | Returns view=%u
 253 View_Scroll                  type=%u, pos=%u
 254 View_Switch                  type=%u, frame=%u
-255 View_Swapbuf                 view=%u
+255 View_Swapbuf                 view=%u, region=(%d, %d, %d, %d)
 
 260 Res_Scene_Load               scene_id=%u                                         | Returns scene_id=%u
 261 Res_Pics_Load                parent=%p                                           | Returns parent=%p

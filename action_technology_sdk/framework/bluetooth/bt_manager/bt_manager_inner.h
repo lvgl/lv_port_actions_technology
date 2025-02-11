@@ -101,6 +101,7 @@ void bt_manager_updata_pre_bt_mac(uint8_t *mac);
 bool bt_manager_config_enable_tws_sync_event(void);
 uint8_t bt_manager_config_connect_phone_num(void);
 bool bt_manager_config_support_a2dp_aac(void);
+bool bt_manager_config_support_a2dp_trs_aac(void);
 bool bt_manager_config_pts_test(void);
 uint16_t bt_manager_config_volume_sync_delay_ms(void);
 uint32_t bt_manager_config_bt_class(void);

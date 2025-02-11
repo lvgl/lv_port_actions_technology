@@ -138,6 +138,7 @@ struct audio_record_t *audio_record_create(uint8_t stream_type, int sample_rate_
 	audio_record->input_gain = audio_policy_get_record_input_gain(stream_type);
 	audio_record->sample_rate = sample_rate_input;
 	audio_record->first_frame = 1;
+	audio_record->started = 0;
 
 	if (audio_record->audio_mode == AUDIO_MODE_DEFAULT)
 		audio_record->audio_mode = audio_policy_get_record_audio_mode(stream_type);
@@ -181,7 +182,8 @@ struct audio_record_t *audio_record_create(uint8_t stream_type, int sample_rate_
 	}
 
 	if (system_check_low_latencey_mode()) {
-		if (audio_record->stream_type == AUDIO_STREAM_VOICE) {
+		if (audio_record->stream_type == AUDIO_STREAM_VOICE
+		|| audio_record->stream_type == AUDIO_STREAM_LE_AUDIO) {
 			if(sample_rate_input == 16) {
 				memset(audio_record->pcm_buff, 0, audio_record->pcm_buff_size);
 				stream_write(audio_record->audio_stream, audio_record->pcm_buff, 256);
@@ -192,7 +194,8 @@ struct audio_record_t *audio_record_create(uint8_t stream_type, int sample_rate_
 	}
 
 	if (audio_policy_get_aec_reference_type() == AEC_REF_TYPE_HW 
-		&& audio_record->stream_type == AUDIO_STREAM_VOICE){
+		&& (audio_record->stream_type == AUDIO_STREAM_VOICE
+		|| audio_record->stream_type == AUDIO_STREAM_LE_AUDIO)){
 		hal_ain_set_aec_record_back(audio_record->audio_handle, 1);
 	}
 
@@ -207,6 +210,7 @@ struct audio_record_t *audio_record_create(uint8_t stream_type, int sample_rate_
 	SYS_LOG_INF("volume : %d ", audio_record->volume);
 	SYS_LOG_INF("audio_handle : %p", audio_record->audio_handle);
 	SYS_LOG_INF("audio_stream : %p", audio_record->audio_stream);
+
 	if (outer_stream) {
 		SYS_LOG_INF("audio_stream ptr : %x", ((struct acts_ringbuf *)outer_stream)->cpu_ptr);
 	}
@@ -259,10 +263,12 @@ int audio_record_start(struct audio_record_t *handle)
 	if (!handle)
 		return -EINVAL;
 
-	hal_ain_channel_read_data(handle->audio_handle, handle->pcm_buff, handle->pcm_buff_size);
+	if (!handle->started) {
+		hal_ain_channel_read_data(handle->audio_handle, handle->pcm_buff, handle->pcm_buff_size);
 
-	hal_ain_channel_start(handle->audio_handle);
-
+		hal_ain_channel_start(handle->audio_handle);
+		handle->started = 1;
+	}
 	return 0;
 }
 
@@ -275,7 +281,8 @@ int audio_record_stop(struct audio_record_t *handle)
 		stream_close(handle->audio_stream);
 
 	if (audio_policy_get_aec_reference_type() == AEC_REF_TYPE_HW 
-		&& handle->stream_type == AUDIO_STREAM_VOICE){
+		&& (handle->stream_type == AUDIO_STREAM_VOICE
+		|| handle->stream_type == AUDIO_STREAM_LE_AUDIO)){
 		hal_ain_set_aec_record_back(handle->audio_handle, 0);
 	}
 

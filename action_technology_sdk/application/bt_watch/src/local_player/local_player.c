@@ -152,7 +152,7 @@ int mplayer_update_media_info(struct local_player_t *lcplayer, media_info_t *inf
 				info->channels, info->avg_bitrate);
 	return 0;
 }
-
+extern void lcmusic_force_stop_cb_sync(void *handle);
 struct local_player_t *mplayer_start_play(struct lcplay_param *lcparam)
 {
 	media_init_param_t init_param;
@@ -171,6 +171,8 @@ struct local_player_t *mplayer_start_play(struct lcplay_param *lcparam)
 #ifdef CONFIG_PLAYTTS
 	tts_manager_wait_finished(false);
 #endif
+
+	media_player_force_stop(false);
 
 #ifdef CONFIG_LOOP_FSTREAM
 	if (lcparam->play_mode == 1)
@@ -221,9 +223,15 @@ struct local_player_t *mplayer_start_play(struct lcplay_param *lcparam)
 		goto err_exit;
 	}
 
+	media_player_set_force_stop_cb(lcplayer->player, lcplayer, lcmusic_force_stop_cb_sync);
+
 #ifdef CONFIG_BT_TRANSMIT
 	/*makesure bt transmit STEREO mode*/
 	media_player_set_effect_output_mode(lcplayer->player, MEDIA_EFFECT_OUTPUT_DEFAULT);
+	if(!bt_transmit_need_effect())
+	{
+		media_player_set_effect_enable(lcplayer->player, 0);
+	}
 	bt_transmit_catpure_start(init_param.output_stream, init_param.sample_rate, init_param.channels);
 #endif
 

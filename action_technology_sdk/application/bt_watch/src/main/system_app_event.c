@@ -237,6 +237,14 @@ void system_hotplug_event_handle(struct app_msg *msg)
 			}
 		}
 	#endif
+	#ifdef CONFIG_CARD_READER_RUNTIME
+		if (msg->value == HOTPLUG_IN) {
+			app_switch_add_app(APP_ID_CARD_READER);
+			app_switch(APP_ID_CARD_READER, APP_SWITCH_CURR, false);
+		} else if (msg->value == HOTPLUG_OUT) {
+			_system_remove_app(APP_ID_CARD_READER);
+		}
+	#endif
 		break;
 	case HOTPLUG_USB_HOST:
 		if (msg->value == HOTPLUG_IN) {

@@ -215,6 +215,16 @@ struct spi_cs_control {
 	SPI_CS_CONTROL_PTR_DT(DT_DRV_INST(inst), delay_)
 #endif
 
+#define  SPI_STAGE_PREPARE 0
+#define  SPI_STAGE_FINSHED 1
+/**
+ * @brief SPI callback for asynchronous transfer requests
+ *
+ * @param dev SPI device which is notifying of transfer completion or error
+ * @param stage stage=0 after config rx/tx dma, =1, transfer finshed 
+ */
+typedef void (*spi_callback_t)(int stage);
+
 /**
  * @brief SPI controller configuration structure
  *
@@ -245,7 +255,7 @@ struct spi_config {
 	uint32_t		frequency;
 	uint16_t		operation;
 	uint16_t		slave;
-
+	spi_callback_t   call_back;
 	const struct spi_cs_control *cs;
 };
 

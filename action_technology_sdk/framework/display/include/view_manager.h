@@ -38,8 +38,6 @@
 #define VIEW_INVALID_ID   VIEW_ID_ALL
 #define MSGBOX_INVALID_ID MSGBOX_ID_ALL
 
-#define TRANSFORM_BUFFER_NUM_MAX	2
-
 /****************************************************************************
 * Public Types
 ****************************************************************************/
@@ -80,6 +78,7 @@ enum UI_MSG_ID {
 
 	MSG_DISPLAY_POST, /* 22 */
 	MSG_DISPLAY_RESUME,
+	MSG_DISPLAY_SUSPEND,
 	MSG_DISPLAY_LOCK,
 	MSG_DISPLAY_ROTATE,
 
@@ -91,12 +90,12 @@ enum UI_MSG_ID {
 	MSG_MSGBOX_KEY,    /* key event passed to message box, param is struct msg_view_key_data */
 
 	/* gesture setting */
-	MSG_GESTURE_SET_SCROLL_DIR, /* 31 */
+	MSG_GESTURE_SET_SCROLL_DIR, /* 32 */
 	MSG_GESTURE_LOCK_SCROLL,
 	MSG_GESTURE_STOP_SCROLL,
 	MSG_GESTURE_WAIT_RELEASE,
 
-	MSG_VIEW_TRANSFORM, /* 35 */
+	MSG_VIEW_TRANSFORM, /* 36 */
 	MSG_VIEW_TRANSFORM_START,
 	MSG_VIEW_TRANSFORM_END,
 
@@ -165,6 +164,10 @@ enum UI_VIEW_CREATE_FLAGS {
 	UI_CREATE_FLAG_FLOATING = (1 << 3), /* the view will never get focused */
 	UI_CREATE_FLAG_NO_FB = (1 << 4), /* initial no surface buffer */
 	UI_CREATE_FLAG_POST_ON_PAINT = (1 << 5), /* only post the view to display when painted */
+	/* indicate the view can be scrolled by setting drag attr.
+	 * views with flag UI_CREATE_FLAG_FLOATING will never be scrollable.
+	 */
+	UI_CREATE_FLAG_SCROLLABLE = (1 << 6),
 };
 
 /**
@@ -399,23 +402,6 @@ typedef struct view_user_msg_data {
 	};
 } view_user_msg_data_t;
 
-typedef struct {
-	/** key value, which key is pressed */
-	uint32_t key_val;
-
-	/** key type, which key type of the pressed key */
-	uint32_t key_type;
-
-	/** app state, the state of app service to handle the message */
-	uint32_t app_state;
-
-	/** app msg, the message of app service will be send */
-	uint32_t app_msg;
-
-	/** key policy */
-	uint32_t key_policy;
-} ui_key_map_t;
-
 /**
  * @struct view_data
  * @brief Structure hoding data of view gui-specific data
@@ -435,18 +421,6 @@ typedef struct view_data {
 	const void *presenter; /* view presenter passed by app */
 	void *user_data; /* application defined data */
 } view_data_t;
-
-typedef struct {
-	ui_region_t     region;
-	ui_view_proc_t  view_proc;
-	ui_get_state_t  view_get_state;
-	/** state match function */
-	ui_state_match_t view_state_match;
-	const ui_key_map_t	*view_key_map;
-	void		*app_id;
-	uint16_t	flags;
-	uint16_t	order;
-} ui_view_info_t;
 
 /* app entry structure */
 typedef struct view_entry {
@@ -470,7 +444,6 @@ typedef struct view_entry {
 typedef struct {
 	sys_snode_t node;
 
-#ifdef CONFIG_UI_SERVICE
 	const view_entry_t *entry;
 	ui_region_t region;
 	uint32_t inst_id;    /* instance ID */
@@ -488,11 +461,6 @@ typedef struct {
 	ui_view_drag_anim_cb_t drag_anim_cb;
 
 	view_data_t data;
-#else
-	void   *app_id;
-	ui_view_info_t  info;
-	uint16_t   view_id;
-#endif
 } ui_view_context_t;
 
 typedef struct ui_view_anim_cfg {
@@ -672,6 +640,17 @@ int view_wait_for_refresh(uint16_t view_id, int timeout);
 int view_set_refresh_en(uint16_t view_id, bool enabled);
 
 /**
+ * @brief view refresh
+ *
+ * This routine provide view refresh
+ *
+ * @param view_id id of view
+ *
+ * @retval 0 on succsess else negative errno code.
+ */
+int view_refresh(uint16_t view_id);
+
+/**
  * INTERNAL_HIDDEN @endcond
  */
 
@@ -721,6 +700,15 @@ bool view_is_paused(uint16_t view_id);
  * @return query result.
  */
 bool view_is_inflated(uint16_t view_id);
+
+/**
+ * @brief Query view is scrollable or not
+ *
+ * @param view_id id of view
+ *
+ * @return query result.
+ */
+bool view_is_scrollable(uint16_t view_id);
 
 /**
  * @brief Query view is scrolling or not
@@ -989,15 +977,6 @@ uint16_t view_manager_get_current_view_id(void);
  * @retval pointer to view entry
  */
 view_entry_t * view_manager_get_view_entry(uint16_t view_id);
-
-/**
- * @brief call registered callback to do transition effects
- *
- * @param N/A
- *
- * @retval N/A
- */
- void view_manager_transform_views(int abort);
 
 /**
  * @brief check if view cache is scrolling

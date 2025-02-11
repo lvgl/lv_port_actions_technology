@@ -25,3 +25,11 @@ config CARD_READER_APP
 	default n
 	help
 	This option enables or disable the card reader app.
+
+config CARD_READER_RUNTIME
+	bool
+	prompt "CARD READER runtime Support"
+	depends on CARD_READER_APP
+	default n
+	help
+	This option enables or disable dynamically switch card reader modes based on hotplug information.

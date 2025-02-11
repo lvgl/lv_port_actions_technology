@@ -48,6 +48,13 @@ typedef enum {
 int ui_switch_effect_set_type(uint8_t type);
 
 /**
+ * @brief Get UI switch effect type
+ *
+ * @retval type effect type, see ui_switch_effect_e.
+ */
+uint8_t ui_switch_effect_get_type(void);
+
+/**
  * @brief Set UI switch effect total frames
  *
  * @param frame number of effect frames.
@@ -68,6 +75,7 @@ void ui_switch_effect_set_anim_dir(bool out_right);
 #else
 
 static inline int ui_switch_effect_set_type(uint8_t type) { return 0; }
+static inline uint8_t ui_switch_effect_get_type(void) { return UI_SWITCH_EFFECT_NONE; }
 static inline void ui_switch_effect_set_total_frames(uint16_t frame) { }
 static inline void ui_switch_effect_set_anim_dir(bool out_right) { }
 

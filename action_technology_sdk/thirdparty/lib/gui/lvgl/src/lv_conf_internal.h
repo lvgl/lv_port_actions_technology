@@ -771,6 +771,23 @@
         #endif
     #endif
 
+    /* VG-Lite buffer access address range.
+     */
+    #ifndef LV_VG_LITE_BUFFER_ADDR_START
+        #ifdef CONFIG_LV_VG_LITE_BUFFER_ADDR_START
+            #define LV_VG_LITE_BUFFER_ADDR_START CONFIG_LV_VG_LITE_BUFFER_ADDR_START
+        #else
+            #define LV_VG_LITE_BUFFER_ADDR_START 0
+        #endif
+    #endif
+
+    #ifndef LV_VG_LITE_BUFFER_ADDR_END
+        #ifdef CONFIG_LV_VG_LITE_BUFFER_ADDR_END
+            #define LV_VG_LITE_BUFFER_ADDR_END CONFIG_LV_VG_LITE_BUFFER_ADDR_END
+        #else
+            #define LV_VG_LITE_BUFFER_ADDR_END 0xffffffff
+        #endif
+    #endif
 #endif
 
 /* Use Custom GPU init. */
@@ -780,6 +797,29 @@
     #else
         #define LV_USE_DRAW_CUSTOM_GPU_INIT 0
     #endif
+#endif
+
+
+/* Draw on Actions Technology Platforms. */
+#ifndef LV_USE_ACTIONS
+    #ifdef CONFIG_LV_USE_ACTIONS
+        #define LV_USE_ACTIONS 1
+    #else
+        #define LV_USE_ACTIONS 0
+    #endif
+#endif
+
+#if LV_USE_ACTIONS
+    /* Use Actions 2D. */
+    #ifndef LV_USE_DRAW_ACTS2D
+        #ifdef CONFIG_LV_USE_DRAW_ACTS2D
+            #define LV_USE_DRAW_ACTS2D 1
+        #else
+            #define LV_USE_DRAW_ACTS2D 0
+        #endif
+    #endif
+#else
+    #define LV_USE_DRAW_ACTS2D 0
 #endif
 
 /*=======================

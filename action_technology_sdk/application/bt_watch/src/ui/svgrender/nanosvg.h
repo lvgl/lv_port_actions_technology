@@ -248,6 +248,7 @@ typedef struct NSVGshape
     int blendMode;               // blend mode of shape
     int blend_flag;              // 'blendmode' flag
     int animateFlag;             // animate flag
+    int pathType;                // path type
     struct NSVGclipPathData* clipPath; // Pointer of structure NSVGclipPathData, include clip-path data.
     struct NSVGshape* next;        // Pointer to next shape, or NULL if last element.
     VGLITEpath* vgPathOfCharacter;   // Pointer of structure VGLITEpath, include path data of character.
@@ -260,18 +261,6 @@ typedef struct NSVGimage
     float height;                // Height of the image.
     NSVGshape* shapes;            // Linked list of shapes in the image.
 } NSVGimage;
-
-typedef struct NSVGpattern {
-    float x, y, width, height;
-    char units;
-    NSVGshape* shape;
-} NSVGpattern;
-
-typedef struct NSVGtext {
-    float x, y, dx, dy, rotate, textLength, fontSize;
-    char content[128];
-    int hasStroke;
-} NSVGtext;
 
 // Parses SVG file from a file, returns SVG image as paths.
 NSVGimage* nsvgParseFromFile(const char* filename, const char* units, float dpi);
@@ -308,7 +297,7 @@ void nsvgDelete(NSVGimage* image);
 #define NSVG_ALIGN_NONE 0
 #define NSVG_ALIGN_MEET 1
 #define NSVG_ALIGN_SLICE 2
-#define IMGDATA_SIZE 4096
+#define IMGDATA_SIZE 8300
 #define GROUP_CLASS_NUMS 10
 
 #define NSVG_NOTUSED(v) do { (void)(1 ? (void)0 : ( (void)(v) ) ); } while(0)
@@ -326,6 +315,9 @@ void nsvgDelete(NSVGimage* image);
     #define NSVG_INLINE inline
 #endif
 
+/*Image URL format*/
+#define NSVG_IMAGE_FORMAT_URL "url"
+
 typedef enum VGBlendMode
 {
     VG_MIXBLENDMODE_MULTIPLY = 5,
@@ -334,19 +326,19 @@ typedef enum VGBlendMode
 } VGBlendMode;
 
 /* Theoretical width and height of image in .svg file */
-float svg_image_width = 0;
-float svg_image_height = 0;
-float svg_scale_image_width = 0;
-float svg_scale_image_height = 0;
+static float svg_image_width = 0;
+static float svg_image_height = 0;
+static float svg_scale_image_width = 0;
+static float svg_scale_image_height = 0;
 /* String pointers and flags for SVG defs/symbol handling */
-char* content_start = NULL;
-char* content_end = NULL;
-int   insideDefs = 0;
-int   emptyDefs = 0;
+static char* content_start = NULL;
+static char* content_end = NULL;
+static int   insideDefs = 0;
+static int   emptyDefs = 0;
 /*The number of "class" in group tree */
-char g_class_flag[GROUP_CLASS_NUMS];
-int  class_nums_count = 0;
-int  g_index = 0;
+static char g_class_flag[GROUP_CLASS_NUMS];
+static int  class_nums_count = 0;
+static int  g_index = 0;
 
 static void nsvg__startElement(void* ud, const char* el, const char** attr);
 static void nsvg__endElement(void* ud, const char* el);
@@ -563,6 +555,12 @@ enum NSVGunits {
     NSVG_UNITS_EX
 };
 
+enum NSVGpathType {
+    NSVG_PATH = 0,
+    NSVG_PATTERN_PATH = 1,
+    NSVG_CLIP_PATH = 2,
+};
+
 typedef struct NSVGcoordinate {
     float value;
     int units;
@@ -630,6 +628,17 @@ typedef struct NSVGtextpathData
     char content[128];
 } NSVGtextpathData;
 
+typedef struct NSVGdefsImage
+{
+    char name[64];
+    char format[64];
+    char encoding[64];
+    float x, y, width, height;
+    char imgdata[IMGDATA_SIZE];
+    int drawFlag;
+    struct NSVGdefsImage* next;
+}NSVGdefsImage;
+
 typedef struct NSVGpatternData
 {
     char id[64];
@@ -643,6 +652,7 @@ typedef struct NSVGpatternData
     float preserveAspectRatio;
     struct NSVGpatternData* next;
     NSVGshape* shape;
+    NSVGdefsImage* image;
 } NSVGpatternData;
 
 typedef struct NSVGclipPathData {
@@ -650,6 +660,8 @@ typedef struct NSVGclipPathData {
     NSVGpath* path;
     char units;
     struct NSVGclipPathData* next;
+    char premul_flag;
+    char use_flag;
     char flag;
 } NSVGclipPathData;
 
@@ -664,6 +676,19 @@ typedef struct NSVGanimateData
     int dur;
     int repeatCount;
 } NSVGanimateData;
+
+typedef struct NSVGpattern {
+    float x, y, width, height;
+    char units;
+    NSVGshape* shape;
+    NSVGdefsImage* image;
+} NSVGpattern;
+
+typedef struct NSVGtext {
+    float x, y, dx, dy, rotate, textLength, fontSize;
+    char content[128];
+    int hasStroke;
+} NSVGtext;
 
 typedef struct NSVGattrib
 {
@@ -743,18 +768,6 @@ typedef struct NSVGdefspath
 
     struct NSVGdefspath* next;
 }NSVGdefspath;
-
-typedef struct NSVGdefsImage
-{
-    char name[64];
-    char format[64];
-    char encoding[64];
-    float x, y, width, height;
-    char imgdata[IMGDATA_SIZE];
-    int drawFlag;
-
-    struct NSVGdefsImage* next;
-}NSVGdefsImage;
 
 typedef struct NSVGtextFlag {
     char textTegFlag;
@@ -1003,7 +1016,6 @@ static void nsvg__deletePaths(NSVGpath* path)
         if (path->pts != NULL)
         {
             NANOSVG_FREE(path->pts);
-            path->pts = NULL;
         }
         NANOSVG_FREE(path);
         path = next;
@@ -1042,6 +1054,12 @@ static void nsvg__deletePaint(NSVGpaint* paint)
 
     if (paint->type == NSVG_PAINT_LINEAR_GRADIENT || paint->type == NSVG_PAINT_RADIAL_GRADIENT)
         NANOSVG_FREE(paint->gradient);
+
+    if (paint->pattern) {
+        if (paint->pattern->image)
+            NANOSVG_FREE(paint->pattern->image);
+        NANOSVG_FREE(paint->pattern);
+    }
 }
 
 
@@ -1051,13 +1069,14 @@ static void nsvg__deleteAnimate(NSVGanimate* animate)
         NANOSVG_FREE(animate);
 }
 
-static void nsvg__deleteClipPath(NSVGshape* shape, NSVGclipPathData* clipPath)
+static void nsvg__deleteClipPath(NSVGshape* shape, NSVGclipPathData* clipPath, char use_flag)
 {
-    if (clipPath != NULL && (shape->next == NULL || shape->next->clipPath != clipPath))
+    if (use_flag)
     {
-        if (clipPath->path != NULL)
+        if (clipPath != NULL && (shape->next == NULL || shape->next->clipPath != clipPath))
         {
-            while (clipPath) {
+            if (clipPath->path != NULL)
+            {
                 NSVGpath* path = clipPath->path;
                 while (path) {
                     NSVGpath* next = path->next;
@@ -1069,9 +1088,36 @@ static void nsvg__deleteClipPath(NSVGshape* shape, NSVGclipPathData* clipPath)
                     NANOSVG_FREE(path);
                     path = next;
                 }
-                NSVGclipPathData* next = clipPath->next;
+
                 NANOSVG_FREE(clipPath);
-                clipPath = next;
+            }
+        }
+    }
+    else
+    {
+        NSVGclipPathData* tem_clipPath = clipPath;
+        while (tem_clipPath) {
+            if (tem_clipPath->use_flag == 0)
+            {
+                NSVGpath* path = tem_clipPath->path;
+                while (path) {
+                    NSVGpath* next = path->next;
+                    if (path->pts != NULL)
+                    {
+                        NANOSVG_FREE(path->pts);
+                        path->pts = NULL;
+                    }
+                    NANOSVG_FREE(path);
+                    path = next;
+                }
+
+                NSVGclipPathData* next_clippath = tem_clipPath->next;
+                NANOSVG_FREE(tem_clipPath);
+                tem_clipPath = next_clippath;
+            }
+            else
+            {
+                tem_clipPath = tem_clipPath->next;
             }
         }
     }
@@ -1110,10 +1156,8 @@ static void nsvg__deleteSymbols(NSVGsymbolData* symb)
 
 static void nsvg__deleteDefsTags(NSVGdefsTagData* tag)
 {
-    int len;
     while (tag) {
         NSVGdefsTagData *next = tag->next;
-        len = strlen(tag->content);
         NANOSVG_FREE(tag->content);
         NANOSVG_FREE(tag);
         tag = next;
@@ -1138,17 +1182,6 @@ static void nsvg__deleteDefsImage(NSVGdefsImage* image)
     }
 }
 
-/*
-static void nsvg__deleteDefsPath(NSVGdefspath* path)
-{
-    while (path) {
-        NSVGdefspath* next = path->next;
-        NANOSVG_FREE(path);
-        path = next;
-    }
-}
-*/
-
 static void nsvg__deleteParser(NSVGparser* p)
 {
     if (p != NULL) {
@@ -1160,6 +1193,7 @@ static void nsvg__deleteParser(NSVGparser* p)
         nsvg__deleteDefsTags(p->defTags);
         nsvg__deleteStyle(p->style);
         nsvg__deleteDefsImage(p->defsimage);
+        nsvg__deleteClipPath(NULL, p->clipPaths, 0);
         nsvgDelete(p->image);
 
         if (p->defsString)
@@ -1358,8 +1392,10 @@ static NSVGclipPathData* nsvg__findClipPathData(NSVGparser* p, const char* id)
     if (id == NULL || *id == '\0')
         return NULL;
     while (clipPath != NULL) {
-        if (strcmp(clipPath->id, id) == 0)
+        if (strcmp(clipPath->id, id) == 0) {
+            clipPath->use_flag = 1;
             return clipPath;
+        }
         clipPath = clipPath->next;
     }
     return NULL;
@@ -1381,6 +1417,15 @@ static NSVGpattern* nsvg__createPattern(NSVGparser* p, const char* id, signed ch
     pattern->width = data->width.value;
     pattern->shape = data->shape;
     pattern->units = data->units;
+
+    if (data->image) {
+        NSVGdefsImage* shapeImage = (NSVGdefsImage*)NANOSVG_MALLOC(sizeof(NSVGdefsImage));
+        memcpy(shapeImage, data->image, sizeof(NSVGdefsImage));
+        pattern->image = shapeImage;
+    } else {
+        pattern->image = NULL;
+    }
+
     *paintType = data->type;
 
     return pattern;
@@ -1846,6 +1891,7 @@ static void nsvg__addShape(NSVGparser* p)
     if (attr->clipPath[0] != 0) {
         NSVGclipPathData* temp_clip_path = nsvg__findClipPathData(p, attr->clipPath);
         shape->clipPath = temp_clip_path;
+        shape->pathType = NSVG_CLIP_PATH;
     }
 
     memcpy(shape->id, attr->id, sizeof shape->id);
@@ -1938,6 +1984,7 @@ static void nsvg__addShape(NSVGparser* p)
     shape->flags = (attr->visible ? NSVG_FLAGS_VISIBLE : 0x00);
 
     if (!p->patternFlag) {
+        shape->pathType = NSVG_PATH;
         // Add to tail
         if (p->image->shapes == NULL)
             p->image->shapes = shape;
@@ -1946,6 +1993,7 @@ static void nsvg__addShape(NSVGparser* p)
         p->shapesTail = shape;
     }
     else {
+        shape->pathType = NSVG_PATTERN_PATH;
         if (p->patterns->shape == NULL)
             p->patterns->shape = shape;
         else {
@@ -3628,7 +3676,7 @@ static void nsvg__parseDefsimage(NSVGparser* p, const char** attr)
     int i;
     char name[64];
     int width = 0, height = 0;
-    //double x = 0, y = 0;
+    double x = 0, y = 0;
     char* s, *imgdata = NULL, *encoding = NULL, *format = NULL;
     char* saveptr;
     char* saveptr1;
@@ -3646,6 +3694,12 @@ static void nsvg__parseDefsimage(NSVGparser* p, const char** attr)
         else if (strcmp(attr[i], "height") == 0) {
             height = nsvg__atof(attr[i + 1]) * (svg_scale_image_height / svg_image_height);
         }
+        else if (strcmp(attr[i], "x") == 0) {
+            x = nsvg__atof(attr[i + 1]) * (svg_scale_image_width / svg_image_width);
+        }
+        else if (strcmp(attr[i], "y") == 0) {
+            y = nsvg__atof(attr[i + 1]) * (svg_scale_image_height / svg_image_height);
+        }
         else if (strcmp(attr[i], "xlink:href") == 0) {
             ref = attr[i + 1];
         }
@@ -3661,13 +3715,22 @@ static void nsvg__parseDefsimage(NSVGparser* p, const char** attr)
         encoding = strtok_s(NULL, " ,", &saveptr);
         imgdata = saveptr;
 
-        s = strtok_s(s, "/", &saveptr1);
-        format = saveptr1;
+        if (imgdata && imgdata[0]) {
+            s = strtok_s(s, "/", &saveptr1);
+            format = saveptr1;
+        } else {
+            imgdata = s;
+            format = (char *)NSVG_IMAGE_FORMAT_URL;
+        }
     }
-    if (format && format[0])
-        strcpy(image->format, format);
-    if (encoding && encoding[0])
-        strcpy(image->encoding, format);
+    if (format && format[0]) {
+        strncpy(image->format, format, sizeof(image->format));
+        image->format[sizeof(image->format) - 1] = '\0';
+    }
+    if (encoding && encoding[0]) {
+        strncpy(image->encoding, encoding, sizeof(image->encoding));
+        image->encoding[sizeof(image->encoding) - 1] = '\0';
+    }
     if (imgdata && imgdata[0]) {
         int i = strlen(imgdata);
         if (i >= IMGDATA_SIZE)
@@ -3676,12 +3739,14 @@ static void nsvg__parseDefsimage(NSVGparser* p, const char** attr)
         if (image->drawFlag)
             strcpy(image->imgdata, imgdata);
         else
-            NANOSVG_PRINT("Need to increase the size of image->imgdata[] to %d.\n", i);
+            NANOSVG_PRINT("Need to increase the size of IMGDATA_SIZE to %d.\n", i + 1);
     }
     if (name[0])
         strcpy(image->name, name);
     image->width = width;
     image->height = height;
+    image->x = x;
+    image->y = y;
 
     /* Add the image to parser. */
     if (p->defsimage) {
@@ -3690,6 +3755,17 @@ static void nsvg__parseDefsimage(NSVGparser* p, const char** attr)
     }
     else {
         p->defsimage = image;
+    }
+
+    if (p->patternFlag) {
+        if (p->patterns->image == NULL)
+            p->patterns->image = image;
+        else {
+            NSVGdefsImage* tem_image = p->patterns->image;
+            while (tem_image->next)
+                tem_image = tem_image->next;
+            tem_image->next = image;
+        }
     }
 }
 
@@ -4136,6 +4212,7 @@ static void nsvg__parseDefsTag(NSVGparser* p, const char *el, const char** attr)
         while (*start != '<') start++;
         end = start;
         if (memcmp(start, "<symbol", 6) == 0) {
+            NANOSVG_FREE(elem);
             content_end = end;
             return;
         }
@@ -4258,14 +4335,19 @@ static void nsvg__parseUse(NSVGparser* p, const char** attr)
 static void nsvg__parseSVG(NSVGparser* p, const char** attr)
 {
     int i;
+    int width_flag = 0;
+    int height_flag = 0;
+
     for (i = 0; attr[i]; i += 2) {
         if (!nsvg__parseAttr(p, attr[i], attr[i + 1])) {
             if (strcmp(attr[i], "width") == 0) {
                 svg_image_width = atoi(attr[i + 1]);
                 svg_scale_image_width = p->image->width = nsvg__parseCoordinate(p, attr[i + 1], 0.0f, 0.0f);
+                width_flag = 1;
             } else if (strcmp(attr[i], "height") == 0) {
                 svg_image_height = atoi(attr[i + 1]);
                 svg_scale_image_height = p->image->height = nsvg__parseCoordinate(p, attr[i + 1], 0.0f, 0.0f);
+                height_flag = 1;
             } else if (strcmp(attr[i], "viewBox") == 0) {
                 const char* s = attr[i + 1];
                 char buf[64];
@@ -4309,6 +4391,12 @@ static void nsvg__parseSVG(NSVGparser* p, const char** attr)
                 }
             }
         }
+    }
+
+    if (!width_flag || !height_flag) {
+        svg_image_width = svg_scale_image_width = p->image->width = 400;
+        svg_image_height = svg_scale_image_height = p->image->height = 400;
+        NANOSVG_PRINT("The svg source file does not set the width and heigh, set width and heigh to 400.\n");
     }
 }
 
@@ -4851,7 +4939,6 @@ static void nsvg__scaleToViewbox(NSVGparser* p, const char* units)
     NSVGshape* shape;
     NSVGpath* path;
     float tx, ty, sx, sy, us, bounds[4], avgs;
-    //float t[6];
     int i;
     float* pt;
 
@@ -4920,9 +5007,9 @@ static void nsvg__scaleToViewbox(NSVGparser* p, const char* units)
             }
         }
         if (shape->clipPath != NULL) {
-            if (shape->clipPath->flag == 0)
+            if (shape->clipPath->premul_flag == 0)
             {
-                shape->clipPath->flag = 1;
+                shape->clipPath->premul_flag = 1;
                 for (path = shape->clipPath->path; path != NULL; path = path->next) {
                     path->bounds[0] = (path->bounds[0] + tx) * sx;
                     path->bounds[1] = (path->bounds[1] + ty) * sy;
@@ -5100,7 +5187,7 @@ void nsvgDelete(NSVGimage* image)
         nsvg__deletePaint(&shape->fill);
         nsvg__deletePaint(&shape->stroke);
         nsvg__deleteAnimate(shape->animate);
-        nsvg__deleteClipPath(shape, shape->clipPath);
+        nsvg__deleteClipPath(shape, shape->clipPath, 1);
         NANOSVG_FREE(shape);
         shape = snext;
     }
@@ -5109,7 +5196,6 @@ void nsvgDelete(NSVGimage* image)
 
 void nsvg_parseStyleContent(char* s, char* attr[])
 {
-    //char *saveptr_group, *saveptr_item, *group;
     char *name, *value;
     int nattr = 0;
     char* cur = s;

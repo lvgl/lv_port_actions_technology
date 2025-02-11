@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/*********************
+ *      INCLUDES
+ *********************/
+
 #include "../../src/stdlib/lv_mem.h"
 
 #if LV_USE_STDLIB_MALLOC == LV_STDLIB_CUSTOM
@@ -49,9 +53,9 @@ static struct k_spinlock lvgl_heap_lock;
 void lv_mem_init(void)
 {
 #if defined(CONFIG_UI_MEMORY_MANAGER)
-#  if !defined(CONFIG_UI_SERVICE)
+    #if !defined(CONFIG_UI_SERVICE)
     ui_mem_init();
-#  endif
+    #endif
 #elif defined(CONFIG_LV_Z_MEM_POOL_SYS_HEAP)
     sys_heap_init(&lvgl_heap, &lvgl_heap_mem[0], CONFIG_LV_Z_MEM_POOL_SIZE);
 #endif

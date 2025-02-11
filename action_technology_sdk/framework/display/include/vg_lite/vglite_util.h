@@ -170,6 +170,22 @@ void matrix_rotate_z(float rz, vg_lite_matrix_t *matrix);
 void matrix_rotate(float rx, float ry, float rz, uint8_t order, vg_lite_matrix_t *matrix);
 
 /*
+ * Compute rotate matrix around arbitrary axis to the world coordinate
+ *
+ * The rotate axis is defined as follows:
+ * origin (0, 0) -> (x, y, z)
+ *
+ * @param x X component of unit vector representing the rotation axis
+ * @param y Y component of unit vector representing the rotation axis
+ * @param z Z component of unit vector representing the rotation axis
+ * @param angle rotation angle
+ * @param matrix store the rotate matrix result
+ *
+ * @retval N/A
+ */
+void matrix_rotate_axis(float x, float y, float z, float angle, vg_lite_matrix_t *matrix);
+
+/*
  * Compute matrix multiplication
  *
  * @param matrix_left pointer to the left multiplication matrix
@@ -293,6 +309,17 @@ void transfrom_perspective(vertex_t *vertex, float camera_x, float camera_y, flo
  * @retval the result
  */
 float transfrom_normal_z(vg_lite_matrix_t *rotate, const normal_t *normal);
+
+/*
+ * Nomalize a vector
+ *
+ * @param x pointer to X component of vector
+ * @param y pointer to Y component of vector
+ * @param z pointer to Z component of vector
+ *
+ * @retval N/A
+ */
+void vector_normalize(float *x, float *y, float *z);
 
 #endif /* CONFIG_VG_LITE */
 #endif /* VG_LITE_VGLITE_UTIL_H_ */

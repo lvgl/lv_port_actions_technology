@@ -757,6 +757,15 @@ static void lv_label_event(const lv_obj_class_t * class_p, lv_event_t * e)
             w = LV_MIN(w, lv_obj_get_style_max_width(obj, 0));
 
             lv_text_get_size(&label->size_cache, label->text, font, letter_space, line_space, w, flag);
+            if(label->long_mode == LV_LABEL_LONG_SCROLL || label->long_mode == LV_LABEL_LONG_SCROLL_CIRCULAR) {
+                if(w == LV_COORD_MAX) {
+                    lv_memcpy(&label->scrl_size_cache, &label->size_cache, sizeof(label->size_cache));
+                }
+                else {
+                    lv_text_get_size(&label->scrl_size_cache, label->text, font, letter_space, line_space, LV_COORD_MAX, flag);
+                }
+            }
+
             label->invalid_size_cache = false;
         }
 
@@ -806,12 +815,18 @@ static void draw_main(lv_event_t * e)
      * (In addition, they will create misalignment in this situation)*/
     if((label->long_mode == LV_LABEL_LONG_SCROLL || label->long_mode == LV_LABEL_LONG_SCROLL_CIRCULAR) &&
        (label_draw_dsc.align == LV_TEXT_ALIGN_CENTER || label_draw_dsc.align == LV_TEXT_ALIGN_RIGHT)) {
+#if 0
         lv_point_t size;
         lv_text_get_size(&size, label->text, label_draw_dsc.font, label_draw_dsc.letter_space, label_draw_dsc.line_space,
                          LV_COORD_MAX, flag);
         if(size.x > lv_area_get_width(&txt_coords)) {
             label_draw_dsc.align = LV_TEXT_ALIGN_LEFT;
         }
+#else
+        if(label->scrl_size_cache.x > lv_area_get_width(&txt_coords)) {
+            label_draw_dsc.align = LV_TEXT_ALIGN_LEFT;
+        }
+#endif
     }
 
     lv_area_t txt_clip;
@@ -840,9 +855,12 @@ static void draw_main(lv_event_t * e)
 
     if(label->long_mode == LV_LABEL_LONG_SCROLL_CIRCULAR) {
         lv_point_t size;
+#if 0
         lv_text_get_size(&size, label->text, label_draw_dsc.font, label_draw_dsc.letter_space, label_draw_dsc.line_space,
                          LV_COORD_MAX, flag);
-
+#else
+        lv_memcpy(&size, &label->scrl_size_cache, sizeof(size));
+#endif
         /*Draw the text again on label to the original to make a circular effect */
         if(size.x > lv_area_get_width(&txt_coords)) {
             label_draw_dsc.ofs_x = label->offset.x + size.x +

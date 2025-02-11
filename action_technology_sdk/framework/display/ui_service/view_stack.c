@@ -15,9 +15,6 @@
 #include <string.h>
 #include <assert.h>
 #include <view_stack.h>
-#ifdef CONFIG_UI_SWITCH_EFFECT
-#include "ui_effects/switch_effect.h"
-#endif
 
 LOG_MODULE_REGISTER(view_stack, LOG_LEVEL_INF);
 
@@ -38,6 +35,10 @@ typedef struct {
 	view_stack_data_t data[CONFIG_VIEW_STACK_LEVEL];
 	uint8_t num;
 	uint8_t inited : 1;
+#ifdef CONFIG_UI_SWITCH_EFFECT
+	uint8_t efx_type;
+	bool efx_out_right;
+#endif
 } view_stack_ctx_t;
 
 static view_stack_ctx_t view_stack;
@@ -46,6 +47,7 @@ static OS_MUTEX_DEFINE(mutex);
 static int _view_stack_update(const view_stack_data_t *data, bool push_stack);
 static int _view_stack_jump(view_stack_data_t *old_data,
 		const view_stack_data_t *new_data);
+static void _view_stack_change_effect_dir(bool out_right);
 
 int view_stack_init(void)
 {
@@ -59,6 +61,12 @@ int view_stack_init(void)
 	}
 
 	view_stack.inited = 1;
+
+#ifdef CONFIG_UI_SWITCH_EFFECT
+	view_stack.efx_type = UI_SWITCH_EFFECT_NONE;
+	view_stack.efx_out_right = false;
+	ui_switch_effect_set_anim_dir(false);
+#endif
 
 out_unlock:
 	os_mutex_unlock(&mutex);
@@ -167,9 +175,9 @@ int view_stack_pop(void)
 	if (view_stack.num <= 1) {
 		goto out_unlock;
 	}
-#ifdef CONFIG_UI_SWITCH_EFFECT
-	ui_switch_effect_set_anim_dir(true);	//quit reverse
-#endif
+
+	_view_stack_change_effect_dir(true);
+
 	res = _view_stack_jump(&view_stack.data[view_stack.num - 1],
 					&view_stack.data[view_stack.num - 2]);
 	view_stack.num--;
@@ -218,9 +226,9 @@ int view_stack_push_view(uint16_t view_id, const void *presenter)
 		.presenter = presenter,
 		.id = view_id,
 	};
-#ifdef CONFIG_UI_SWITCH_EFFECT
-	ui_switch_effect_set_anim_dir(false);
-#endif
+
+	_view_stack_change_effect_dir(false);
+
 	return _view_stack_update(&data, true);
 }
 
@@ -239,9 +247,9 @@ int view_stack_jump_cache2(const view_cache_dsc_t *dsc,
 		.id = focus_view_id,
 		.main_id = main_view_id,
 	};
-#ifdef CONFIG_UI_SWITCH_EFFECT
-	ui_switch_effect_set_anim_dir(false);
-#endif
+
+	_view_stack_change_effect_dir(false);
+
 	return _view_stack_update(&data, false);
 }
 
@@ -303,6 +311,19 @@ void view_stack_dump(void)
 	os_printk("\n");
 
 	os_mutex_unlock(&mutex);
+}
+
+void view_stack_set_switch_effect(uint8_t type)
+{
+#ifdef CONFIG_UI_SWITCH_EFFECT
+	os_mutex_lock(&mutex, OS_FOREVER);
+
+	if (view_stack.efx_type != type && !ui_switch_effect_set_type(type)) {
+		view_stack.efx_type = type;
+	}
+
+	os_mutex_unlock(&mutex);
+#endif /* CONFIG_UI_SWITCH_EFFECT */
 }
 
 static int _view_stack_update(const view_stack_data_t *data, bool push_stack)
@@ -473,7 +494,19 @@ static int _view_stack_jump(view_stack_data_t *old_data,
 			if (new_data->group->scroll_cb)
 				new_data->group->scroll_cb(new_data->group->vlist[idx]);
 		} else {
-			res = ui_view_create(new_data->id, new_data->presenter, UI_CREATE_FLAG_SHOW);
+			view_entry_t *view_entry = view_manager_get_view_entry(new_data->id);
+			if (view_entry == NULL) {
+				res = -EINVAL;
+			} else {
+				uint8_t create_flags = UI_CREATE_FLAG_SHOW;
+
+				if (view_entry->width > view_manager_get_disp_xres() ||
+					view_entry->height > view_manager_get_disp_yres()) {
+					create_flags |= UI_CREATE_FLAG_SCROLLABLE;
+				}
+
+				res = ui_view_create(new_data->id, new_data->presenter, create_flags);
+			}
 		}
 
 		new_view = new_data->id;
@@ -481,4 +514,14 @@ static int _view_stack_jump(view_stack_data_t *old_data,
 
 	SYS_LOG_INF("view_stack: jump %d -> %d (res=%d)", old_view, new_view, res);
 	return res;
+}
+
+static void _view_stack_change_effect_dir(bool out_right)
+{
+#ifdef CONFIG_UI_SWITCH_EFFECT
+	if (view_stack.efx_out_right != out_right) {
+		view_stack.efx_out_right = out_right;
+		ui_switch_effect_set_anim_dir(out_right);
+	}
+#endif
 }

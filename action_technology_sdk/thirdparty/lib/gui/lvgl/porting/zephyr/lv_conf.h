@@ -38,27 +38,6 @@
  */
 #define LV_USE_STDLIB_SPRINTF   LV_STDLIB_CLIB
 
-/*========================
- * RENDERING CONFIGURATION
- *========================*/
-
-#define LV_USE_DRAW_CUSTOM_GPU_INIT 1
-#define LV_VG_LITE_USE_GPU_INIT     1
-
-#if defined(CONFIG_LV_USE_DRAW_VG_LITE)
-    #define LV_DRAW_BUF_ALIGN 64
-#else
-    #define LV_DRAW_BUF_ALIGN 1
-#endif
-
-#ifndef LV_USE_DRAW_ACTS_DMA2D
-    #ifdef CONFIG_LV_USE_DRAW_ACTS_DMA2D
-        #define LV_USE_DRAW_ACTS_DMA2D 1
-    #else
-        #define LV_USE_DRAW_ACTS_DMA2D 0
-    #endif
-#endif
-
 /*-------------
  * Asserts
  *-----------*/

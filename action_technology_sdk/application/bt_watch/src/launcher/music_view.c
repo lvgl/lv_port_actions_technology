@@ -42,6 +42,7 @@
 #include "video_player.h"
 #endif
 #include <widgets/text_arc.h>
+#include <widgets/text_canvas.h>
 
 #define MAX_SUPPORT_CNT	2
 #define MUSIC_INFO_UPDATE_PERIOD	300
@@ -419,7 +420,7 @@ static void _exit_more_view(void)
 	lvgl_res_unload_pictures(p_lview_data->img_dsc_more_btn, NUM_MORE_BTNS);
 	lvgl_res_unload_pictures(p_lview_data->img_dsc_more_btn_sel, NUM_MORE_BTNS);
 	lvgl_res_unload_pictures(p_lview_data->img_dsc_bt_state_bmp, NUM_BT_STATE_IMGS);
-	ui_manager_gesture_set_dir(GESTURE_ALL_BITFIELD);
+	ui_gesture_unlock_scroll();
 }
 
 static void _exit_vol_view(void)
@@ -444,8 +445,8 @@ static void _exit_vol_view(void)
 
 	lvgl_res_unload_pictures(p_lview_data->img_dsc_vol_btn, NUM_VOL_BTNS);
 
-	ui_manager_gesture_wait_release();
-	ui_manager_gesture_set_dir(GESTURE_ALL_BITFIELD);
+	ui_gesture_wait_release();
+	ui_gesture_unlock_scroll();
 }
 
 #ifdef CONFIG_BT_TRANSMIT
@@ -461,8 +462,8 @@ static void _exit_bt_earphone_list_view(void)
 	lvgl_res_unload_pictures(p_lview_data->img_dsc_bt_earphone_update_btn, NUM_BT_EARPHONE_LIST_BTNS);
 	lvgl_res_unload_strings(p_lview_data->res_txt_bt_earphone_list, NUM_BT_EARPHONE_LIST_TXTS);
 
-	ui_manager_gesture_wait_release();
-	ui_manager_gesture_set_dir(GESTURE_ALL_BITFIELD);
+	ui_gesture_wait_release();
+	ui_gesture_unlock_scroll();
 
 	os_mutex_lock(&music_view_mutex, OS_FOREVER);
 	p_lview_data->update_bt_earphone_list = 0;
@@ -533,7 +534,7 @@ static void _music_play_view(uint8_t cur_player, uint8_t prev_player)
 	btn_state_toggle(p_lview_data->btn[BTN_BMP_MUSIC_SOURCE]);
 	lv_obj_invalidate(p_lview_data->btn[BTN_BMP_MUSIC_SOURCE]);
 
-	lv_label_set_text(p_lview_data->lbl[TXT_SONG_NAME], "");
+	text_canvas_set_text(p_lview_data->lbl[TXT_SONG_NAME], "");
 	text_arc_set_text(p_lview_data->album_obj,"");
 	text_arc_refresh(p_lview_data->album_obj);
 
@@ -890,7 +891,42 @@ static void _create_label_array(lv_obj_t *par, lv_obj_t **pobj, lv_point_t *pt,
 	} else {
 		_set_label_array_mode(pobj, LV_LABEL_LONG_CLIP, num);
 	}
+}
 
+static void _set_text_canvas_array_mode(lv_obj_t **pobj, int mode, int num)
+{
+	for (int i = 0; i < num; i++) {
+		if (mode == TEXT_CANVAS_LONG_SCROLL_CIRCULAR) {
+			text_canvas_set_long_mode(pobj[i], TEXT_CANVAS_LONG_SCROLL_CIRCULAR);
+			lv_obj_set_style_anim_duration(pobj[i], lv_anim_speed(20), LV_PART_MAIN);
+		} else {
+			text_canvas_set_long_mode(pobj[i], TEXT_CANVAS_LONG_CLIP);
+		}
+	}
+}
+
+static void _create_text_canvas_array(lv_obj_t *par, lv_obj_t **pobj, lv_point_t *pt,
+								lv_style_t *sty, lvgl_res_string_t *res_txt, uint32_t num)
+{
+	int i;
+
+	for (i = 0; i < num; i++) {
+		pobj[i] = text_canvas_create(par);
+		text_canvas_set_text(pobj[i], "");
+		lv_obj_add_style(pobj[i], &sty[i], LV_PART_MAIN);
+		lv_obj_set_pos(pobj[i], pt[i].x, pt[i].y);
+		//lv_obj_set_size(pobj[i], res_txt[i].width, res_txt[i].height);
+		lv_obj_set_width(pobj[i], res_txt[i].width);
+
+		SYS_LOG_INF("x:%d y=%d width =%d height=%d\n",
+			pt[i].x, pt[i].y, res_txt[i].width, res_txt[i].height);
+	}
+
+	if (view_is_focused(MUSIC_VIEW)) {
+		_set_text_canvas_array_mode(pobj, TEXT_CANVAS_LONG_SCROLL_CIRCULAR, num);
+	} else {
+		_set_text_canvas_array_mode(pobj, TEXT_CANVAS_LONG_CLIP, num);
+	}
 }
 
 static void _create_vol_bar(lv_obj_t *scr)
@@ -1095,7 +1131,7 @@ static void _display_vol_view(view_data_t *view_data)
 	_create_vol_bar(p_lview_data->vol_bmp);
 
 	/* hidden left and right view to receive callback function when BMP_VOL_BG was draw */
-	ui_manager_gesture_set_dir(0);
+	ui_gesture_lock_scroll();
 }
 
 #ifdef CONFIG_BT_TRANSMIT
@@ -1135,7 +1171,7 @@ static void _display_bt_earphone_list(view_data_t *view_data)
 	p_lview_data->update_bt_earphone_list = 1;
 
 	/* hidden left and right view to receive callback function when bt earphone list was draw */
-	ui_manager_gesture_set_dir(0);
+	ui_gesture_lock_scroll();
 }
 #endif /* CONFIG_BT_TRANSMIT */
 
@@ -1184,7 +1220,7 @@ static void _display_more_view(view_data_t *view_data)
 	_create_bt_connect_state_img(p_lview_data->more_bmp);
 
 	/* hidden left and right view to receive callback function when more view was draw */
-	ui_manager_gesture_set_dir(0);
+	ui_gesture_lock_scroll();
 }
 #endif
 
@@ -1271,7 +1307,7 @@ static void _display_song_name_album(void)
 	if (!p_lview_data || !p_lview_data->song_name || !p_lview_data->album)
 		return;
 
-	lv_label_set_text(p_lview_data->lbl[TXT_SONG_NAME], p_lview_data->song_name);
+	text_canvas_set_text(p_lview_data->lbl[TXT_SONG_NAME], p_lview_data->song_name);
 	text_arc_set_text(p_lview_data->album_obj, p_lview_data->album);
 	text_arc_refresh(p_lview_data->album_obj);
 
@@ -1663,7 +1699,7 @@ static void _music_event_handler(lv_event_t * e)
 
 static void text_arc_tuning_cb(uint32_t letter, int16_t *st_angle, int16_t *end_angle)
 {
-	char tuning_str[8] = {"creow"};
+	char tuning_str[20] = {"creow（）"};
 	uint32_t ofs_1 = 0;
 	if(letter == lv_text_encoded_next(tuning_str, &ofs_1)) {
 		*st_angle -= 1;
@@ -1677,6 +1713,10 @@ static void text_arc_tuning_cb(uint32_t letter, int16_t *st_angle, int16_t *end_
 	} else if(letter == lv_text_encoded_next(tuning_str, &ofs_1)) {
 		*st_angle -= 1;
 		*end_angle -= 1;
+	} else if(letter == lv_text_encoded_next(tuning_str, &ofs_1)) {
+		*end_angle += 4;
+	} else if(letter == lv_text_encoded_next(tuning_str, &ofs_1)) {
+		*st_angle += 4;
 	}
 }
 
@@ -1713,7 +1753,7 @@ static int _music_view_layout_update(view_data_t *view_data, bool first_layout)
 		/* create image */
 		_create_img_array(scr, data->bmp, data->pt_bmp, data->img_dsc_bmp, NUM_IMGS);
 
-		data->album_obj = text_arc_create(scr);
+		data->album_obj = text_arc_create(data->bmp[BMP_BG]);
 		lv_obj_set_size(data->album_obj,300,300);
 		text_arc_set_radian(data->album_obj, 150, 0, 3);
 		text_arc_set_center(data->album_obj, true);
@@ -1723,9 +1763,9 @@ static int _music_view_layout_update(view_data_t *view_data, bool first_layout)
 		text_arc_refresh(data->album_obj);
 
 		/* create play progress */
-		_create_music_play_progress_bar(scr);
+		_create_music_play_progress_bar(data->bmp[BMP_BG]);
 		/* create button */
-		_create_btn_array(scr, data->btn, data->pt_def, data->img_dsc_def, data->img_dsc_sel, NUM_BTNS, view_data);
+		_create_btn_array(data->bmp[BMP_BG], data->btn, data->pt_def, data->img_dsc_def, data->img_dsc_sel, NUM_BTNS, view_data);
 
 		/* FIXME: donot update the play/pause icon when pressed */
 		lv_imagebutton_set_src(data->btn[BTN_PLAY], LV_IMAGEBUTTON_STATE_RELEASED, NULL, &data->img_dsc_def[BTN_PLAY], NULL);
@@ -1748,7 +1788,7 @@ static int _music_view_layout_update(view_data_t *view_data, bool first_layout)
 		lv_obj_set_ext_click_area(data->btn[BTN_VOL], lv_obj_get_style_width(data->btn[BTN_VOL], LV_PART_MAIN) / 2);
 
 		/* create label */
-		_create_label_array(scr, data->lbl, data->pt_txt, data->style_txt, data->res_txt, NUM_TXTS);
+		_create_text_canvas_array(data->bmp[BMP_BG], data->lbl, data->pt_txt, data->style_txt, data->res_txt, NUM_TXTS);
 
 		/* init text */
 #ifdef CONFIG_LCMUSIC_APP
@@ -1944,12 +1984,11 @@ static int _music_view_delete(view_data_t *view_data)
 		btmusic_set_play_callback(NULL);
 	#endif
 
-		_delete_obj_array(data->bmp, NUM_IMGS);
+		lv_obj_delete(data->progress_arc);
 		_delete_obj_array(data->btn, NUM_BTNS);
 		_delete_obj_array(data->lbl, NUM_TXTS);
+		_delete_obj_array(data->bmp, NUM_IMGS);
 		_reset_label_style_array(data->style_txt, NUM_TXTS);
-
-		lv_obj_delete(data->progress_arc);
 
 		lv_style_reset(&data->style_arc_bg);
 		lv_style_reset(&data->style_arc_red);
@@ -2017,7 +2056,7 @@ static int _music_view_focus_changed(view_data_t *view_data, bool focused)
 		{
 			_music_view_preload(view_data, true);
 		}
-		_set_label_array_mode(data->lbl, LV_LABEL_LONG_SCROLL_CIRCULAR, NUM_TXTS);
+		_set_text_canvas_array_mode(data->lbl, TEXT_CANVAS_LONG_SCROLL_CIRCULAR, NUM_TXTS);
 	}
 	else
 	{
@@ -2034,7 +2073,7 @@ static int _music_view_focus_changed(view_data_t *view_data, bool focused)
 				lv_timer_delete(data->bt_status_timer);
 				data->bt_status_timer = NULL;
 			}
-			_set_label_array_mode(data->lbl, LV_LABEL_LONG_CLIP, NUM_TXTS);
+			_set_text_canvas_array_mode(data->lbl, TEXT_CANVAS_LONG_CLIP, NUM_TXTS);
 		}
 		lvgl_res_preload_cancel_scene(SCENE_LCMUSIC_VIEW);
 		lvgl_res_unload_scene_compact(SCENE_LCMUSIC_VIEW);

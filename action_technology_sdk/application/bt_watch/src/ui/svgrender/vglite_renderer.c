@@ -62,7 +62,7 @@ static int commit_count = 0;
 #endif
 
 #include "nanosvg.h"
-#include "vg_lite.h"
+#include "vglite_renderer.h"
 
 extern int spng_load_memory(vg_lite_buffer_t * buffer, const void * png_bytes, size_t png_len);
 extern int spng_free_buffer(vg_lite_buffer_t * buffer);
@@ -102,6 +102,8 @@ static unsigned int unicode;
 static vg_lite_fill_t fill_rule;
 static vg_lite_float_t shape_bound[4]; // [minx,miny,maxx,maxy]
 static vg_lite_float_t global_scale = 1.0f;
+
+static const struct NSVGImageDecoder *g_imagedec;
 
 #ifdef CONFIG_FREETYPE_FONT
 
@@ -224,15 +226,15 @@ static vg_lite_error_t renderText(vg_lite_buffer_t * render_buffer_ptr, NSVGshap
 }
 #endif /* CONFIG_FREETYPE_FONT */
 
-static vg_lite_error_t renderImage(vg_lite_buffer_t* render_buffer_ptr, NSVGshape* shape)
+static vg_lite_error_t renderImage(vg_lite_buffer_t* render_buffer_ptr, NSVGdefsImage* image_ptr, char is_pattern_mode)
 {
-    if (!shape->fill.image->drawFlag)
+    if (!image_ptr->drawFlag)
     {
         NANOSVG_PRINT("Bypass an image because of its oversize.\n");
         return 0;
     }
 
-    NSVGdefsImage* image = shape->fill.image;
+    NSVGdefsImage* image = image_ptr;
     vg_lite_buffer_t src;
     vg_lite_matrix_t image_matrix;
     vg_lite_blend_t blend = OPENVG_BLEND_SRC_OVER;
@@ -240,56 +242,101 @@ static vg_lite_error_t renderImage(vg_lite_buffer_t* render_buffer_ptr, NSVGshap
     unsigned char* output;
     size_t len;
     int pos_x, pos_y;
+    bool not_url = strcmp(image->format, NSVG_IMAGE_FORMAT_URL);
 
-    /* Decode image data. */
-    if (nsvgBase64Decode(s, &output, &len) < 0) {
-        NANOSVG_PRINT("nsvgBase64Decode failed\n");
+    if (not_url) {
+        /* Decode image data. */
+        if (nsvgBase64Decode(s, &output, &len) < 0) {
+            NANOSVG_PRINT("nsvgBase64Decode failed\n");
+            return 0;
+        }
+
+        /* Load decoded png data to vglite buffer. */
+        if (spng_load_memory(&src, output, len)) {
+            NANOSVG_PRINT("png load failed\n");
+            goto VGLError;
+        }
+
+        src.compress_mode = VG_LITE_DEC_DISABLE;
+        src.image_mode = VG_LITE_ZERO;
+        src.tiled = VG_LITE_LINEAR;
+    } else if (g_imagedec) {
+        if (g_imagedec->decode(g_imagedec, &src, s)) {
+            NANOSVG_PRINT("image decode load failed\n");
+            return 0;
+        }
+    } else {
+        NANOSVG_PRINT("no image decoder registered\n");
         return 0;
     }
-
-    /* Load decoded png data to vglite buffer. */
-    //vg_lite_load_png_data(&src, output, len);
-    spng_load_memory(&src, output, len);
 
     pos_x = image->x;
     pos_y = image->y;
 
-    src.compress_mode = VG_LITE_DEC_DISABLE;
-    src.image_mode = VG_LITE_ZERO;
-    src.tiled = VG_LITE_LINEAR;
-
-    memcpy(&image_matrix, &global_matrix, sizeof(global_matrix));
+    if (!is_pattern_mode)
+        memcpy(&image_matrix, &global_matrix, sizeof(global_matrix));
+    else
+        vg_lite_identity(&image_matrix);
 
     VGL_ERROR_CHECK(vg_lite_translate(pos_x * global_scale, pos_y * global_scale, &image_matrix));
-    VGL_ERROR_CHECK(vg_lite_scale(image->width * global_scale/src.width, image->height * global_scale/src.height, &image_matrix));
+    float image_scale_size = src.height > src.width ? (float)image->height * global_scale / (float)src.height : (float)image->width * global_scale / (float)src.width;
+    int image_translate_size;
+    if (image->height > image->width)
+    {
+        image_translate_size = (image->width * global_scale - src.width * image_scale_size) / 2;
+        VGL_ERROR_CHECK(vg_lite_translate(image_translate_size, 0, &image_matrix));
+    }
+    else
+    {
+        image_translate_size = (image->height * global_scale - src.height * image_scale_size) / 2;
+        VGL_ERROR_CHECK(vg_lite_translate(0, image_translate_size, &image_matrix));
+    }
+    VGL_ERROR_CHECK(vg_lite_scale(image_scale_size, image_scale_size,&image_matrix));
+
     VGL_ERROR_CHECK(vg_lite_blit(render_buffer_ptr, &src, &image_matrix, blend, 0, 0));
     VGL_ERROR_CHECK(vg_lite_finish());
 
-    //VGL_ERROR_CHECK(vg_lite_free(&src));
-    spng_free_buffer(&src);
-    NANOSVG_FREE(output);
+    if (not_url) {
+        spng_free_buffer(&src);
+        NANOSVG_FREE(output);
+    } else if (g_imagedec && g_imagedec->release) {
+        g_imagedec->release(g_imagedec, &src);
+    }
 
     return 0;
 
 VGLError:
-    NANOSVG_FREE(output);
+    if (not_url)
+        NANOSVG_FREE(output);
     return 1;
 }
 
-static vg_lite_error_t generateVGLitePath(NSVGpath* shape_path, vg_lite_path_t* vgl_path, vg_lite_path_type_t path_type)
+static vg_lite_error_t generateVGLitePath(NSVGpath* shape_path, vg_lite_path_t* vgl_path, vg_lite_path_type_t path_type, char nsvg_path_type)
 {
     float* d = &((float*)vgl_path->path)[0];
-    float* bufend = d + PATH_DATA_BUFFER_SIZE;
 
     for (NSVGpath* path = shape_path; path != NULL; path = path->next)
     {
         float* s = &path->pts[0];
 
         /* Exit if remaining path_data_buf[] is not sufficient to hold the path data */
-        if ((bufend - d) < (7 * path->npts + 10) / 3)
+        if (nsvg_path_type == NSVG_PATH || nsvg_path_type == NSVG_CLIP_PATH)
         {
-            NANOSVG_PRINT("Error: Need to increase PATH_DATA_BUFFER_SIZE for path_data_buf[].\n");
-            goto VGLError;
+            float* bufend = d + PATH_DATA_BUFFER_SIZE;
+            if ((bufend - d) < (7 * path->npts + 10) / 3)
+            {
+                NANOSVG_PRINT("Error: Need to increase PATH_DATA_BUFFER_SIZE for path_data_buf[].\n");
+                goto VGLError;
+            }
+        }
+        else if (nsvg_path_type == NSVG_PATH)
+        {
+            float* bufend = d + PATTERN_BUFFER_SIZE;
+            if ((bufend - d) < (7 * path->npts + 10) / 3)
+            {
+                NANOSVG_PRINT("Error: Need to increase PATTERN_BUFFER_SIZE for path_data_buf[].\n");
+                goto VGLError;
+            }
         }
 
         /* Create VGLite cubic bezier path data from path->pts[] */
@@ -614,56 +661,63 @@ static int renderPatternPath(vg_lite_buffer_t *render_buffer_ptr, NSVGpaint* pai
         VGL_ERROR_CHECK(vg_lite_allocate(&pattern_buf));
         VGL_ERROR_CHECK(vg_lite_clear(&pattern_buf, NULL, 0xFFFFFFFF));
 
-        fill_rule = VG_LITE_FILL_NON_ZERO - pattern_shape->fillRule;
-
-        for (; pattern_shape; pattern_shape = pattern_shape->next)
+        if (pattern_shape != NULL)
         {
-            memset(&pattern_path, 0, sizeof(vg_lite_path_t));
-            pattern_shape_bound[0] = pattern_shape->bounds[0] * global_scale;
-            pattern_shape_bound[1] = pattern_shape->bounds[1] * global_scale;
-            pattern_shape_bound[2] = pattern_shape->bounds[2] * global_scale;
-            pattern_shape_bound[3] = pattern_shape->bounds[3] * global_scale;
+            fill_rule = VG_LITE_FILL_NON_ZERO - pattern_shape->fillRule;
 
-            VGL_ERROR_CHECK(vg_lite_init_path(&pattern_path, VG_LITE_FP32, VG_LITE_MEDIUM, 0, &pattern_data_buf[0],
-                pattern_shape_bound[0], pattern_shape_bound[1], pattern_shape_bound[2], pattern_shape_bound[3]));
-
-            path_type = 0;
-            if (pattern_shape->fill.type != NSVG_PAINT_NONE)
-                path_type |= VG_LITE_DRAW_FILL_PATH;
-            if (pattern_shape->stroke.type != NSVG_PAINT_NONE)
-                path_type |= VG_LITE_DRAW_STROKE_PATH;
-
-
-            VGL_ERROR_CHECK(generateVGLitePath(pattern_shape->paths, &pattern_path, path_type));
-
-            if (pattern_shape->stroke.type != NSVG_PAINT_NONE)
+            for (; pattern_shape; pattern_shape = pattern_shape->next)
             {
-                vg_lite_cap_style_t linecap = VG_LITE_CAP_BUTT + pattern_shape->strokeLineCap;
-                vg_lite_join_style_t joinstyle = VG_LITE_JOIN_MITER + pattern_shape->strokeLineJoin;
-                vg_lite_float_t strokewidth = pattern_shape->strokeWidth * global_scale;
-                vg_lite_color_t stroke_color = pattern_shape->stroke.color;
+                memset(&pattern_path, 0, sizeof(vg_lite_path_t));
+                pattern_shape_bound[0] = pattern_shape->bounds[0] * global_scale;
+                pattern_shape_bound[1] = pattern_shape->bounds[1] * global_scale;
+                pattern_shape_bound[2] = pattern_shape->bounds[2] * global_scale;
+                pattern_shape_bound[3] = pattern_shape->bounds[3] * global_scale;
 
-                pattern_path.path_type = VG_LITE_DRAW_STROKE_PATH;
-                if (pattern_shape->opacity < 1 || pattern_shape->fill_opacity == 0)
+                VGL_ERROR_CHECK(vg_lite_init_path(&pattern_path, VG_LITE_FP32, VG_LITE_MEDIUM, 0, &pattern_data_buf[0],
+                    pattern_shape_bound[0], pattern_shape_bound[1], pattern_shape_bound[2], pattern_shape_bound[3]));
+
+                path_type = 0;
+                if (pattern_shape->fill.type != NSVG_PAINT_NONE)
+                    path_type |= VG_LITE_DRAW_FILL_PATH;
+                if (pattern_shape->stroke.type != NSVG_PAINT_NONE)
+                    path_type |= VG_LITE_DRAW_STROKE_PATH;
+
+
+                VGL_ERROR_CHECK(generateVGLitePath(pattern_shape->paths, &pattern_path, path_type, pattern_shape->pathType));
+
+                if (pattern_shape->stroke.type != NSVG_PAINT_NONE)
                 {
-                    vg_lite_color_t color = stroke_color;
-                    uint8_t a = (uint8_t)(((color & 0xFF000000) >> 24) * pattern_shape->opacity);
-                    stroke_color = (color & 0x00ffffff) | ((a << 24) & 0xff000000);
-                }
-                else
-                {
-                    setOpacity(&stroke_color, pattern_shape->opacity);
+                    vg_lite_cap_style_t linecap = VG_LITE_CAP_BUTT + pattern_shape->strokeLineCap;
+                    vg_lite_join_style_t joinstyle = VG_LITE_JOIN_MITER + pattern_shape->strokeLineJoin;
+                    vg_lite_float_t strokewidth = pattern_shape->strokeWidth * global_scale;
+                    vg_lite_color_t stroke_color = pattern_shape->stroke.color;
+
+                    pattern_path.path_type = VG_LITE_DRAW_STROKE_PATH;
+                    if (pattern_shape->opacity < 1 || pattern_shape->fill_opacity == 0)
+                    {
+                        vg_lite_color_t color = stroke_color;
+                        uint8_t a = (uint8_t)(((color & 0xFF000000) >> 24) * pattern_shape->opacity);
+                        stroke_color = (color & 0x00ffffff) | ((a << 24) & 0xff000000);
+                    }
+                    else
+                    {
+                        setOpacity(&stroke_color, pattern_shape->opacity);
+                    }
+
+                    VGL_ERROR_CHECK(vg_lite_set_stroke(&pattern_path, linecap, joinstyle, strokewidth, pattern_shape->miterLimit,
+                        pattern_shape->strokeDashArray, pattern_shape->strokeDashCount, pattern_shape->strokeDashOffset, 0xFFFFFFFF));
+                    VGL_ERROR_CHECK(vg_lite_update_stroke(&pattern_path));
+
+                    pattern_path.stroke_color = stroke_color;
                 }
 
-                VGL_ERROR_CHECK(vg_lite_set_stroke(&pattern_path, linecap, joinstyle, strokewidth, pattern_shape->miterLimit,
-                    pattern_shape->strokeDashArray, pattern_shape->strokeDashCount, pattern_shape->strokeDashOffset, 0xFFFFFFFF));
-                VGL_ERROR_CHECK(vg_lite_update_stroke(&pattern_path));
+                VGL_ERROR_CHECK(vg_lite_draw(&pattern_buf, &pattern_path, fill_rule, &draw_pattern_matrix, VG_LITE_BLEND_NONE, pattern_shape->fill.color));
 
-                pattern_path.stroke_color = stroke_color;
             }
-
-            VGL_ERROR_CHECK(vg_lite_draw(&pattern_buf, &pattern_path, fill_rule, &draw_pattern_matrix, VG_LITE_BLEND_NONE, pattern_shape->fill.color));
-
+        }
+        else
+        {
+            renderImage(&pattern_buf, paint->pattern->image, 1);
         }
 
         if (vg_lite_query_feature(gcFEATURE_BIT_VG_IM_REPEAT_REFLECT))
@@ -737,7 +791,7 @@ static int renderPatternPath(vg_lite_buffer_t *render_buffer_ptr, NSVGpaint* pai
                 start_y = tem_y;
             }
 
-            VGL_ERROR_CHECK(vg_lite_identity(&temp_mat));
+            memcpy(&temp_mat, &global_matrix, sizeof(global_matrix));
             VGL_ERROR_CHECK(vg_lite_translate(shape_bound[0], shape_bound[1], &temp_mat));
             VGL_ERROR_CHECK(vg_lite_blit(render_buffer_ptr, &temp_buf, &temp_mat, VG_LITE_BLEND_SRC_OVER, 0, 0));
             VGL_ERROR_CHECK(vg_lite_finish());
@@ -776,7 +830,7 @@ static vg_lite_buffer_t* renderClipPath(vg_lite_buffer_t* render_buffer_ptr, NSV
     VGL_ERROR_CHECK(vg_lite_identity(&clip_path_matrix));
     VGL_ERROR_CHECK(vg_lite_init_path(&clip_path, VG_LITE_FP32, VG_LITE_MEDIUM, 0, &path_data_buf[0],
         shape->clipPath->path->bounds[0], shape->clipPath->path->bounds[1], shape->clipPath->path->bounds[2], shape->clipPath->path->bounds[3]));
-    generateVGLitePath(shape->clipPath->path, &clip_path, VG_LITE_DRAW_FILL_PATH);
+    generateVGLitePath(shape->clipPath->path, &clip_path, VG_LITE_DRAW_FILL_PATH, shape->pathType);
     VGL_ERROR_CHECK(vg_lite_draw(&clip_path_buffer, &clip_path, VG_LITE_FILL_EVEN_ODD, &global_matrix, VG_LITE_BLEND_NONE, 0xFF000000));
     VGL_ERROR_CHECK(vg_lite_blit(&clip_path_buffer, render_buffer_ptr, &clip_path_matrix, VG_LITE_BLEND_SRC_IN, 0, 0));
     VGL_ERROR_CHECK(vg_lite_finish());
@@ -878,7 +932,7 @@ int renderSVGImage(NSVGimage *image, vg_lite_buffer_t *render_buffer_ptr, vg_lit
         fill_rule = VG_LITE_FILL_NON_ZERO - shape->fillRule;
 
         /* Generate VGLite cubic bezier path data from current shape */
-        VGL_ERROR_CHECK(generateVGLitePath(shape->paths, &vgl_path, path_type));
+        VGL_ERROR_CHECK(generateVGLitePath(shape->paths, &vgl_path, path_type, shape->pathType));
 
         /* Render VGLite fill path with linear/radial gradient support */
         if (shape->fill.type != NSVG_PAINT_NONE)
@@ -903,7 +957,7 @@ int renderSVGImage(NSVGimage *image, vg_lite_buffer_t *render_buffer_ptr, vg_lit
 #endif
             }
             else if (shape->fill.type == NSVG_PAINT_IMAGE) {
-                VGL_ERROR_CHECK(renderImage(current_render_buffer_ptr, shape));
+                VGL_ERROR_CHECK(renderImage(current_render_buffer_ptr, shape->fill.image, 0));
             }
             else {
                 VGL_ERROR_CHECK(renderPatternPath(current_render_buffer_ptr, &shape->fill, shape->fillPattern));
@@ -1022,4 +1076,10 @@ NSVGimage* parseSVGImageFromFile(const char *filename, int *pwidth, int *pheight
 void deleteSVGImage(NSVGimage *image)
 {
     nsvgDelete(image);
+}
+
+void setSVGImageDecoder(const struct NSVGImageDecoder *decoder)
+{
+    if (decoder && decoder->decode)
+        g_imagedec = decoder;
 }

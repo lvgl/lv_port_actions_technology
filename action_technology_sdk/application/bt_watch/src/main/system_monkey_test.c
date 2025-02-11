@@ -33,6 +33,7 @@ const static uint8_t dvfs_level_table[] = {DVFS_LEVEL_S2, DVFS_LEVEL_NORMAL, DVF
 
 #define CONFIG_MONKEY_WORK_Q_STACK_SIZE 1280
 #define INPUT_EVENT_INTERVAL 			10
+#define KEY_EVENT_INTERVAL				60 /* the minimum report period is 60 ms in real case */
 #define MAX_POINTER_TRAVEL 				10
 #define STEP_LENGTH                     20
 
@@ -52,8 +53,8 @@ enum MONKEY_INPUT_TYPE {
 struct monkey_input {
 	uint8_t event : 7;
 	uint8_t finished : 1;
-	uint8_t interval;
 	uint8_t step;
+	uint32_t interval; /* number of INPUT_EVENT_INTERVAL or timestamp directly */
 } monkey_input_t;
 
 struct monkey_context_t {
@@ -183,9 +184,9 @@ static int send_remind(uint8_t *event_step)
 		msg.cmd = BAT_CHG_EVENT_DC5V_IN;
 	}
 
-	*event_step += 1;
-
-	send_async_msg(APP_ID_LAUNCHER, &msg);
+	if (send_async_msg_discardable(APP_ID_LAUNCHER, &msg) == true) {
+		*event_step += 1;
+	}
 
 	return (*event_step == 1) ? 0 : 1;
 }
@@ -204,10 +205,10 @@ static void _monkey_work(struct k_work *work)
 #endif
 
 	if (event == KEY_EVENT) {
-		/* reduce stress of msg manager */
-		if (++monkey_context.inputs[MONKEY_KEY].interval >= 2) {
+		uint32_t uptime = os_uptime_get_32();
+		if (uptime - monkey_context.inputs[MONKEY_KEY].interval >= KEY_EVENT_INTERVAL) {
 			sys_event_report_input(DEFAULT_KEY_EVENT);
-			monkey_context.inputs[MONKEY_KEY].interval = 0;
+			monkey_context.inputs[MONKEY_KEY].interval = uptime;
 			monkey_context.inputs[MONKEY_KEY].finished = 1;
 		}
 	} else if (event == REMIND_EVENT) {
