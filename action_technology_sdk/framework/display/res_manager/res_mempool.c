@@ -241,6 +241,16 @@ void res_mem_free_block(void* ptr)
 	}
 }
 
+int res_mem_is_block(void* ptr)
+{
+	if(block_mem == NULL || (uint32_t)ptr < (uint32_t)block_mem || (uint32_t)ptr >= (uint32_t)(block_mem+block_size*block_num))
+	{
+		return 0;
+	}
+
+	return 1;
+}
+
 void* res_array_alloc_debug(int32_t type, size_t size, const char *func)
 {
 	return ui_mem_alloc(MEM_RES, size, func);

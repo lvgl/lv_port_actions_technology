@@ -334,15 +334,17 @@ uint32_t res_manager_scene_is_loaded(uint32_t scene_id);
 void res_manager_dump_info(void);
 resource_bitmap_t* res_manager_load_frame_from_picregion(resource_info_t* info, resource_picregion_t* picreg, uint32_t frame);
 
-int res_manager_load_bitmap_for_decoder(style_bitmap_t* bitmap);
+int res_manager_load_bitmap_for_decoder(resource_bitmap_t* bitmap, int force);
 void res_manager_free_bitmap_for_decoder(void* ptr);
+int res_manager_decode_bitmap_to_img_dsc(void* raw, void* decoded);
 
 int res_manager_set_current_string_res(const uint8_t** string_res, uint32_t string_cnt);
 uint8_t* res_manager_get_string(uint8_t* key);
+uint8_t* res_manager_get_string_from_id(int id);
 
 #ifdef CONFIG_RES_MANAGER_ENABLE_MEM_LEAK_DEBUG
 void res_manager_compact_buffer_check(uint32_t scene_id);
 #endif
 uint32_t res_mem_get_mem_peak(void);
-
+void res_manager_clear_decoder_cache(void);
 #endif /*__RES_MANAGER_API_H__*/

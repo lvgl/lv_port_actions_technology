@@ -10,7 +10,7 @@ manifest:
     path: thirdparty/fs/fatfs
   - name: lvgl
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_LVGL
-    revision: ce16356c0708862d201eb43583e906dbb00f2e6e
+    revision: 4ea471ca6f720b5a4af52ce4541b15b373f03648
     path: thirdparty/lib/gui/lvgl
   - name: alipay
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_ALIPAY
@@ -42,22 +42,22 @@ manifest:
     path: thirdparty/fs/littlefs
   - name: bootloader
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_BOOT_LOADER
-    revision: a5e12c5553ddbb4b99cb7f450afef3aed51b827b
+    revision: 7485d42810b5f0faa829a4d8030c724e1af70445
   - name: framework_base
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_FRAMEWORK_BASE
     revision: b6d925b8fc4f4b0e97f4251f1bcca0639ac0ff3d
     path: framework/base
   - name: framework_system
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_SYSTEM
-    revision: 59e5575354508ad6b16c1447eeb0a1eabe5e8d61
+    revision: 5e18add615fbf3b8d26a32dcce7c57b8fe47b6fb
     path: framework/system
   - name: audio
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_AUDIO
-    revision: 92c64e2334421c5ff8ba442ffb1d820e3b754265
+    revision: 3d4692f5ef38386034f82e325880bc0ca3de37b6
     path: framework/audio
   - name: media
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_MEDIA_BASE
-    revision: 1797e678d3ff5b75f66d907929c54e0f42e4175d
+    revision: ef845e69c6b60615b707e347c6ad262d421987f3
     path: framework/media
   - name: ota
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_OTA
@@ -65,11 +65,11 @@ manifest:
     path: framework/ota
   - name: bluetooth
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_BLUETOOTH
-    revision: 1955a4b4b7b44766e279f471edcb5da56a41a94d
+    revision: 3e500df3aac398c564462a8b3574322e54100dcd
     path: framework/bluetooth
   - name: display
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_DISPLAY
-    revision: 453d35b972f73ba364a1ff5e0ec19e794cbd0603
+    revision: 76ccdffa32fcdc94cee4ff423effcd549f18299e
     path: framework/display
   - name: usb
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_USB
@@ -81,12 +81,36 @@ manifest:
     path: framework/sensor
   - name: bt_watch
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_APPLICATION_BT_WATCH
-    revision: 0f0fcae143d3a1df96abece4e7195c32f512d01b
+    revision: ae295dbc7e8d50479fba7c288f771e794dce55a9
     path: application/bt_watch
+  - name: bt_watch_no_psram
+    url: ssh://192.168.4.4:29418/ZH/actions/BT_WATCH_NO_PSRAM
+    revision: eecc4b1a2b54d72c24f39352a6b01960041e7562
+    path: application/bt_watch_no_psram
+  - name: bt_watch_qc
+    url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_APPLICATION_BT_WATCH_QC
+    revision: 2669ebf808072ed300680703cad98c5760701e7d
+    path: application/bt_watch_qc
   - name: app_demo
     url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_APPLICATION_DEMO
-    revision: 2f9486f9156f42d2d43dbc89b51262a7c9818f56
+    revision: 0a594f9341bbcf27d6c6be9c77520a111f4b4844
     path: application/app_demo
+  - name: glyphix_demo
+    url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_APPLICATION_GLYPHIX_DEMO
+    revision: 91a125129138730faf300a5d823cf536606cf7d6
+    path: application/glyphix_demo
+  - name: glyphix
+    url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_GLYPHIX
+    revision: 587d0a7b8d49bc622001d864c6995aa771cbd1ba
+    path: thirdparty/lib/glyphix
+  - name: cherryusb
+    url: ssh://192.168.4.4:29418/CD/actions/ZSDK_LIB_USB
+    revision: e2bd39409587cd06eb50aeaf70085aafd40f61e9
+    path: thirdparty/lib/CherryUSB
+  - name: awk
+    url: ssh://192.168.4.4:29418/ZH/actions/ZSDK_LIB_AMAP
+    revision: 0be8870f4ad9934bb878835c1491f3fec75fca2a
+    path: thirdparty/lib/awk_map
   self:
     path: zephyr
     west-commands: scripts/west-commands.yml

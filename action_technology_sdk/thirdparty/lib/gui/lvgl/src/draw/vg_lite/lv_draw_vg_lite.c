@@ -36,6 +36,8 @@
 
 static int32_t draw_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer);
 
+static int32_t draw_dispatch_task(lv_draw_unit_t * draw_unit, lv_layer_t * layer, lv_draw_task_t * task);
+
 static int32_t draw_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task);
 
 static int32_t draw_delete(lv_draw_unit_t * draw_unit);
@@ -54,7 +56,7 @@ static int32_t draw_wait_for_finish(lv_draw_unit_t * draw_unit);
  *   GLOBAL FUNCTIONS
  **********************/
 
-void lv_draw_vg_lite_init(void)
+lv_draw_unit_t * lv_draw_vg_lite_init(bool subunit)
 {
 #if LV_VG_LITE_USE_GPU_INIT
     extern void gpu_init(void);
@@ -68,9 +70,16 @@ void lv_draw_vg_lite_init(void)
     lv_vg_lite_dump_info();
 
     /* lv_draw_buf_vg_lite_init_handlers(); */
+    lv_draw_vg_lite_unit_t * unit;
+    if(subunit) {
+        unit = lv_malloc_zeroed(sizeof(lv_draw_vg_lite_unit_t));
+        unit->base_unit.dispatch_task_cb = draw_dispatch_task;
+    }
+    else {
+        unit = lv_draw_create_unit(sizeof(lv_draw_vg_lite_unit_t));
+        unit->base_unit.dispatch_cb = draw_dispatch;
+    }
 
-    lv_draw_vg_lite_unit_t * unit = lv_draw_create_unit(sizeof(lv_draw_vg_lite_unit_t));
-    unit->base_unit.dispatch_cb = draw_dispatch;
     unit->base_unit.evaluate_cb = draw_evaluate;
     unit->base_unit.delete_cb = draw_delete;
     unit->base_unit.wait_for_finish_cb = draw_wait_for_finish;
@@ -81,7 +90,12 @@ void lv_draw_vg_lite_init(void)
     lv_vg_lite_stroke_init(unit, LV_VG_LITE_STROKE_CACHE_CNT);
 #endif
     lv_vg_lite_path_init(unit);
-    /* lv_vg_lite_decoder_init(); */
+
+    if(!subunit) {
+        lv_vg_lite_decoder_init();
+    }
+
+    return &unit->base_unit;
 }
 
 void lv_draw_vg_lite_deinit(void)
@@ -92,14 +106,14 @@ void lv_draw_vg_lite_deinit(void)
  *   STATIC FUNCTIONS
  **********************/
 
-#define SPI0_BASE_ADDR 0x10000000
-#define SPI0_BASE_END_ADDR 0x14000000
-#define buf_is_nor(buf) \
-        ((((uint32_t)buf) >= SPI0_BASE_ADDR) && (((uint32_t)buf) < SPI0_BASE_END_ADDR))
-
 static inline bool is_vglite_accessible(const void * ptr)
 {
-    return (buf_is_nor(ptr) || ((uintptr_t)ptr & (LV_DRAW_BUF_ALIGN - 1))) ? false : true;
+    uintptr_t address = (uintptr_t)ptr;
+
+    if(address < LV_VG_LITE_BUFFER_ADDR_START || address > LV_VG_LITE_BUFFER_ADDR_END)
+        return false;
+
+    return ((address & (LV_DRAW_BUF_ALIGN - 1))) ? false : true;
 }
 
 static bool check_image_is_supported(const lv_draw_image_dsc_t * dsc)
@@ -274,6 +288,38 @@ static int32_t draw_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer)
     return 1;
 }
 
+static int32_t draw_dispatch_task(lv_draw_unit_t * draw_unit, lv_layer_t * layer, lv_draw_task_t * task)
+{
+    lv_draw_vg_lite_unit_t * u = (lv_draw_vg_lite_unit_t *)draw_unit;
+
+    /* Return immediately if it's busy with draw task. */
+    if(u->task_act) {
+        return 0;
+    }
+
+    /* Return if target buffer format is not supported. */
+    if(!lv_vg_lite_is_dest_cf_supported(layer->color_format)) {
+        return LV_DRAW_UNIT_IDLE;
+    }
+
+    void * buf = lv_draw_layer_alloc_buf(layer);
+    if(!buf) {
+        return LV_DRAW_UNIT_IDLE;
+    }
+
+    task->state = LV_DRAW_TASK_STATE_IN_PROGRESS;
+    u->base_unit.target_layer = layer;
+    u->base_unit.clip_area = &task->clip_area;
+    u->task_act = task;
+
+    draw_execute(u);
+
+    u->task_act->state = LV_DRAW_TASK_STATE_READY;
+    u->task_act = NULL;
+
+    return 1;
+}
+
 static int32_t draw_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
 {
     LV_UNUSED(draw_unit);
@@ -345,7 +391,7 @@ static int32_t draw_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
     }
 
     /* The draw unit is able to draw this task. */
-    task->preference_score = 80;
+    task->preference_score = VG_LITE_DRAW_PREFERENCE_SCORE;
     task->preferred_draw_unit_id = VG_LITE_DRAW_UNIT_ID;
     return 1;
 }
@@ -366,8 +412,8 @@ static int32_t draw_delete(lv_draw_unit_t * draw_unit)
 
 static int32_t draw_wait_for_finish(lv_draw_unit_t * draw_unit)
 {
-    vg_lite_finish();
-    return 0;
+    lv_vg_lite_finish((lv_draw_vg_lite_unit_t *)draw_unit);
+    return 1;
 }
 
 #endif /*LV_USE_DRAW_VG_LITE*/

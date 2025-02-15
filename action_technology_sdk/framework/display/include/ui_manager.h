@@ -144,24 +144,6 @@ static inline int ui_message_wait_reply(void)
 	return ui_message_send_sync(VIEW_INVALID_ID, MSG_VIEW_NULL, 0);
 }
 
-#ifndef CONFIG_UI_SERVICE
-/**
- * @brief dispatch ui message to target view
- *
- * This routine dispatch ui message to target view which mark by view id
- * if the target view not found in view list ,return failed. otherwise target
- * view will process this ui message.
- *
- * @param view_id id of view
- * @param msg_id id of msg_id
- * @param msg_data param of message
- *
- * @return 0 if invoked succsess.
- * @return others if invoked failed.
- */
-int ui_message_dispatch(uint16_t view_id, uint8_t msg_id, uint32_t msg_data);
-#endif
-
 /**
  * INTERNAL_HIDDEN @endcond
  */
@@ -177,11 +159,7 @@ int ui_message_dispatch(uint16_t view_id, uint8_t msg_id, uint32_t msg_data);
  *
  * @retval 0 on invoiked success else negative errno code.
  */
-#ifdef CONFIG_UI_SERVICE
 int ui_view_create(uint16_t view_id, const void *presenter, uint8_t flags);
-#else
-int ui_view_create(uint16_t view_id, ui_view_info_t *info);
-#endif
 
 /**
  * @brief Inflate view layout

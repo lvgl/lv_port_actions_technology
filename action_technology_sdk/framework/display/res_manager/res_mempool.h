@@ -100,6 +100,7 @@ void * res_mem_aligned_alloc_debug(uint8_t type, size_t align, size_t size, cons
 
 void* res_mem_alloc_block(size_t size, const char* func);
 void res_mem_free_block(void* ptr);
+int res_mem_is_block(void* ptr);
 
 size_t res_mem_get_align(void);
 

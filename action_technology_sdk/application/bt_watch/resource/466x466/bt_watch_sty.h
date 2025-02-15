@@ -30,6 +30,7 @@
 #define  SCENE_APPLIST8888_VIEW    0x5849a9f4
 #define  RES_VIB    0x61912ab0
 #define  RES_THIRD_PARTY_APP    0x8f8ce9cd
+#define  RES_AWK_MAP    0x5c6bf5ab
 #define  SCENE_SPORT_VIEW    0x6165a2ed
 #define  PIC_BG    0xd34492b2
 #define  PIC_BTN    0x35f2d33d

@@ -217,6 +217,7 @@ int audio_policy_get_record_audio_mode(uint8_t stream_type)
 
 	switch (stream_type) {
 		case AUDIO_STREAM_VOICE:
+		case AUDIO_STREAM_LE_AUDIO:
 		case AUDIO_STREAM_AI:
 		case AUDIO_STREAM_LOCAL_RECORD:
 		case AUDIO_STREAM_GMA_RECORD:
@@ -351,6 +352,7 @@ int audio_policy_get_record_channel_support_aec(uint8_t stream_type)
 
 	switch (stream_type) {
 		case AUDIO_STREAM_VOICE:
+		case AUDIO_STREAM_LE_AUDIO:
 		support_aec = true;
 		break;
 	}
@@ -362,6 +364,7 @@ int audio_policy_get_record_channel_aec_tail_length(uint8_t stream_type, uint8_t
 {
 	switch (stream_type) {
 	case AUDIO_STREAM_VOICE:
+	case AUDIO_STREAM_LE_AUDIO:
 		if (in_debug) {
 			return (sample_rate > 8) ? 32 : 64;
 		} else if (user_policy) {
@@ -378,7 +381,8 @@ int audio_policy_get_record_channel_aec_tail_length(uint8_t stream_type, uint8_t
 
 int audio_policy_is_out_channel_aec_reference(uint8_t stream_type)
 {
-    if(stream_type == AUDIO_STREAM_VOICE){
+    if(stream_type == AUDIO_STREAM_VOICE
+		|| stream_type == AUDIO_STREAM_LE_AUDIO){
         return true;
     }else{
         return false;
@@ -387,7 +391,8 @@ int audio_policy_is_out_channel_aec_reference(uint8_t stream_type)
 
 int audio_policy_get_out_channel_aec_reference_stream_type(uint8_t stream_type)
 {
-    if(stream_type == AUDIO_STREAM_VOICE){
+    if(stream_type == AUDIO_STREAM_VOICE
+		|| stream_type == AUDIO_STREAM_LE_AUDIO){
         return AUDIO_MODE_MONO;
     }else{
         return 0;
@@ -454,6 +459,7 @@ int audio_policy_get_pa_volume(uint8_t stream_type, uint8_t volume_level)
 
 	switch (stream_type) {
 		case AUDIO_STREAM_VOICE:
+		case AUDIO_STREAM_LE_AUDIO:
 			pa_volume = user_policy->voice_pa_table[volume_level];
 			break;
 		case AUDIO_STREAM_LINEIN:
@@ -463,7 +469,6 @@ int audio_policy_get_pa_volume(uint8_t stream_type, uint8_t volume_level)
 		case AUDIO_STREAM_MUSIC:
 		case AUDIO_STREAM_LOCAL_MUSIC:
 		case AUDIO_STREAM_SPDIF_IN:
-		case AUDIO_STREAM_LE_AUDIO:
 			pa_volume = user_policy->music_pa_table[volume_level];
 			break;
 		case AUDIO_STREAM_TTS:
@@ -489,6 +494,7 @@ int audio_policy_get_da_volume(uint8_t stream_type, uint8_t volume_level)
 
 	switch (stream_type) {
 	case AUDIO_STREAM_VOICE:
+	case AUDIO_STREAM_LE_AUDIO:
 		da_volume = user_policy->voice_da_table[volume_level];
 		break;
 	case AUDIO_STREAM_LINEIN:
@@ -524,6 +530,7 @@ int audio_policy_get_volume_level_by_db(uint8_t stream_type, int volume_db)
 
 	switch (stream_type) {
 		case AUDIO_STREAM_VOICE:
+		case AUDIO_STREAM_LE_AUDIO:
 			volume_table = user_policy->voice_pa_table;
 			break;
 		case AUDIO_STREAM_LINEIN:

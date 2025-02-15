@@ -1149,6 +1149,10 @@ static void ble_connected_notify_work_callback(struct k_work *work)
 static int bt_manager_ble_htimer_enable(bool enable,uint32_t time)
 {
 	SYS_LOG_INF("Ble htimer en %d t %d", enable, time);
+#ifdef CONFIG_BT_BLE_IPS
+	SYS_LOG_INF("avoid ips adv stop.");
+	return 0;
+#endif
 
     if (enable) {
         hrtimer_start(&ble_info.timer, 1000*time, 1000*time);

@@ -9,6 +9,7 @@
 /*********************
  *      INCLUDES
  *********************/
+
 #include <memory/mem_cache.h>
 #include <ui_mem.h>
 #include <ui_surface.h>
@@ -23,12 +24,13 @@
 /*********************
  *      DEFINES
  *********************/
+
 #if LV_COLOR_DEPTH == 16
-#  define SURFACE_PIXEL_FORMAT HAL_PIXEL_FORMAT_RGB_565
+    #define SURFACE_PIXEL_FORMAT HAL_PIXEL_FORMAT_RGB_565
 #elif LV_COLOR_DEPTH == 24
-#  define SURFACE_PIXEL_FORMAT HAL_PIXEL_FORMAT_RGB_888
+    #define SURFACE_PIXEL_FORMAT HAL_PIXEL_FORMAT_RGB_888
 #else
-#  define SURFACE_PIXEL_FORMAT HAL_PIXEL_FORMAT_XRGB_8888
+    #define SURFACE_PIXEL_FORMAT HAL_PIXEL_FORMAT_XRGB_8888
 #endif
 
 /**********************
@@ -50,6 +52,7 @@ typedef struct lvgl_disp_user_data {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
+
 static void _display_vsync_cb(const struct display_callback *callback, uint32_t timestamp);
 static void _display_pm_notify_cb(const struct display_callback *callback, uint32_t pm_action);
 
@@ -62,6 +65,7 @@ static int _init_overlay_layer(ui_layer_t *layer, graphic_buffer_t *gbuf,
 /**********************
  *  STATIC VARIABLES
  **********************/
+
 static const struct display_callback s_disp_callback = {
     .vsync = _display_vsync_cb,
     .pm_notify = _display_pm_notify_cb,
@@ -74,13 +78,14 @@ static OS_SEM_DEFINE(s_disp_sem, 0, 1);
 /**********************
  *   GLOBAL FUNCTIONS
  **********************/
+
 int lv_port_display_init(void)
 {
     uint16_t hor_res = 0;
     uint16_t ver_res = 0;
     uint8_t flags = 0;
 
-    if (display_composer_init()) {
+    if(display_composer_init()) {
         LV_LOG_ERROR("composer init failed");
         return LV_RESULT_INVALID;
     }
@@ -88,25 +93,25 @@ int lv_port_display_init(void)
     display_composer_register_callback(&s_disp_callback);
     display_composer_get_geometry(&hor_res, &ver_res, NULL, NULL);
 
-    switch (display_composer_get_orientation()) {
-    case 90:
-        flags = SURFACE_ROTATED_90;
-        break;
-    case 180:
-        flags = SURFACE_ROTATED_180;
-        break;
-    case 270:
-        flags = SURFACE_ROTATED_270;
-        break;
-    default:
-        break;
+    switch(display_composer_get_orientation()) {
+        case 90:
+            flags = SURFACE_ROTATED_90;
+            break;
+        case 180:
+            flags = SURFACE_ROTATED_180;
+            break;
+        case 270:
+            flags = SURFACE_ROTATED_270;
+            break;
+        default:
+            break;
     }
 
     k_sem_init(&s_disp_data.ready_sem, 0, 1);
     s_disp_data.pm_state = LVX_DISPLAY_STATE_ON;
 
     surface_t *surface = surface_create(hor_res, ver_res, SURFACE_PIXEL_FORMAT, 2, flags);
-    if (surface == NULL) {
+    if(surface == NULL) {
         LV_LOG_ERROR("surface_create failed");
         return LV_RESULT_INVALID;
     }
@@ -114,7 +119,7 @@ int lv_port_display_init(void)
     surface_register_callback(surface, SURFACE_CB_POST, _surface_post_handler, surface);
 
     lv_display_t *disp = lvgl_virtual_display_create(surface);
-    if (disp == NULL) {
+    if(disp == NULL) {
         LV_LOG_ERROR("display_create failed");
         surface_destroy(surface);
         return LV_RESULT_INVALID;
@@ -137,7 +142,7 @@ lv_result_t lvx_display_add_observer(const lvx_display_observer_t * observer)
 
 lv_result_t lvx_display_flush_wait(void)
 {
-    if (s_disp_data.surface == NULL)
+    if(s_disp_data.surface == NULL)
         return LV_RESULT_INVALID;
 
     surface_wait_for_refresh(s_disp_data.surface, -1);
@@ -152,12 +157,12 @@ lv_result_t lvx_display_read_to_draw_buf(lv_draw_buf_t * draw_buf)
     int res;
 
     res = lvx_display_flush_wait();
-    if (res < 0)
+    if(res < 0)
         return LV_RESULT_INVALID;
 
     gbuf = surface_get_post_buffer(s_disp_data.surface);
     required_size = graphic_buffer_get_bytes_per_line(gbuf) * gbuf->height;
-    if (draw_buf == NULL || draw_buf->data_size < required_size)
+    if(draw_buf == NULL || draw_buf->data_size < required_size)
         return LV_RESULT_INVALID;
 
     draw_buf->header.cf = LV_COLOR_FORMAT_NATIVE;
@@ -173,7 +178,7 @@ void * lvx_display_overlay_prepare(void)
 {
     graphic_buffer_t *gbuf = NULL;
 
-    if (lvx_display_flush_wait())
+    if(lvx_display_flush_wait())
         return NULL;
 
     surface_set_max_buffer_count(s_disp_data.surface, 1);
@@ -209,13 +214,13 @@ lv_result_t lvx_display_overlay_flush(const lv_draw_buf_t * bg_buf, const lv_poi
     graphic_buffer_t gbufs[2];
     int num = 1;
 
-    if (s_disp_data.in_overlay == false)
+    if(s_disp_data.in_overlay == false)
         return LV_RESULT_INVALID;
 
-    if (_init_overlay_layer(&layers[0], &gbufs[0], bg_buf, bg_pos, LV_OPA_COVER))
+    if(_init_overlay_layer(&layers[0], &gbufs[0], bg_buf, bg_pos, LV_OPA_COVER))
         return LV_RESULT_INVALID;
 
-    if (!_init_overlay_layer(&layers[1], &gbufs[1], fg_buf, fg_pos, fg_opa))
+    if(!_init_overlay_layer(&layers[1], &gbufs[1], fg_buf, fg_pos, fg_opa))
         num = 2;
 
     display_composer_post(layers, num, POST_FULL_FRAME);
@@ -225,36 +230,37 @@ lv_result_t lvx_display_overlay_flush(const lv_draw_buf_t * bg_buf, const lv_poi
 /**********************
  *  STATIC FUNCTIONS
  **********************/
+
 static void _display_vsync_cb(const struct display_callback *callback, uint32_t timestamp)
 {
-    if (!s_disp_data.initialized) {
+    if(!s_disp_data.initialized) {
         s_disp_data.initialized = true;
         k_sem_give(&s_disp_data.ready_sem);
     }
 
     lv_port_indev_pointer_scan();
 
-    if (s_disp_data.observer && s_disp_data.observer->vsync_cb) {
+    if(s_disp_data.observer && s_disp_data.observer->vsync_cb) {
         s_disp_data.observer->vsync_cb(s_disp_data.observer, timestamp);
     }
 }
 
 static void _display_pm_notify_cb(const struct display_callback *callback, uint32_t pm_action)
 {
-    switch (pm_action) {
-    case PM_DEVICE_ACTION_LATE_RESUME:
-        s_disp_data.pm_state = LVX_DISPLAY_STATE_ON;
-        break;
-    case PM_DEVICE_ACTION_LOW_POWER:
-        s_disp_data.pm_state = LVX_DISPLAY_STATE_IDLE;
-        break;
-    case PM_DEVICE_ACTION_EARLY_SUSPEND:
-    default:
-        s_disp_data.pm_state = LVX_DISPLAY_STATE_OFF;
-        break;
+    switch(pm_action) {
+        case PM_DEVICE_ACTION_LATE_RESUME:
+            s_disp_data.pm_state = LVX_DISPLAY_STATE_ON;
+            break;
+        case PM_DEVICE_ACTION_LOW_POWER:
+            s_disp_data.pm_state = LVX_DISPLAY_STATE_IDLE;
+            break;
+        case PM_DEVICE_ACTION_EARLY_SUSPEND:
+        default:
+            s_disp_data.pm_state = LVX_DISPLAY_STATE_OFF;
+            break;
     }
 
-    if (s_disp_data.observer && s_disp_data.observer->state_cb) {
+    if(s_disp_data.observer && s_disp_data.observer->state_cb) {
         s_disp_data.observer->state_cb(s_disp_data.observer, s_disp_data.pm_state);
     }
 }
@@ -270,7 +276,7 @@ static void _surface_post_handler(uint32_t event, void *data, void *user_data)
     surface_t *surface = user_data;
     ui_layer_t layer;
 
-    if (s_disp_data.in_overlay) {
+    if(s_disp_data.in_overlay) {
         surface_complete_one_post(surface);
         return;
     }
@@ -300,13 +306,13 @@ static int _init_overlay_layer(ui_layer_t *layer, graphic_buffer_t *gbuf,
         pos->x, pos->y, pos->x + buf->header.w - 1, pos->y + buf->header.h - 1,
     };
 
-    if (buf == NULL || pos == NULL)
+    if(buf == NULL || pos == NULL)
         return -EINVAL;
 
-    if (lv_area_intersect(&clip_area, &clip_area, &disp_area) == false)
+    if(lv_area_intersect(&clip_area, &clip_area, &disp_area) == false)
         return -EINVAL;
 
-    if (graphic_buffer_init(gbuf, buf->header.w, buf->header.h,
+    if(graphic_buffer_init(gbuf, buf->header.w, buf->header.h,
                             SURFACE_PIXEL_FORMAT, 0, buf->header.stride / (LV_COLOR_DEPTH / 8),
                             (void *)buf->data))
         return -EINVAL;

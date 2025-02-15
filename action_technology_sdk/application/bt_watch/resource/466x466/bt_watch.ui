@@ -5,16 +5,16 @@
     <property name="prj_language" value="0x0" />
     <property name="prj_screen_width" value="0x1d2" />
     <property name="prj_screen_height" value="0x1d2" />
-    <property name="prj_res_file" value="..\..\boards\ats3085s_dev_watch_ext_nor\res\bt_watch.res" />
-    <property name="prj_res_str_dir" value="..\..\boards\ats3085s_dev_watch_ext_nor\res" />
+    <property name="prj_res_file" value="..\..\res\bt_watch.res" />
+    <property name="prj_res_str_dir" value="..\..\res" />
     <property name="prj_res_head_file" value="..\454x454\bt_watch_pic.h" />
     <property name="prj_res_str_head_file" value="..\454x454\bt_watch_str.h" />
     <property name="prj_sty_head_file" value=".\bt_watch_sty.h" />
-    <property name="prj_sty_file" value="..\..\boards\ats3085s_dev_watch_ext_nor\res\bt_watch.sty" />
+    <property name="prj_sty_file" value="..\..\res\bt_watch.sty" />
     <property name="prj_build_res_type" value="0x1" />
     <property name="prj_build_res_mode" value="0x0" />
     <property name="prj_case_path" value="..\466x466" />
-    <property name="prj_sdk_path" value="..\454x454" />
+    <property name="prj_sdk_path" value="..\466x466" />
     <property name="desktop_file_create" value="0x0" />
     <property name="desktop_file_path" value="" />
     <property name="desktop_file_comment" value="" />
@@ -2049,6 +2049,53 @@
                     <property name="space" value="0x0064" />
                     <property name="pixel" value="0x0001" />
                     <property name="strid" value="STR_THIRD_PARTY_APP" />
+                </element>
+            </element>
+            <element class="resgroup_resource">
+                <property name="name" value="res_awk_map" />
+                <property name="id" value="31956" />
+                <property name="x" value="0x0000" />
+                <property name="y" value="0x07c4" />
+                <property name="width" value="0x01d2" />
+                <property name="height" value="0x006c" />
+                <property name="background" value="0x00c8c8c8" />
+                <property name="opaque" value="0x0000" />
+                <property name="transparency" value="0x00ff" />
+                <property name="visible" value="0x0001" />
+                <property name="editable" value="1" />
+                <element class="picture_resource">
+                    <property name="name" value="pic_icon" />
+                    <property name="id" value="31957" />
+                    <property name="x" value="0x0000" />
+                    <property name="y" value="0x0007" />
+                    <property name="width" value="0x0052" />
+                    <property name="height" value="0x0052" />
+                    <property name="visible" value="0x0011" />
+                    <property name="compress" value="0x0000" />
+                    <property name="PNG_A8" value="0x0000" />
+                    <property name="ARGB" value="0x0000" />
+                    <element class="layer">
+                        <property name="0" value=".\applist\png\icon\高德地图.png" />
+                    </element>
+                </element>
+                <element class="string_resource">
+                    <property name="name" value="str_text" />
+                    <property name="id" value="31958" />
+                    <property name="x" value="0x0064" />
+                    <property name="y" value="0x0000" />
+                    <property name="width" value="0x0064" />
+                    <property name="height" value="0x0024" />
+                    <property name="foreground" value="0x00ffffff" />
+                    <property name="background" value="0x00000000" />
+                    <property name="visible" value="0x0001" />
+                    <property name="align" value="0x000e" />
+                    <property name="mode" value="0x0002" />
+                    <property name="size" value="0x0024" />
+                    <property name="scroll" value="0x0" />
+                    <property name="direction" value="-1" />
+                    <property name="space" value="0x0064" />
+                    <property name="pixel" value="0x0001" />
+                    <property name="strid" value="STR_AWK_MAP" />
                 </element>
             </element>
         </element>
@@ -17050,19 +17097,6 @@
         <picture value=".\btcall\raw\3way\组-1.png" LayerID="241" />
         <picture value=".\btcall\raw\3way\组-3.png" LayerID="243" />
         <picture value=".\applist\jpg\icon\gps.jpg" LayerID="12" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\png\icon\秒表.png" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\png\icon\闹钟.png" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\png\icon\计时器.png" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\png\icon\电话：开.png" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\png\icon\电话：关.png" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\png\icon\振动：开.png" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\png\icon\振动：关.png" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\png\icon\剧院模式.png" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\png\icon\恢复出厂设置.png" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\png\icon\关机.png" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\jpg\icon\app下载.jpg" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\jpg\icon\关于.jpg" />
-        <picture value="..\..\..\bt_watch\resource\454x454\applist\png\icon\指南针.png" />
         <picture value=".\applist\png\icon\秒表.png" LayerID="17" />
         <picture value=".\applist\png\icon\闹钟.png" LayerID="18" />
         <picture value=".\applist\png\icon\计时器.png" LayerID="19" />
@@ -17086,7 +17120,6 @@
         <picture value=".\cube_box\6.jpg" LayerID="429" />
         <picture value=".\applist\jpg\icon\立方体.jpg" LayerID="16" />
         <picture value=".\applist\png\icon\立方体.png" LayerID="31" />
-        <picture value="..\454x454\applist\png\icon\立方体.png" />
         <picture value=".\setting\disability.png" LayerID="430" />
         <picture value=".\setting\enabled.png" LayerID="431" />
         <picture value=".\clock_selector\analog.png" LayerID="154" />
@@ -17200,6 +17233,7 @@
         <picture value=".\setting\wonhot.bmp" LayerID="437" />
         <picture value=".\setting\cube_turntable.bmp" LayerID="438" />
         <picture value=".\setting\applist_9.png" LayerID="537" />
+        <picture value=".\applist\png\icon\高德地图.png" LayerID="32" />
         <txt value="..\multilang_translate_table.xls" />
         <string value="STR_NULL" />
         <string value="STR_APP_DOWNLOAD" />
@@ -17272,6 +17306,7 @@
         <string value="STR_TRANSMIT_CODE" />
         <string value="STR_PAY_CODE" />
         <string value="STR_THIRD_PARTY_APP" />
+        <string value="STR_AWK_MAP" />
     </resource>
     <config>
         <property name="blockHeight" value="78" />
@@ -17284,6 +17319,7 @@
         <property name="index_isDithering" value="0" />
         <property name="isBlockCompress" value="0" />
         <property name="isCompressRes" value="1" />
+        <property name="isDither" value="0" />
         <property name="isPNGARGBToETC2" value="0" />
         <property name="isPNGIndex8Comp" value="1" />
         <property name="isRawJpeg" value="1" />

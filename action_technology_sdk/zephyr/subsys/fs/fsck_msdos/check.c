@@ -151,6 +151,7 @@ checkfilesys(const char *fname)
     out:
 	if (finish_dosdirsection)
 		finishDosDirSection();
+	releasefat(fat);
 	ext_free(fat);
 	ext_close(dosfs);
 

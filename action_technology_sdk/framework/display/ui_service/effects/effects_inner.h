@@ -45,6 +45,7 @@ typedef struct {
 	float radius;
 	float pivot_x;
 	float pivot_y;
+	uint8_t out_in	:	1;
 } effects_fan;
 
 typedef struct {
@@ -98,13 +99,19 @@ typedef struct {
 	uint8_t type; /* effect type */
 
 #ifdef CONFIG_VG_LITE
+	float camera_distance;
+	union {
+		effects_cube cube;
+		effects_fan fan;
+		effects_alpha alpha;
+		effects_scale scale;
+		uint32_t user_data[10];		/* use for user extension space */
+	};
 	/* internal flags */
 	uint8_t blend : 1;
 	uint8_t dither : 1;
-	union {
-		effects_alpha alpha;
-		uint32_t user_data[10];		/* use for user extension space */
-	};
+	uint8_t param_inited : 1;
+	uint8_t opt_round_screen_overlapped	: 1;
 #endif
 } vscroll_effect_ctx_t;
 
@@ -164,6 +171,10 @@ void vglite_scroll_proc_page_effect(scroll_effect_ctx_t *ctx, const ui_transform
 void vglite_scroll_proc_scale_effect(scroll_effect_ctx_t *ctx, const ui_transform_param_t *param);
 
 void vglite_vscroll_proc_alpha_effect(vscroll_effect_ctx_t *ctx, const ui_transform_param_t *param);
+void vglite_vscroll_proc_cube_effect(vscroll_effect_ctx_t *ctx, const ui_transform_param_t *param);
+void vglite_vscroll_proc_fan_effect(vscroll_effect_ctx_t *ctx, const ui_transform_param_t *param);
+void vglite_vscroll_proc_page_effect(vscroll_effect_ctx_t *ctx, const ui_transform_param_t *param);
+void vglite_vscroll_proc_scale_effect(vscroll_effect_ctx_t *ctx, const ui_transform_param_t *param);
 
 int vglite_switch_proc_fan_effect(switch_effect_ctx_t *ctx, const ui_transform_param_t *param);
 int vglite_switch_proc_scale_effect(switch_effect_ctx_t *ctx, const ui_transform_param_t *param);

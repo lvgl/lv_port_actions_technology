@@ -24,7 +24,7 @@
 #define CONFIG_READ_DIRCT 1
 
 /* Drag threshold in pixels */
-#define POINTER_SCROLL_LIMIT    10
+#define POINTER_SCROLL_LIMIT    30
 
 /* Gesture threshold in pixels */
 #define POINTER_GESTURE_LIMIT    50

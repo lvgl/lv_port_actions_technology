@@ -289,7 +289,8 @@ static int shell_cmd_spicache_profile(const struct shell *shell,
 int print_buf(const struct shell *shell, char *ptr, int len)
 {
     int i;
-    shell_print(shell,"\n");
+    //shell_print(shell,"\n");
+    printk("\n");
     for(i = 0; i < len; i++)
     {
         if(i % 16 == 0)

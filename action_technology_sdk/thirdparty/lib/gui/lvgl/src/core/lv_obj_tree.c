@@ -634,11 +634,11 @@ static void dump_tree_core(lv_obj_t * obj, int32_t depth)
 #endif
 
     /*id of `obj0` is an invalid id for builtin id*/
-    LV_LOG("[%d]parent:%p, obj:%p, id:%s, class:%p(%s), flags:%x, state:%x,"
-           "coords:(%" LV_PRId32 ",%" LV_PRId32 ",%" LV_PRId32 ",%" LV_PRId32 ")\n",
-           depth, (void *)(obj ? obj->parent : NULL), (void *)obj, id, obj->class_p,
-           obj->class_p->name ? obj->class_p->name : "unknown", obj->flags, obj->state,
-           obj->coords.x1, obj->coords.y1, obj->coords.x2, obj->coords.y2);
+    LV_LOG_USER("[%d]parent:%p, obj:%p, id:%s, class:%p(%s), flags:%x, state:%x,"
+                "coords:(%" LV_PRId32 ",%" LV_PRId32 ",%" LV_PRId32 ",%" LV_PRId32 ")\n",
+                depth, (void *)(obj ? obj->parent : NULL), (void *)obj, id, obj->class_p,
+                obj->class_p->name ? obj->class_p->name : "unknown", obj->flags, obj->state,
+                obj->coords.x1, obj->coords.y1, obj->coords.x2, obj->coords.y2);
 #endif /*LV_USE_LOG*/
 
     if(obj && obj->spec_attr && obj->spec_attr->child_cnt) {

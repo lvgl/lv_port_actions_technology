@@ -47,6 +47,7 @@ struct lv_label_t {
 #endif
 
     lv_point_t size_cache;              /**< Text size cache */
+    lv_point_t scrl_size_cache;         /**< Text scroll size cache */
     lv_point_t offset;                  /**< Text draw position offset */
     lv_label_long_mode_t long_mode : 3; /**< Determine what to do with the long texts */
     uint8_t static_txt : 1;             /**< Flag to indicate the text is static */

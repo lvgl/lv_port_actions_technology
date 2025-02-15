@@ -177,6 +177,7 @@ struct audio_record_t {
     uint8_t reload_buff_alloced:1;
     uint8_t drop_cnt:2;
     uint8_t printk_cnt;
+	uint8_t started;
 
 	int16_t adc_gain;
 	int16_t input_gain;

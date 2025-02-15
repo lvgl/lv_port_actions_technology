@@ -588,8 +588,8 @@ static void _exit_alarm_sub_view(alarm_set_view_data_t *data)
 		app_mem_free(data->sub_view);
 	data->sub_view = NULL;
 
-	ui_manager_gesture_wait_release();
-	ui_manager_gesture_set_dir(GESTURE_ALL_BITFIELD);
+	ui_gesture_wait_release();
+	ui_gesture_unlock_scroll();
 }
 
 static void _exit_alarm_main_view_btn(alarm_main_view_data_t *main_view)
@@ -786,7 +786,7 @@ static void _display_alarm_sub_view(alarm_set_view_data_t *data, uint8_t index)
 	_display_sub_view_btn(data);
 	_display_sub_view_time(data, data->tm_min[index]);
 	/* hidden left and right view to receive callback function when alarm sub view was draw */
-	ui_manager_gesture_set_dir(0);
+	ui_gesture_lock_scroll();
 
 }
 

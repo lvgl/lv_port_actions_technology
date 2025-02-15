@@ -227,8 +227,6 @@ static int lcdc_config_mode(const struct device *dev, const struct display_video
 		return -ENOTSUP;
 	}
 
-	clk_set_rate(CLOCK_ID_LCD, KHZ(mode->pixel_clk));
-
 	LCDC->CTL &= ~(LCD_TE_EN | LCD_TE_MODE_MASK | LCD_OUT_FORMAT_MASK);
 
 #if USE_LCDC_TE
@@ -252,16 +250,25 @@ static int lcdc_config_mode(const struct device *dev, const struct display_video
 		break;
 	}
 
-	if (data->port->type == DISPLAY_PORT_QSPI_SYNC) {
-		uint16_t data_cycles = mode->hactive *
-			display_format_get_bits_per_pixel(mode->pixel_format) / 4;
+	if (data->port->type == DISPLAY_PORT_QSPI_DDR_0 ||
+		data->port->type == DISPLAY_PORT_QSPI_DDR_1 ||
+		data->port->type == DISPLAY_PORT_QSPI_DDR_2) {
+		/* For DDR mode, the SPI clock 'SCL' frequency is the half of LCD clock */
+		clk_set_rate(CLOCK_ID_LCD, KHZ(mode->pixel_clk) * 2);
+	} else {
+		clk_set_rate(CLOCK_ID_LCD, KHZ(mode->pixel_clk));
 
-		LCDC->QSPI_DTAS = LCD_QSPI_DTAS(0, data_cycles);
-		LCDC->QSPI_SYNC_TIM = LCD_QSPI_SYNC_TIM(
-				mode->hsync_len + mode->hback_porch + mode->hfront_porch,
-				mode->vfront_porch, mode->vback_porch);
-	} else if (data->port->type == DISPLAY_PORT_TR_LCD) {
-		LCDC->TR_IMG_SIZE = LCD_TR_IMG_SIZE(mode->hactive, mode->vactive);
+		if (data->port->type == DISPLAY_PORT_QSPI_SYNC) {
+			uint16_t data_cycles = mode->hactive *
+				display_format_get_bits_per_pixel(mode->pixel_format) / 4;
+
+			LCDC->QSPI_DTAS = LCD_QSPI_DTAS(0, data_cycles);
+			LCDC->QSPI_SYNC_TIM = LCD_QSPI_SYNC_TIM(
+					mode->hsync_len + mode->hback_porch + mode->hfront_porch,
+					mode->vfront_porch, mode->vback_porch);
+		} else if (data->port->type == DISPLAY_PORT_TR_LCD) {
+			LCDC->TR_IMG_SIZE = LCD_TR_IMG_SIZE(mode->hactive, mode->vactive);
+		}
 	}
 
 	return 0;

@@ -33,7 +33,7 @@
 #include <freetype/fterrors.h>
 #include <freetype/fttypes.h>
 
-#include "../../font_mempool.h"
+#include "../../../font_mempool.h"
 #include <zephyr.h>
 #include <fs/fs.h>
 #include <os_common_api.h>

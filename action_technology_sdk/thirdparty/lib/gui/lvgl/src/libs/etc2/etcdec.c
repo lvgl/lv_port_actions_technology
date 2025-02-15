@@ -488,7 +488,7 @@ void calculatePaintColors59T(uint8_t d, uint8_t p, uint8_t (colors)[2][3], uint8
     possible_colors[3][G] = CLAMP(0,colors[1][G] - table59T[d],255);
     possible_colors[3][B] = CLAMP(0,colors[1][B] - table59T[d],255);
 
-    if (p == PATTERN_T) {
+    if(p == PATTERN_T) {
         // C3
         possible_colors[0][R] = colors[0][R];
         possible_colors[0][G] = colors[0][G];
@@ -584,7 +584,7 @@ void calculatePaintColors58H(uint8_t d, uint8_t p, uint8_t (colors)[2][3], uint8
     possible_colors[3][G] = CLAMP(0,colors[1][G] - table58H[d],255);
     possible_colors[3][B] = CLAMP(0,colors[1][B] - table58H[d],255);
 
-    if (p == PATTERN_H) {
+    if(p == PATTERN_H) {
         // C1
         possible_colors[0][R] = CLAMP(0,colors[0][R] + table58H[d],255);
         possible_colors[0][G] = CLAMP(0,colors[0][G] + table58H[d],255);
@@ -725,7 +725,7 @@ void decompressBlockDiffFlipC(uint32_t block_part1, uint32_t block_part2, uint8_
     diffbit = (GETBITSHIGH(block_part1, 1, 33));
     flipbit = (GETBITSHIGH(block_part1, 1, 32));
 
-    if( !diffbit ){
+    if(!diffbit) {
         // We have diffbit = 0.
 
         // First decode left part of block.
@@ -747,7 +747,7 @@ void decompressBlockDiffFlipC(uint32_t block_part1, uint32_t block_part2, uint8_
         pixel_indices_MSB = GETBITS(block_part2, 16, 31);
         pixel_indices_LSB = GETBITS(block_part2, 16, 15);
 
-        if( (flipbit) == 0 ) {
+        if(flipbit == 0) {
             // We should not flip
             shift = 0;
             for(int x=startx; x<startx+2; x++) {
@@ -866,7 +866,7 @@ void decompressBlockDiffFlipC(uint32_t block_part1, uint32_t block_part2, uint8_
         pixel_indices_MSB = GETBITS(block_part2, 16, 31);
         pixel_indices_LSB = GETBITS(block_part2, 16, 15);
 
-        if( (flipbit) == 0 )
+        if(flipbit == 0)
         {
             // We should not flip
             shift = 0;
@@ -885,8 +885,7 @@ void decompressBlockDiffFlipC(uint32_t block_part1, uint32_t block_part2, uint8_
                 }
             }
         }
-        else
-        {
+        else {
             // We should flip
             shift = 0;
             for(int x=startx; x<startx+4; x++)
@@ -1010,12 +1009,12 @@ void decompressBlockETC2c(uint32_t block_part1, uint32_t block_part2, uint8_t * 
         green = color1[1] + diff[1];
         blue  = color1[2] + diff[2];
 
-        if(red < 0 || red > 31){
+        if(red < 0 || red > 31) {
             uint32_t block59_part1, block59_part2;
             unstuff59bits(block_part1, block_part2, &block59_part1, &block59_part2);
             decompressBlockTHUMB59Tc(block59_part1, block59_part2, img, width, height, startx, starty, channels);
         }
-        else if (green < 0 || green > 31) {
+        else if(green < 0 || green > 31) {
             uint32_t block58_part1, block58_part2;
             unstuff58bits(block_part1, block_part2, &block58_part1, &block58_part2);
             decompressBlockTHUMB58Hc(block58_part1, block58_part2, img, width, height, startx, starty, channels);
@@ -1445,7 +1444,7 @@ void decompressBlockETC21BitAlphaC(uint32_t block_part1, uint32_t block_part2, u
             unstuff59bits(block_part1, block_part2, &block59_part1, &block59_part2);
             decompressBlockTHUMB59Tc(block59_part1, block59_part2, img, width, height, startx, starty, channelsRGB);
         }
-        else if (green < 0 || green > 31) {
+        else if(green < 0 || green > 31) {
             uint32_t block58_part1, block58_part2;
             unstuff58bits(block_part1, block_part2, &block58_part1, &block58_part2);
             decompressBlockTHUMB58Hc(block58_part1, block58_part2, img, width, height, startx, starty, channelsRGB);
@@ -1711,7 +1710,7 @@ void decompressBlockAlpha16bitC(uint8_t * data, uint8_t * img, int width, int he
 #else
             //make data compatible with the .pgm format. See the comment in compressBlockAlpha16() for details.
             uint16_t uSixteen;
-            if (formatSigned) {
+            if(formatSigned) {
                 //the pgm-format only allows unsigned images,
                 //so we add 2^15 to get a 16-bit value.
                 uSixteen = get16bits11signed(alpha,(table%16),(table/16),index) + 256*128;

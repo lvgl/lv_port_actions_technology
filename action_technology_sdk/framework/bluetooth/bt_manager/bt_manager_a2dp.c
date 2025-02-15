@@ -62,6 +62,21 @@ static const uint8_t a2dp_trs_sbc_codec_user[] = {
 	48, /* max bitpool */
 #endif
 };
+
+static const uint8_t a2dp_trs_aac_codec_user[] = {
+	0x00,	/* BT_A2DP_AUDIO << 4 */
+	0x02,	/* BT_A2DP_MPEG2 */
+	//0xF0,	/* MPEG2 AAC LC, MPEG4 AAC LC, MPEG AAC LTP, MPEG4 AAC Scalable */
+	0x80,	/* MPEG2 AAC LC*/
+	0x01,	/* Sampling Frequecy 44100 */
+	0x8F,	/* Sampling Frequecy 48000, channels 1, channels 2 */
+	//0x84,	/* VBR, bit rate <= 320kbps*/
+	//0xE2,	/* bit rate */
+	//0x00	/* bit rate */
+	0x81,	/* VBR, bit rate <= 128kbps*/
+	0xF4,	/* bit rate */
+	0x00	/* bit rate */
+};
 #endif
 
 
@@ -202,8 +217,14 @@ int bt_manager_a2dp_profile_start(void)
 #ifdef CONFIG_BT_A2DP_TRS
 	param.a2dp_cp_scms_t = 0;		/* Is better just set for transmit */
 	param.a2dp_delay_report = 0;	/* Is better just set for transmit */
-    bt_manager_trs_a2dp_profile_start(&param);
+	bt_manager_trs_a2dp_profile_start(&param);
 	param.trs_sbc_codec = (uint8_t *)a2dp_trs_sbc_codec_user;
+
+	if (bt_manager_config_support_a2dp_trs_aac()) {
+		param.trs_aac_codec = (uint8_t *)a2dp_trs_aac_codec_user;
+	} else {
+		param.trs_aac_endpoint_num = 0;
+	}
 #endif
 
 	return btif_a2dp_start((struct btsrv_a2dp_start_param *)&param);

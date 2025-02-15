@@ -36,8 +36,9 @@
 #define __stm32_sdram2_section Z_GENERIC_SECTION(_STM32_SDRAM2_SECTION_NAME)
 #define __act_s2_notsave	Z_GENERIC_SECTION(_ACT_S2_NOT_SAVE_SECTION_NAME)
 #define __act_s2_sleep_data	Z_GENERIC_SECTION(_ACT_SLEEP_DATA_SECTION_NAME)
-
-
+#ifdef CONFIG_USING_OPULINKS_LIB
+#define __wifi_data	Z_GENERIC_SECTION(_WIFI_DATA_SECTION_NAME)
+#endif
 #define __stm32_backup_sram_section Z_GENERIC_SECTION(_STM32_BACKUP_SRAM_SECTION_NAME)
 #endif /* CONFIG_ARM */
 

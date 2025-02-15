@@ -30,9 +30,9 @@
 #define CONFIG_VIEW_CACHE_LEVEL 2
 #define CONFIG_VIEW_SCROLL_MEM_DEFAULT 1
 /* resource path config */
-#define CONFIG_APP_UI_DISK "../../boards/ats3085s_dev_watch_ext_nor/res/"
-#define CONFIG_APP_FONT_DISK "../../boards/ats3085s_dev_watch_ext_nor/fonts/"
-#define CONFIG_WELCOME_UI_DISK "../../boards/ats3085s_dev_watch_ext_nor/sdfs_k/"
+#define CONFIG_APP_UI_DISK "../../res/"
+#define CONFIG_APP_FONT_DISK "../../fonts/"
+#define CONFIG_WELCOME_UI_DISK "../../fs_sdfs/sdfs_k/"
 
 /* psram size */
 #define CONFIG_PSRAM_SIZE 8192

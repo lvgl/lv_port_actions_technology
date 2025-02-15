@@ -386,6 +386,10 @@ int surface_begin_frame(surface_t *surface)
 		return -ENOBUFS;
 	}
 
+	/* surface_update() may called in another thread, so synchronization is required */
+	_surface_frame_wait_end(surface);
+	_surface_draw_wait_finish(surface);
+
 #if CONFIG_SURFACE_MAX_BUFFER_COUNT > 1
 	if (surface->buf_count == 2) {
 		surface_cover_check_data_t cover_check_data = {
@@ -405,10 +409,6 @@ int surface_begin_frame(surface_t *surface)
 			surface->dirty_area.x2, surface->dirty_area.y2, covered);
 	}
 #endif /* CONFIG_SURFACE_MAX_BUFFER_COUNT > 1 */
-
-	/* surface_update() may called in another thread, so synchronization is required */
-	_surface_frame_wait_end(surface);
-	_surface_draw_wait_finish(surface);
 
 	/* surface swap buffer ? */
 	if (!covered) {
@@ -880,7 +880,8 @@ static void _surface_swapbuf(surface_t *surface)
 
 #if defined(CONFIG_TRACING) && defined(CONFIG_UI_SERVICE)
 	ui_view_context_t *view = surface->user_data[SURFACE_CB_POST];
-	os_strace_u32(SYS_TRACE_ID_VIEW_SWAPBUF, view->entry->id);
+	os_strace_u32x5(SYS_TRACE_ID_VIEW_SWAPBUF, view->entry->id, surface->dirty_area.x1, surface->dirty_area.y1,
+	                surface->dirty_area.x2, surface->dirty_area.y2);
 #endif
 
 	frontptr = (uint8_t *)graphic_buffer_get_bufptr(

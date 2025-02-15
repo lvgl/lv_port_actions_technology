@@ -269,6 +269,8 @@ static int _tts_start_play(struct tts_item_t *tts_item, const char *file_name)
         init_param.type = MEDIA_SRV_TYPE_PARSER_AND_PLAYBACK;
     }
 
+	media_player_force_stop(false);
+
 	init_param.stream_type = AUDIO_STREAM_TTS;
 	init_param.efx_stream_type = AUDIO_STREAM_TTS;
 	init_param.sample_rate = 16;

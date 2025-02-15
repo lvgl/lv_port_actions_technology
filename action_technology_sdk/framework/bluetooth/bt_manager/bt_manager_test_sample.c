@@ -2040,8 +2040,10 @@ static int shell_cmd_bt_crash(const struct shell *shell, size_t argc, char *argv
 #include <thread_timer.h>
 #include <bt_manager_ips.h>
 //struct thread_timer ips_adv_timer;
+#define IPS_ENCODEC_DATA_SEND_INV (20-1)
 os_delayed_work ips_work;
 bool ips_mic_status = false;
+static uint32_t g_match_id = 0x31323334;
 static void *ips_handle = NULL;
 static uint8_t g_pkt_num[CONFIG_BT_PER_ADV_SYNC_MAX];
 static void *sync_handle[CONFIG_BT_PER_ADV_SYNC_MAX];
@@ -2129,6 +2131,9 @@ void test_ips_synced(void *sync_handle, struct bt_ips_sync_info *info)
 void test_ips_term(void *sync_handle)
 {
 	SYS_LOG_INF("synced lost %x.", sync_handle);
+	uint8_t index = test_ips_pa_st_get(sync_handle);
+	g_pkt_num[index] = 0;
+
 	test_ips_remove_pa(sync_handle);
 }
 
@@ -2137,9 +2142,12 @@ void test_ips_recv_codec(void *sync_handle, struct bt_ips_recv_info *info, uint8
 	SYS_LOG_INF("sync_handle %x %d.", sync_handle, info->pkt_num);
 	uint8_t index = test_ips_pa_st_get(sync_handle);
 
-	if (info->pkt_num != g_pkt_num[index] + 1)
-		SYS_LOG_ERR("index %d %d %d.", index, g_pkt_num[index], info->pkt_num);
+	if (0xff == g_pkt_num[index] && 0 == info->pkt_num) {
 
+	} else {
+		if ((info->pkt_num != g_pkt_num[index] + 1))
+			SYS_LOG_ERR("loss %d %d_%d.", index, g_pkt_num[index], info->pkt_num);
+	}
 	g_pkt_num[index] = info->pkt_num;
 }
 
@@ -2177,6 +2185,9 @@ static void shell_ips_adv_loop_work(struct k_work *work)
 	struct bt_ips_send_info info;
 	uint8_t data[40];
 
+	if (BT_IPS_STATUS_READY != bt_manager_ips_status_get())
+		return;
+
 	//SYS_LOG_INF("hdl: (%p)", ips_handle);
 
 	info.length = 40; //发送编码数据长度
@@ -2189,27 +2200,31 @@ static void shell_ips_adv_loop_work(struct k_work *work)
 		info.status = BT_IPS_STATUS_READY;
 		bt_manager_ips_send_codec(ips_handle, &info, NULL);
 	}
-	os_delayed_work_submit(&ips_work, 20);
+	os_delayed_work_submit(&ips_work, IPS_ENCODEC_DATA_SEND_INV);
 }
 
 #define TEST_IPS_NAME "ips_tele"
 
+static uint8_t g_cnt_subscriber;
+static bt_addr_t g_subs_mac[BT_IPS_SUBS_MAX];
+
 void shell_ips_search_cb(struct bt_ips_search_rt *rt)
 {
 	struct bt_ips_init_info init_info;
+	uint8_t role = BT_IPS_ROLE_SUBSCRIBER;
 
 	SYS_LOG_INF("search t_num %d role %d %s.", rt->t_num, rt->role, rt->name);
-	if (BT_IPS_ROLE_INITIATOR == rt->role) {
-
-	} else if ((4) == rt->t_num) {
-
+	if (BT_IPS_ROLE_INITIATOR == rt->role && rt->t_num > 0) {
+		role = BT_IPS_ROLE_SUBSCRIBER;
+	} else if (BT_IPS_ROLE_SUBSCRIBER == rt->role && (1) == rt->t_num) {
+		role = BT_IPS_ROLE_INITIATOR;
 	} else {
 		return;
 	}
 
 	bt_manager_ips_search_close();
-	init_info.match_id = 0x31323334; // 匹配码, 4bytes 随机数
-	init_info.role = BT_IPS_ROLE_SUBSCRIBER;
+	init_info.match_id = g_match_id; // 匹配码, 4bytes 随机数
+	init_info.role = role;
 	memcpy(init_info.name, TEST_IPS_NAME ,strlen(TEST_IPS_NAME));
 	init_info.ch_max = rt->t_num; //最多允许接收的音频通道数量
 	init_info.tx_codec = BT_IPS_TX_CODEC_OPUS; //本机广播的编码格式
@@ -2217,14 +2232,22 @@ void shell_ips_search_cb(struct bt_ips_search_rt *rt)
 	init_info.ch_mode = BT_IPS_TX_CH_SINGLE; //单声道或双声道
 	init_info.samp_freq = BT_IPS_SAMPLE_FREQ_8; //采样率8KHZ or 16KHZ
 	init_info.bit_width = BT_IPS_BIT_WIDTH_16; // 位宽8bits or 16bits
+	init_info.cnt_subscriber = rt->cnt_subscriber;
+	if (rt->cnt_subscriber > 0 && rt->cnt_subscriber <= BT_IPS_SUBS_MAX) {
+		memcpy(&init_info.subs_mac[0], &rt->subs_mac[0], rt->cnt_subscriber*6);
+	}
 
-	bt_manager_ips_search_close();
+	g_cnt_subscriber = rt->cnt_subscriber;
+	if (g_cnt_subscriber > 0 && g_cnt_subscriber <= BT_IPS_SUBS_MAX) {
+		memcpy(&g_subs_mac[0], &rt->subs_mac[0], g_cnt_subscriber*6);
+	}
+
 	if (bt_manager_ips_start(&ips_handle, &init_info, (struct bt_ips_cb *)&test_ips_cb))
 		return;
 
 	os_delayed_work_init(&ips_work, shell_ips_adv_loop_work);
 	os_delayed_work_cancel(&ips_work);
-	os_delayed_work_submit(&ips_work, 20);
+	os_delayed_work_submit(&ips_work, IPS_ENCODEC_DATA_SEND_INV);
 	//thread_timer_init(&ips_adv_timer,ips_adv_loop_timer, NULL);
 	//thread_timer_start(&ips_adv_timer, 100, 100);
 	SYS_LOG_INF("2 timer start.");
@@ -2234,7 +2257,6 @@ static int shell_cmd_ips_search(const struct shell *shell, size_t argc, char *ar
 {
 	struct bt_ips_search_init info;
 	uint16_t ch = 1, role = BT_IPS_ROLE_INITIATOR;
-	uint32_t shell_id = 0x31323334;
 
 	if (argc >= 2) {
 		role = strtoul(argv[1], NULL, 16);
@@ -2245,13 +2267,13 @@ static int shell_cmd_ips_search(const struct shell *shell, size_t argc, char *ar
 	}
 
 	if (argc == 4) {
-		shell_id = strtoul(argv[3], NULL, 16);
+		g_match_id = strtoul(argv[3], NULL, 16);
 	}
 
-	SYS_LOG_INF("shell match id %x.", shell_id);
+	SYS_LOG_INF("shell match id %x.", g_match_id);
 	SYS_LOG_INF("ch max %d.", ch);
 
-	info.match_id = shell_id; // 匹配码, 4bytes 随机数
+	info.match_id = g_match_id; // 匹配码, 4bytes 随机数
 	info.role = role;
 	info.s_cb = shell_ips_search_cb;
 	memcpy(info.name, TEST_IPS_NAME ,strlen(TEST_IPS_NAME));
@@ -2273,7 +2295,6 @@ static int shell_cmd_ips_start(const struct shell *shell, size_t argc, char *arg
 {
 	struct bt_ips_init_info init_info;
 	uint16_t ch = 1, role = BT_IPS_ROLE_INITIATOR;
-	uint32_t shell_id = 0x31323334;
 
 	if (argc >= 2) {
 		role = strtoul(argv[1], NULL, 16);
@@ -2284,13 +2305,13 @@ static int shell_cmd_ips_start(const struct shell *shell, size_t argc, char *arg
 	}
 
 	if (argc == 4) {
-		shell_id = strtoul(argv[3], NULL, 16);
+		g_match_id = strtoul(argv[3], NULL, 16);
 	}
 
-	SYS_LOG_INF("shell match id %x.", shell_id);
+	SYS_LOG_INF("shell match id %x.", g_match_id);
 	SYS_LOG_INF("ch max %d.", ch);
 
-	init_info.match_id = shell_id; // 匹配码, 4bytes 随机数
+	init_info.match_id = g_match_id; // 匹配码, 4bytes 随机数
 	init_info.role = role;
 	memcpy(init_info.name, TEST_IPS_NAME ,strlen(TEST_IPS_NAME));
 	init_info.ch_max = ch; //最多允许接收的音频通道数量
@@ -2301,12 +2322,17 @@ static int shell_cmd_ips_start(const struct shell *shell, size_t argc, char *arg
 	init_info.bit_width = BT_IPS_BIT_WIDTH_16; // 位宽8bits or 16bits
 
 	bt_manager_ips_search_close();
+	init_info.cnt_subscriber = g_cnt_subscriber;
+	if (init_info.cnt_subscriber > 0 && init_info.cnt_subscriber <= BT_IPS_SUBS_MAX) {
+		memcpy(&init_info.subs_mac[0], &g_subs_mac[0], init_info.cnt_subscriber*6);
+	}
+
 	if (bt_manager_ips_start(&ips_handle, &init_info, (struct bt_ips_cb *)&test_ips_cb))
 		return 0;
 
 	os_delayed_work_init(&ips_work, shell_ips_adv_loop_work);
 	os_delayed_work_cancel(&ips_work);
-	os_delayed_work_submit(&ips_work, 20);
+	os_delayed_work_submit(&ips_work, IPS_ENCODEC_DATA_SEND_INV);
 	//thread_timer_init(&ips_adv_timer,ips_adv_loop_timer, NULL);
 	//thread_timer_start(&ips_adv_timer, 100, 100);
 	SYS_LOG_INF("timer start.");
@@ -2328,6 +2354,13 @@ static int shell_cmd_ips_stop(const struct shell *shell, size_t argc, char *argv
 		g_pkt_num[i] = 0;
 
 	//thread_timer_stop(&ips_adv_timer);
+
+	return 0;
+}
+
+static int shell_cmd_ips_clear(const struct shell *shell, size_t argc, char *argv[])
+{
+	g_cnt_subscriber = 0;
 
 	return 0;
 }
@@ -2430,6 +2463,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(bt_mgr_cmds,
 	SHELL_CMD(bt_ips_start, NULL, "ips_start", shell_cmd_ips_start),
 	SHELL_CMD(bt_ips_stop, NULL, "ips_stop", shell_cmd_ips_stop),
 	SHELL_CMD(bt_ips_mic, NULL, "mic enable", shell_cmd_ips_mic_enable),
+	SHELL_CMD(bt_ips_clear, NULL, "ips info clear", shell_cmd_ips_clear),
 #endif
 	SHELL_SUBCMD_SET_END
 );

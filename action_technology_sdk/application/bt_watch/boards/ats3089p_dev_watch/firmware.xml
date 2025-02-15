@@ -287,7 +287,7 @@
 
 		<partition>
 			<address>0x4790000</address>
-			<size>0x80000</size>
+			<size>0xB0000</size>
 			<type>DATA</type>
 			<name>fw0_sdfs</name>
 			<file_id>20</file_id>
@@ -303,12 +303,12 @@
 		</partition>
 
 		<partition>
-			<address>0x4810000</address>
-			<size>0x4F0000</size>
+			<address>0x4840000</address>
+			<size>0x4C0000</size>
 			<type>TEMP</type>
 			<name>fw0_temp</name>
 			<file_id>254</file_id>
-			<file_address>0x4810000</file_address>
+			<file_address>0x4840000</file_address>
 			<enable_crc>false</enable_crc>
 			<enable_encryption>false</enable_encryption>
 			<enable_ota>false</enable_ota>

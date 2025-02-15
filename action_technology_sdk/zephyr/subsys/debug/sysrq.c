@@ -13,6 +13,7 @@
 #include <kernel.h>
 #include <drivers/uart.h>
 #include <soc.h>
+#include <debug/ramdump.h>
 
 struct sysrq_key_op {
 	char key;
@@ -70,6 +71,19 @@ static void sysrq_handle_stack_dump(int key)
 }
 #endif
 
+#ifdef CONFIG_DEBUG_RAMDUMP
+static void sysrq_handle_save_ramdump(int key)
+{
+#ifdef CONFIG_ACTIONS_PRINTK_DMA
+	set_panic_exe(1);
+#endif
+	ramdump_save(NULL, 0);
+#ifdef CONFIG_ACTIONS_PRINTK_DMA
+	set_panic_exe(0);
+#endif
+}
+#endif
+
 
 static const struct sysrq_key_op sysrq_key_table[] = {
 #ifdef CONFIG_KERNEL_SHOW_STACK
@@ -96,6 +110,14 @@ static const struct sysrq_key_op sysrq_key_table[] = {
 	},
 #endif
 
+#ifdef CONFIG_DEBUG_RAMDUMP
+	{
+		.key		= 'r',
+		.handler	= sysrq_handle_save_ramdump,
+		.help_msg	= "save ramdump(r)",
+		.action_msg	= "ramdump:",
+	},
+#endif
 };
 
 /* magic sysrq key: CTLR + 'b' 'r' 'e' 'a' 'k' */

@@ -37,7 +37,10 @@ static const uint32_t pic_grp_ids[] = {
 #ifdef CONFIG_THIRD_PARTY_APP
 	RES_THIRD_PARTY_APP,
 #endif
-	RES_PHONE_OFF,RES_VIBRATION_OFF, RES_AOD_OFF,
+#ifdef CONFIG_AWK_LIB
+	RES_AWK_MAP,
+#endif
+	RES_PHONE_OFF, RES_VIBRATION_OFF, RES_AOD_OFF,
 };
 
 static const applist_view_cb_t * const sp_view_callbacks[] = {
@@ -272,7 +275,7 @@ static int _applist_proc_key(lv_obj_t * scr, ui_key_msg_data_t * key_data)
 
 	if (KEY_VALUE(key_data->event) == KEY_GESTURE_RIGHT) {
 		uint8_t mode = data->presenter->get_view_mode();
-		if (mode == APPLIST_MODE_CELLULAR || mode == APPLIST_MODE_TURNTABLE 
+		if (mode == APPLIST_MODE_CELLULAR || mode == APPLIST_MODE_TURNTABLE
 			|| mode == APPLIST_MODE_WONHOT || mode == APPLIST_MODE_CUBE_TURNTABLE) {
 			key_data->done = true; /* ignore gesture */
 		}
@@ -391,6 +394,11 @@ void applist_btn_event_def_handler(lv_event_t * e)
 #ifdef CONFIG_THIRD_PARTY_APP
 	case THIRD_PARTY_APP_IDX:
 		presenter->open_third_party_app();
+		break;
+#endif
+#ifdef CONFIG_AWK_LIB
+	case AWK_MAP_IDX:
+		presenter->open_awk_map();
 		break;
 #endif
 	case RECOVERY_IDX:

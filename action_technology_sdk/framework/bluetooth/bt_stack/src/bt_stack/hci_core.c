@@ -4871,7 +4871,8 @@ static void le_per_adv_sync_established(struct net_buf *buf)
 
 	if (!pending_per_adv_sync ||
 	    pending_per_adv_sync->sid != evt->sid ||
-	    bt_addr_le_cmp(&pending_per_adv_sync->addr, &evt->adv_addr)) {
+	    bt_addr_le_cmp(&pending_per_adv_sync->addr, &evt->adv_addr) ||
+	    (evt->status != BT_HCI_ERR_SUCCESS)) {
 		struct bt_le_per_adv_sync_term_info term_info;
 
 		BT_ERR("Unexpected per adv sync established event");
@@ -7291,7 +7292,9 @@ void bt_id_get(bt_addr_le_t *addrs, size_t *count)
 {
 	size_t to_copy = MIN(*count, bt_dev.id_count);
 
-	memcpy(addrs, bt_dev.id_addr, to_copy * sizeof(bt_addr_le_t));
+	if (addrs) {
+		memcpy(addrs, bt_dev.id_addr, to_copy * sizeof(bt_addr_le_t));
+	}
 	*count = to_copy;
 }
 
@@ -11453,5 +11456,39 @@ int bt_vs_do_apll_temp_comp(void)
 {
 	return bt_hci_cmd_send(BT_HCI_OP_VS_DO_APLL_TEMP_COMP, NULL);
 }
+
+static int bt_vs_per_comp_set(uint16_t handle, uint8_t sync_enable, uint8_t rsv)
+{
+	struct net_buf *buf;
+	struct bt_hci_cp_sync_perior_adv_params *cp;
+
+	buf = bt_hci_cmd_create(BT_HCI_EVT_VENDOR_SYNC_PERIOR_ADV, sizeof(*cp));
+	if (!buf) {
+		return -ENOBUFS;
+	}
+
+	cp = net_buf_add(buf, sizeof(*cp));
+	cp->sync_handle = sys_cpu_to_le16(handle);
+	cp->sync_enable = sync_enable;
+	cp->rsv = rsv;
+
+	return bt_hci_cmd_send(BT_HCI_EVT_VENDOR_SYNC_PERIOR_ADV, buf);
+}
+
+int bt_le_per_adv_sync_comp_set(struct bt_le_per_adv_sync *per_adv_sync, uint8_t sync_enable, uint8_t rsv)
+{
+	int err = 0;
+
+	if (atomic_test_bit(per_adv_sync->flags, BT_PER_ADV_SYNC_SYNCED)) {
+		err = bt_vs_per_comp_set(per_adv_sync->handle, sync_enable, rsv);
+
+		if (err) {
+			return err;
+		}
+	}
+
+	return err;
+}
+
 /* Actions add end */
 

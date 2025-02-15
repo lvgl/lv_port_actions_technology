@@ -138,10 +138,10 @@ static lv_result_t decode_etc2(uint8_t * dstbuf, uint16_t w, uint16_t h, uint8_t
         for(uint16_t x = 0; x < w; x += 4) {
             if(fp) {
                 uint32_t rn;
-                lv_result_t res = lv_fs_read(fp, data, 16, &rn);
+                lv_fs_res_t res = lv_fs_read(fp, data, 16, &rn);
                 if(res != LV_FS_RES_OK || rn != 16) {
                     LV_LOG_WARN("read ETC2 block failed");
-                    return LV_RESULT_INVALID;
+                    return LV_FS_RES_UNKNOWN;
                 }
             }
 
@@ -158,7 +158,7 @@ static lv_result_t decode_etc2(uint8_t * dstbuf, uint16_t w, uint16_t h, uint8_t
         }
     }
 
-    return LV_RESULT_OK;
+    return LV_FS_RES_OK;
 }
 #endif /* !LV_USE_DRAW_VG_LITE */
 
@@ -267,7 +267,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
 
 #else
     lv_image_header_t * header = &dsc->header;
-    lv_fs_res_t res = LV_RESULT_OK;
+    lv_fs_res_t res = LV_FS_RES_OK;
     lv_draw_buf_t * decoded;
 
     decoded = lv_draw_buf_create_ex(image_cache_draw_buf_handlers, header->w, header->h,
@@ -302,7 +302,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         lv_fs_close(&f);
     }
 
-    if(res == LV_RESULT_INVALID) {
+    if(res != LV_FS_RES_OK) {
         lv_draw_buf_destroy(decoded);
         return LV_RESULT_INVALID;
     }

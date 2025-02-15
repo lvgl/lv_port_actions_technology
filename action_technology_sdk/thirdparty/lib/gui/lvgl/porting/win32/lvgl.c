@@ -7,16 +7,16 @@
 /*********************
  *      INCLUDES
  *********************/
+
 #include "../lvgl_port.h"
-#include "../gpu/lvgl_gpu.h"
 #include <Windows.h>
 
 #if LV_USE_THORVG
-#  if LV_USE_THORVG_EXTERNAL
-#    include <thorvg_capi.h>
-#  else
-#    include "../../src/libs/thorvg/thorvg_capi.h"
-#  endif
+    #if LV_USE_THORVG_EXTERNAL
+        #include <thorvg_capi.h>
+    #else
+        #include "../../src/libs/thorvg/thorvg_capi.h"
+    #endif
 #endif
 
 /**********************

@@ -155,7 +155,11 @@ const codec_config_info_t codec_config[] =
 	#ifdef CONFIG_DECODER_WAV_HW_ACCELERATION
 		.hw_acceleration = true,
 		.ops = NULL,
+		#ifdef CONFIG_ENCODER_MP3
+		.dsp_dec_lib = "aeRECORD.dsp",
+		#else
 		.dsp_dec_lib = "adMUSIC.dsp",
+		#endif
 		.dsp_effect_lib = NULL,
 	#else
 		.hw_acceleration = false,
@@ -301,6 +305,23 @@ const codec_config_info_t codec_config[] =
 	},
 #endif
 
+#ifdef CONFIG_ENCODER_AAC
+	{
+		.format = AAC_TYPE,
+		.codec_type = CODEC_ENC,
+		.overlay_id = OVERLAY_ID_LIBAEOPU,
+	#ifdef CONFIG_ENCODER_AAC_HW_ACCELERATION
+		.hw_acceleration = true,
+		.ops = NULL,
+		.dsp_dec_lib = "adMUSIC.dsp",
+		.dsp_effect_lib = NULL,
+	#else
+		.hw_acceleration = false,
+		.ops = as_encoder_ops_opus,
+	#endif
+	},
+#endif
+
 #ifdef CONFIG_ENCODER_WAV
 	{
 		.format = WAV_TYPE,
@@ -341,7 +362,7 @@ const codec_config_info_t codec_config[] =
 	#ifdef CONFIG_ENCODER_SBC_HW_ACCELERATION
 		.hw_acceleration = true,
 		.ops = NULL,
-		#ifdef CONFIG_ENCODER_OPUS
+		#ifdef CONFIG_ENCODER_MP3
 		.dsp_dec_lib = "aeRECORD.dsp",
 		#else
 		.dsp_dec_lib = "adMUSIC.dsp",

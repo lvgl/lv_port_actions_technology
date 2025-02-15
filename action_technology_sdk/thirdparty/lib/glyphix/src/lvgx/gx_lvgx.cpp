@@ -118,10 +118,10 @@ public:
   WidgetWrapper widget;
 
   LVGLWindow() {
-    lv_obj_add_flag(this, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE |
-                              LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(this, (lv_obj_flag_t)(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE |
+                              LV_OBJ_FLAG_HIDDEN));
     lv_obj_clear_flag(this,
-                      LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_EVENT_BUBBLE);
+                      (lv_obj_flag_t)(LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_EVENT_BUBBLE));
     lv_obj_add_event_cb(this, onPressed, LV_EVENT_PRESSED, nullptr);
     lv_obj_add_event_cb(this, onPressing, LV_EVENT_PRESSING, nullptr);
     lv_obj_add_event_cb(this, onReleased, LV_EVENT_RELEASED, nullptr);
@@ -191,15 +191,28 @@ static void lv_widget_destructor(const lv_obj_class_t *class_p, lv_obj_t *obj) {
 }
 
 static void draw_widget(lv_event_t *e) {
-  lv_obj_t *obj = lv_event_get_target(e);
+  lv_obj_t *obj = ( lv_obj_t *)lv_event_get_target(e);
   LVGLWindow *w = static_cast<LVGLWindow *>(obj);
-  lv_draw_ctx_t *draw_ctx = lv_event_get_draw_ctx(e);
+
   lv_draw_rect_dsc_t draw_dsc_sel;
   lv_draw_rect_dsc_init(&draw_dsc_sel);
   draw_dsc_sel.bg_color = lv_color_hex(0xff808080);
   lv_area_t coords;
   lv_obj_get_content_coords(obj, &coords);
 
+#if LV_VERSION_CHECK(9, 0, 0)
+  lv_layer_t * layer = lv_event_get_layer(e);
+  int buf_w = lv_area_get_width(&layer->buf_area);
+  int buf_h = lv_area_get_height(&layer->buf_area);
+  VDBPaintDevice buf;
+  buf.setBuffer(layer->draw_buf->data, buf_w, buf_h);
+  Painter p(&buf);
+  Point position(coords.x1, coords.y1);
+  Rect clip(Point(layer->_clip_area.x1, layer->_clip_area.y1),
+            Point(layer->_clip_area.x2, layer->_clip_area.y2));
+  Point offset(layer->buf_area.x1, layer->buf_area.y1);
+#else
+  lv_draw_ctx_t *draw_ctx = lv_event_get_draw_ctx(e);
   // lv_draw_rect(draw_ctx, &draw_dsc_sel, &coords);
   int buf_w = lv_area_get_width(draw_ctx->buf_area);
   int buf_h = lv_area_get_height(draw_ctx->buf_area);
@@ -210,6 +223,8 @@ static void draw_widget(lv_event_t *e) {
   Rect clip(Point(draw_ctx->clip_area->x1, draw_ctx->clip_area->y1),
             Point(draw_ctx->clip_area->x2, draw_ctx->clip_area->y2));
   Point offset(draw_ctx->buf_area->x1, draw_ctx->buf_area->y1);
+#endif
+
   position -= offset;
   clip -= offset;
   w->widget.render(&p, position, clip,

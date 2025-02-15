@@ -272,11 +272,19 @@ config CARD_READER_APP
 	prompt "CARD READER App Support"
 	select USB_MASS_STORAGE
 	select MUTIPLE_VOLUME_MANAGER
-  select HOTPLUG
-  select USB_HOTPLUG
+	select HOTPLUG
+	select USB_HOTPLUG
 	default n
 	help
 	This option enables or disable the card reader app.
+
+config CARD_READER_RUNTIME
+	bool
+	prompt "CARD READER runtime Support"
+	depends on CARD_READER_APP
+	default n
+	help
+	This option enables or disable dynamically switch card reader modes based on hotplug information.
 
 config CHARGER_APP
 	bool
@@ -570,6 +578,7 @@ config DEEP_SUSPEND
 config VIDEO_APP
 	bool
 	prompt "support video app"
+	depends on VIDEO_PLAYER
 	default n
 	help
 	This option support video app
@@ -577,6 +586,7 @@ config VIDEO_APP
 config VIDEO_APP_AUDIO_ENABLE
 	bool
 	prompt "enable video audio"
+	depends on VIDEO_APP
 	default y
 	help
 	This option enable video audio

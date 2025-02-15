@@ -91,6 +91,9 @@ typedef enum {
 	PLAYER_DECODE_DATALOST,
 	PLAYER_DECODE_RAW,
 } media_player_state_e;
+/** media force stop callback*/
+typedef void (*force_stop_callback)(void *stop_handle);
+
 /** media player structure */
 typedef struct {
 	/** type of media player @see media_player_type_e */
@@ -103,6 +106,10 @@ typedef struct {
 	uint8_t dvfs_level;
 	/** handle of media service*/
 	void *media_srv_handle;
+	/** force stop cb*/
+	force_stop_callback stop_cb;
+	/** force stop cb*/
+	void *stop_handle;
 } media_player_t;
 
 /** media voice effect mode */
@@ -732,8 +739,9 @@ int media_player_set_lifecycle_notifier(media_srv_event_notify_t notify);
  *
  * This routine provides to stop meida player
  */
-void media_player_force_stop(void);
+void media_player_force_stop(bool disable);
 
+void media_player_set_force_stop_cb(media_player_t * player, void *stop_handle, force_stop_callback cb);
 
 int media_player_set_mix_stream(media_player_t *handle, mix_service_param_t *init_param);
 

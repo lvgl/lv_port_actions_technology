@@ -172,11 +172,11 @@ static const struct media_memory_block media_memory_config[] = {
 
 
 			{.mem_type = INPUT_PCM,      .mem_base = (u32_t)&playback_input_buffer[0x0000], .mem_size = 0x800,},
-			{.mem_type = INPUT_CAPTURE,  .mem_base = (uint32_t)&playback_input_buffer[0x800], .mem_size = 0x400,},
-			{.mem_type = INPUT_ENCBUF,   .mem_base = (u32_t)&playback_input_buffer[0xC00], .mem_size = 640,},
-			{.mem_type = OUTPUT_CAPTURE, .mem_base = (u32_t)&playback_input_buffer[0xE80], .mem_size = 960,},
-			{.mem_type = VAD_STATE, 	 .mem_base = (u32_t)&playback_input_buffer[0x1240], .mem_size = 0x10},
-			{.mem_type = AEC_REFBUF0,    .mem_base = (uint32_t)&playback_input_buffer[0x1250], .mem_size = 0x400,},
+			{.mem_type = INPUT_CAPTURE,  .mem_base = (uint32_t)&playback_input_buffer[0x800], .mem_size = 0x800,},
+			{.mem_type = INPUT_ENCBUF,   .mem_base = (u32_t)&playback_input_buffer[0x1000], .mem_size = 0x400,},
+			{.mem_type = OUTPUT_CAPTURE, .mem_base = (u32_t)&playback_input_buffer[0x1400], .mem_size = 960,},
+			{.mem_type = VAD_STATE, 	 .mem_base = (u32_t)&playback_input_buffer[0x17C0], .mem_size = 0x10},
+			{.mem_type = AEC_REFBUF0,    .mem_base = (uint32_t)&playback_input_buffer[0x17D0], .mem_size = 0x400,},
 		},
 	},
 #ifdef CONFIG_DECODER_ACT_HW_ACCELERATION

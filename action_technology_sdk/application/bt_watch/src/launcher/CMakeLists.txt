@@ -23,11 +23,12 @@ target_sources(app PRIVATE
 	clock_view.c
 	digital1_clock_view.c
 	video_clock_view.c
+	gif_view.c
 	heart_view.c
 	main_view.c
 	message_view.c
-	sport_view.c
 	music_view.c
+	sport_view.c
 	aod_clock_view.c
 	alipay_main_view.c
 	wxpay_main_view.c
@@ -43,16 +44,8 @@ target_sources(app PRIVATE
 	${setting_src}
 )
 
-if(CONFIG_LCMUSIC_APP OR CONFIG_BT_PLAYER)
-	target_sources(app PRIVATE music_view.c)
-endif()
-
 if(CONFIG_ALARM_MANAGER)
 	target_sources(app PRIVATE alarm_set_view.c)
-endif()
-
-if(CONFIG_LV_GIF)
-	target_sources(app PRIVATE gif_view.c)
 endif()
 
 add_subdirectory(clock_selector)
@@ -66,6 +59,10 @@ endif()
 
 if(CONFIG_THIRD_PARTY_APP)
 add_subdirectory(third_party_app)
+endif()
+
+if(CONFIG_AWK_LIB)
+add_subdirectory(awk_map)
 endif()
 
 endif()

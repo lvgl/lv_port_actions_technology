@@ -19,6 +19,7 @@
 #include <drivers/input/input_dev.h>
 #include <sys/util.h>
 #include <logging/log.h>
+#include <debug/ramdump.h>
 
 #ifdef CONFIG_CFG_DRV
 #include <config.h>
@@ -29,6 +30,10 @@ LOG_MODULE_REGISTER(onoffkey, CONFIG_SYS_LOG_INPUT_DEV_LEVEL);
 
 #define ONOFF_KEY_RESERVED (3)
 #define ONOFF_KEY_CODE_INVALID (0xFF)
+
+#ifdef CONFIG_DEBUG_RAMDUMP
+#define ONOFFKEY_RAMDUMP_TIMEOUT_MS (5000)
+#endif
 
 struct onoff_key_info {
 	uint32_t poll_interval_ms;
@@ -48,6 +53,9 @@ struct onoff_key_info {
 
 	uint8_t status_check_on : 1; /* if 1 stands for the onoff key status check worker is on */
 	uint8_t prev_key_stable_status : 2; /* previous onoff key stable status */
+#ifdef CONFIG_DEBUG_RAMDUMP
+	struct k_timer ramd_timer;
+#endif
 };
 
 static void onoff_key_acts_report_key(struct onoff_key_info *onoff, int value)
@@ -145,6 +153,13 @@ static void onoff_key_acts_poll(struct k_work *work)
 
 	if (onoff->prev_key_stable_status != is_onoff_pressed) {
 		if (++onoff->scan_count == onoff->sample_filter_cnt) {
+#ifdef CONFIG_DEBUG_RAMDUMP
+			if (is_onoff_pressed) {
+				k_timer_start(&onoff->ramd_timer, K_MSEC(ONOFFKEY_RAMDUMP_TIMEOUT_MS), K_FOREVER);
+			} else {
+				k_timer_stop(&onoff->ramd_timer);
+			}
+#endif
 			onoff->prev_key_stable_status = is_onoff_pressed;
 			onoff_key_acts_report_key(onoff, is_onoff_pressed);
 			onoff->scan_count = 0;
@@ -167,6 +182,19 @@ static void onoff_key_acts_poll(struct k_work *work)
 #endif
 	}
 }
+
+#ifdef CONFIG_DEBUG_RAMDUMP
+static void onoff_key_ramdump(struct k_timer *timer)
+{
+#ifdef CONFIG_ACTIONS_PRINTK_DMA
+	set_panic_exe(1);
+#endif
+	ramdump_save(NULL, 0);
+#ifdef CONFIG_ACTIONS_PRINTK_DMA
+	set_panic_exe(0);
+#endif
+}
+#endif
 
 static void onoff_key_pmu_notify(void *cb_data, int state)
 {
@@ -195,6 +223,10 @@ static void onoff_key_pmu_notify(void *cb_data, int state)
 	k_timer_start(&onoff->timer, K_MSEC(onoff->poll_interval_ms), K_NO_WAIT);
 #else
 	k_delayed_work_submit(&onoff->timer, K_MSEC(onoff->poll_interval_ms));
+#endif
+
+#ifdef CONFIG_DEBUG_RAMDUMP
+	k_timer_start(&onoff->ramd_timer, K_MSEC(ONOFFKEY_RAMDUMP_TIMEOUT_MS), K_FOREVER);
 #endif
 }
 
@@ -297,6 +329,10 @@ static int onoff_key_acts_init(const struct device *dev)
 	k_timer_user_data_set(&onoff->timer, (void *)dev);
 #else
 	k_delayed_work_init(&onoff->timer, onoff_key_acts_poll);
+#endif
+
+#ifdef CONFIG_DEBUG_RAMDUMP
+	k_timer_init(&onoff->ramd_timer, onoff_key_ramdump, NULL);
 #endif
 
 	return 0;

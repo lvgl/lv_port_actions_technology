@@ -25,6 +25,10 @@
 #ifdef CONFIG_THIRD_PARTY_APP
 #include "../third_party_app/third_party_app_ui.h"
 #endif
+#ifdef CONFIG_AWK_LIB
+#include "../awk_map/awk_map_view.h"
+#endif
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -86,6 +90,9 @@ const applist_view_presenter_t applist_view_presenter = {
 	.open_vib = vibration_ui_enter,
 #ifdef CONFIG_THIRD_PARTY_APP
 	.open_third_party_app = third_party_app_ui_enter,
+#endif
+#ifdef CONFIG_AWK_LIB
+	.open_awk_map = awk_map_view_enter,
 #endif
 };
 

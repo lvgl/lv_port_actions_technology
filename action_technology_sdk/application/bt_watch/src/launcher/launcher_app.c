@@ -321,7 +321,12 @@ static int _launcher_app_init(void)
 #else
 	app->cur_player = BTMUSIC_PLAYER;
 #endif
-	lcmusic_init(CONFIG_APP_FAT_DISK"/");
+#ifdef CONFIG_VIDEO_APP
+	if(app->clock_id != VIDEO_CLOCK_ID) 
+#endif
+	{
+		lcmusic_init(CONFIG_APP_FAT_DISK"/");
+	}
 #endif
 	return 0;
 }
@@ -360,7 +365,6 @@ static void _music_player_exit(void)
 }
 
 #ifdef CONFIG_VIDEO_APP_AUDIO_ENABLE
-#ifdef CONFIG_VIDEO_PLAYER
 void launcher_video_control(int cmd)
 {
 	struct app_msg msg = {
@@ -368,7 +372,7 @@ void launcher_video_control(int cmd)
 		.cmd = cmd,
 	};
 
-	send_async_msg(app_manager_get_current_app(), &msg);
+	send_async_msg(APP_ID_LAUNCHER, &msg);
 }
 
 static void _launcher_video_player_handle(struct app_msg *msg)
@@ -439,7 +443,6 @@ static void _launcher_video_player_handle(struct app_msg *msg)
 	(void)tmp_msg;
 }
 #endif
-#endif
 
 void launcher_switch_player(uint8_t player)
 {
@@ -462,6 +465,14 @@ static void _launcher_app_exit(void)
 	ui_switch_effect_set_type(UI_SWITCH_EFFECT_NONE);
 	view_stack_clean();
 #endif
+
+#ifdef CONFIG_VIDEO_APP_AUDIO_ENABLE
+	/* app has no chance to handle defocus message */
+	struct app_msg tmp_msg = { 0 };
+	tmp_msg.cmd = MSG_VIDEO_VIEW_DEFOCUS;
+	_launcher_video_player_handle(&tmp_msg);
+#endif
+
 	app_manager_thread_exit(APP_ID_LAUNCHER);
 }
 
@@ -469,13 +480,12 @@ static void _launcher_app_early_suspend(void)
 {
 	launcher_app_t *app = launcher_app_get();
 
-#ifdef CONFIG_VIDEO_PLAYER
 #ifdef CONFIG_VIDEO_APP_AUDIO_ENABLE
 	struct app_msg tmp_msg = { 0 };
 	tmp_msg.cmd = MSG_VIDEO_SUSPEND_APP;
 	_launcher_video_player_handle(&tmp_msg);
 #endif
-#endif
+
 	app->suspended = 1;
 
 #ifndef CONFIG_SIMULATOR
@@ -524,13 +534,12 @@ static void _launcher_app_late_resume(void)
 	}
 #endif
 
-#ifdef CONFIG_VIDEO_PLAYER
 #ifdef CONFIG_VIDEO_APP_AUDIO_ENABLE
 	struct app_msg tmp_msg = { 0 };
 	tmp_msg.cmd = MSG_VIDEO_RESUME_APP;
 	_launcher_video_player_handle(&tmp_msg);
 #endif
-#endif
+
 	SYS_LOG_INF("launcher late-resume\n");
 }
 

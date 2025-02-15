@@ -142,6 +142,18 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\lv_image_dsc.h">
       <Filter>lvgl\src\draw</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_acts_decoder.h">
+      <Filter>lvgl\src\draw\actions</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_draw_actions.h">
+      <Filter>lvgl\src\draw\actions</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_draw_acts2d.h">
+      <Filter>lvgl\src\draw\actions</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_draw_actsw.h">
+      <Filter>lvgl\src\draw\actions</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\nxp\pxp\lv_draw_pxp.h">
       <Filter>lvgl\src\draw\nxp\pxp</Filter>
     </ClInclude>
@@ -1273,12 +1285,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\widgets\win\lv_win_private.h">
       <Filter>lvgl\src\widgets\win</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lvgl_decoder.h">
-      <Filter>lvgl\porting\gpu</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lvgl_gpu.h">
-      <Filter>lvgl\porting\gpu</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\lvgl_port.h">
       <Filter>lvgl\porting</Filter>
     </ClInclude>
@@ -1367,6 +1373,18 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\lv_image_decoder.c">
       <Filter>lvgl\src\draw</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_acts_decoder.c">
+      <Filter>lvgl\src\draw\actions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_draw_actions.c">
+      <Filter>lvgl\src\draw\actions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_draw_acts2d.c">
+      <Filter>lvgl\src\draw\actions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\actions\lv_draw_actsw.c">
+      <Filter>lvgl\src\draw\actions</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\draw\nxp\pxp\lv_draw_buf_pxp.c">
       <Filter>lvgl\src\draw\nxp\pxp</Filter>
@@ -2381,18 +2399,6 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\src\widgets\win\lv_win.c">
       <Filter>lvgl\src\widgets\win</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lvgl_decoder.c">
-      <Filter>lvgl\porting\gpu</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lvgl_gpu.c">
-      <Filter>lvgl\porting\gpu</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lvgl_gpu_dma2d.c">
-      <Filter>lvgl\porting\gpu</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\gpu\lvgl_gpu_sw.c">
-      <Filter>lvgl\porting\gpu</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\win32\lvgl.c">
       <Filter>lvgl\porting\win32</Filter>
@@ -3691,8 +3697,8 @@
     <Filter Include="lvgl\porting\win32">
       <UniqueIdentifier>{6d9d978c-baed-47cf-8934-566a9bd06ca2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="lvgl\porting\gpu">
-      <UniqueIdentifier>{ec371adb-bc6c-4fec-8e5e-4ab99d4308b9}</UniqueIdentifier>
+    <Filter Include="lvgl\src\draw\actions">
+      <UniqueIdentifier>{adb52cf7-ea7a-4396-a22d-9bcdfb204fc2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

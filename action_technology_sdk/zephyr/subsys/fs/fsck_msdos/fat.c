@@ -747,7 +747,7 @@ err:
 	return 0;
 }
 
-static void
+void
 releasefat(struct fat_descriptor *fat)
 {
 	if (fat->use_cache) {

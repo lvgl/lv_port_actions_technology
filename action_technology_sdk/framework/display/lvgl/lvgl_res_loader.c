@@ -945,6 +945,7 @@ static int _cvt_bmp2dsc(lv_image_dsc_t *dsc, resource_bitmap_t *bmp)
 	case RESOURCE_BITMAP_FORMAT_ARGB1555:
 	case RESOURCE_BITMAP_FORMAT_INDEX8:
 	default:
+		SYS_LOG_ERR("unsupported resource bitmap format %d", bmp->sty_data->format);
 		return -EINVAL;
 	}
 

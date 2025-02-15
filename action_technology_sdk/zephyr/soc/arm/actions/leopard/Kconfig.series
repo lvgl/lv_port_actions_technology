@@ -4,6 +4,7 @@
 config SOC_SERIES_LEOPARD
 	bool "LEOPARD Series MCU"
 	select ARM
+	select ARMV8_M_DSP
 	select CPU_CORTEX_M33
 	select CPU_CORTEX_M_HAS_DWT
 	select CPU_HAS_FPU

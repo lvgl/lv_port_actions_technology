@@ -73,6 +73,8 @@ void bt_call_start_play(void)
 	tts_manager_wait_finished(true);
 #endif
 
+	media_player_force_stop(false);
+
 	if (!btcall->upload_stream_outer) {
 		btcall->upload_stream = sco_upload_stream_create(codec_id);
 		if (!btcall->upload_stream) {

@@ -87,6 +87,7 @@ static int _svgmap_view_layout(view_data_t *view_data)
 	data->zoom_base = (img_size <= scr_size) ? LV_SCALE_NONE :
 			(LV_SCALE_NONE * scr_size / img_size);
 
+	svg_img_set_font(data->svg_obj, DEF_VFONT_FILE);
 	svg_img_set_scale(data->svg_obj, data->zoom_base);
 	svg_img_set_rotation(data->svg_obj, data->angle);
 	lv_obj_center(data->svg_obj);

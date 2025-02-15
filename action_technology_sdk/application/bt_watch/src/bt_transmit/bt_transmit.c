@@ -14,6 +14,7 @@
 #include <ringbuff_stream.h>
 #include <os_common_api.h>
 #include "bt_transmit.h"
+#include <acts_bluetooth/a2dp-codec.h>
 
 LOG_MODULE_REGISTER(bt_transmit, LOG_LEVEL_INF);
 static OS_MUTEX_DEFINE(bt_transmit_lock);
@@ -126,6 +127,22 @@ static void _sync_vol_timer_handler(struct k_work *work)
 	}
 }
 
+int bt_transmit_need_effect(void)
+{
+	if (!bt_transmit.ready) {
+		return 1;
+	}	
+
+	if (BT_A2DP_MPEG2 == bt_manager_trs_a2dp_get_codecid()) {
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
+}
+
+//static io_stream_t enc_out_stream;
 void bt_transmit_capture_start_inner(void)
 {
 	media_init_param_t init_param;
@@ -171,18 +188,30 @@ void bt_transmit_capture_start_inner(void)
 	memset(&init_param, 0, sizeof(media_init_param_t));
 	init_param.type = MEDIA_SRV_TYPE_CAPTURE;
 	init_param.stream_type = AUDIO_STREAM_DEFAULT;
-	init_param.capture_format = SBC_TYPE;
+	if (BT_A2DP_MPEG2 == bt_manager_trs_a2dp_get_codecid()) {
+		init_param.capture_format = AAC_TYPE;
+	} else {
+		init_param.capture_format = SBC_TYPE;
+	}
 	init_param.capture_sample_rate_input = bt_transmit.src_sample_rate;
 	init_param.capture_sample_rate_output =
 		bt_manager_trs_a2dp_get_sample_rate() == 0 ? 44 : bt_manager_trs_a2dp_get_sample_rate();
 	init_param.capture_channels_input = bt_transmit.src_channels;
 	init_param.capture_channels_output = 2;
-	init_param.capture_bit_rate = bt_manager_a2dp_get_max_bitpool(BTSRV_DEVICE_PLAYER);	//现在dsp里面写死成53了，后面应该由此设置sbc的bitpool
+	if (BT_A2DP_MPEG2 == bt_manager_trs_a2dp_get_codecid()) {
+		init_param.capture_bit_rate = bt_manager_trs_a2dp_bit_rate();
+		if (init_param.capture_bit_rate & 0x8000) { //Variable Bit Rate
+			init_param.capture_bit_rate = 128; 
+		}
+	} else {
+		init_param.capture_bit_rate = bt_manager_a2dp_get_max_bitpool(BTSRV_DEVICE_PLAYER);	//现在dsp里面写死成53了，后面应该由此设置sbc的bitpool
+	}
 	init_param.capture_input_stream = bt_transmit.input_stream;
 	init_param.capture_output_stream = bt_transmit.output_stream;
 	init_param.capture_input_src = CAPTURE_INPUT_FROM_DSP_DEC_OUTPUT;
 
-	SYS_LOG_INF("bitpool %d\n", init_param.capture_bit_rate);
+	SYS_LOG_INF("capture_bit_rate %d\n", init_param.capture_bit_rate);
+	SYS_LOG_INF("src_channels %d %d %d\n", bt_transmit.src_channels, bt_manager_trs_a2dp_get_sample_rate(),bt_manager_trs_a2dp_bit_rate());
 
 	bt_transmit.recorder = media_player_open(&init_param);
 	if (!bt_transmit.recorder) {

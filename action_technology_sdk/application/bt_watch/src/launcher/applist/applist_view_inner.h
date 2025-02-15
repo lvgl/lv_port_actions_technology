@@ -37,6 +37,9 @@ enum applist_idx {
 #ifdef CONFIG_THIRD_PARTY_APP
 	THIRD_PARTY_APP_IDX,
 #endif
+#ifdef CONFIG_AWK_LIB
+	AWK_MAP_IDX,
+#endif
 	NUM_ITEMS,
 
 	PHONE_OFF_IDX = NUM_ITEMS,

@@ -240,6 +240,10 @@ static void _celluar_view_move(applist_ui_data_t *data)
 			pivot.y = bg_size.y - radius;
 		}
 #endif /* CONFIG_PANEL_ROUND_SHAPE */
+		if (radius > cellular->radius)
+			radius = cellular->radius;
+		if (radius < 0)
+			radius = 0;
 
 		uint16_t zoom = cellular->max_zoom * radius / cellular->radius;
 		/*if (zoom < cellular->min_zoom) {

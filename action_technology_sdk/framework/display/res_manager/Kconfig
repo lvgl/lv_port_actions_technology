@@ -62,6 +62,12 @@ config RES_MANAGER_RES_DISK
 	help
 	  This option set driver name for picture resource
 
+config RES_MANAGER_LVGL_RES_CACHE_MAX
+	int "set max res num in lvgl res cache"
+	default 0
+	help
+		This option set max res num in lvgl res cache
+
 config RES_MANAGER_BLOCK_SIZE
 	int "set block size for big pictures"
 	default 0

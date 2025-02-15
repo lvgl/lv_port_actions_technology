@@ -475,6 +475,7 @@ static void dma_done_callback(const struct device *dev, void *callback_data, uin
 	k_sem_give(&data->dma_sync);
 }
 
+#ifdef CONFIG_ACTIONS_PRINTK_DMA
 static int mmc_dma_wait_timeout(const struct device *dma_dev, uint32_t dma_chan, uint32_t timeout_us)
 {
 	uint32_t start_time, curr_time;
@@ -503,6 +504,7 @@ static int mmc_dma_wait_timeout(const struct device *dma_dev, uint32_t dma_chan,
 
 	return 0;
 }
+#endif
 
 static int mmc_acts_transfer_by_dma(const struct device *dev,
 				    bool is_write, uint8_t *buf,
@@ -594,6 +596,7 @@ static int mmc_acts_transfer_by_dma(const struct device *dev,
 	return err;
 }
 
+#ifdef CONFIG_ACTIONS_PRINTK_DMA
 static int mmc_acts_transfer_by_query(const struct device *dev,
 				    bool is_write, uint8_t *buf,
 				    int len, uint32_t timeout_ms)
@@ -668,7 +671,7 @@ static int mmc_acts_transfer_by_query(const struct device *dev,
 
 	return err;
 }
-
+#endif
 
 static int mmc_acts_send_cmd(const struct device *dev, struct mmc_cmd *cmd)
 {
@@ -678,8 +681,9 @@ static int mmc_acts_send_cmd(const struct device *dev, struct mmc_cmd *cmd)
 	int is_write = cmd->flags & (MMC_DATA_WRITE | MMC_DATA_WRITE_DIRECT);
 	uint32_t ctl, rsp_err_mask, len, trans_mode;
 	int err, timeout;
+#ifdef CONFIG_ACTIONS_PRINTK_DMA
 	extern int check_panic_exe(void);
-
+#endif
 	LOG_DBG("CMD%02d: arg 0x%x flags 0x%x is_write %d \n",
 		cmd->opcode, cmd->arg, cmd->flags, !!is_write);
 	LOG_DBG("       blk_num 0x%x blk_size 0x%x, buf %p \n",
@@ -724,10 +728,13 @@ static int mmc_acts_send_cmd(const struct device *dev, struct mmc_cmd *cmd)
 		len = cmd->blk_num * cmd->blk_size;
 		timeout = cmd->blk_num * MMC_DAT_TIMEOUT_MS;
 		/* When SD0 FIFO and DMA width is 32bits, data address in memory shall align by 32bits */
+#ifdef CONFIG_ACTIONS_PRINTK_DMA
 		if (k_is_in_isr() && check_panic_exe()) {
 			err = mmc_acts_transfer_by_query(dev, is_write,
 				cmd->buf, len, timeout);
-		} else if (!cfg->flag_use_dma) {
+		} else
+#endif
+		if (!cfg->flag_use_dma) {
 			err = mmc_acts_transfer_by_cpu(dev, is_write,
 				cmd->buf, len, timeout);
 		} else {

@@ -186,7 +186,7 @@ static inline void spi_context_cs_configure(struct spi_context *ctx)
 			     ctx->config->cs->gpio_pin,
 			     spi_context_cs_inactive_value(ctx));
 	} else {
-		LOG_INF("CS control inhibited (no GPIO device)");
+		//LOG_INF("CS control inhibited (no GPIO device)");
 	}
 }
 

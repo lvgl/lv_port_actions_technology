@@ -321,7 +321,7 @@ void tool_att_loop(void *p1, void *p2, void *p3)
     SYS_LOG_INF("Enter");
 
 #ifdef CONFIG_MEDIA
-	media_player_force_stop();
+	media_player_force_stop(true);
 #endif
 
 #ifdef CONFIG_SYS_WAKELOCK

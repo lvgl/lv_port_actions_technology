@@ -33,6 +33,7 @@
 #define APP_ID_VENDOR			"vendor"
 #define APP_ID_ASET				"aset"
 #define APP_ID_OTA_PRODUCT		"ota_product"
+#define APP_ID_CARD_READER      "card_reader"
 #define APP_ID_DEFAULT			APP_ID_LAUNCHER
 
 /*
@@ -66,6 +67,7 @@
 						APP_ID_WATCH_APPLIST,\
 						APP_ID_MESSAGE,\
 						APP_ID_LAUNCHER,\
+						APP_ID_CARD_READER,\
 					}
 #endif
 

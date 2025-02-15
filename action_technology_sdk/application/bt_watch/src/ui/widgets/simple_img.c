@@ -44,7 +44,6 @@ static void simple_img_constructor(const lv_obj_class_t * class_p, lv_obj_t * ob
 static void simple_img_event(const lv_obj_class_t * class_p, lv_event_t * e);
 static void draw_img(lv_event_t * e);
 
-static void invalidate_image_area(lv_obj_t * img);
 static void refresh_image_area(lv_obj_t * img);
 
 /**********************
@@ -197,24 +196,14 @@ uint16_t simple_image_get_scale(lv_obj_t * obj)
  *   STATIC FUNCTIONS
  **********************/
 
-static void invalidate_image_area(lv_obj_t * obj)
-{
-	simple_img_t * img = (simple_img_t *)obj;
-
-	lv_area_t abs_area;
-	abs_area.x1 = img->trans_area.x1 + obj->coords.x1;
-	abs_area.y1 = img->trans_area.y1 + obj->coords.y1;
-	abs_area.x2 = img->trans_area.x2 + obj->coords.x1;
-	abs_area.y2 = img->trans_area.y2 + obj->coords.y1;
-
-	lv_obj_invalidate_area(obj, &abs_area);
-}
-
 static void refresh_image_area(lv_obj_t * obj)
 {
 	simple_img_t * img = (simple_img_t *)obj;
 
-	invalidate_image_area(obj);
+	lv_area_t trans_area;
+	lv_area_copy(&trans_area, &img->trans_area);
+	lv_area_move(&trans_area, obj->coords.x1, obj->coords.y1);
+	lv_obj_invalidate_area(obj, &trans_area);
 
 	if (img->rotation > 0 || img->scale != LV_SCALE_NONE) {
 		lv_image_buf_get_transformed_area(&img->trans_area, img->header.w,
@@ -233,7 +222,9 @@ static void refresh_image_area(lv_obj_t * obj)
 	lv_obj_refresh_ext_draw_size(obj);
 	lv_display_enable_invalidation(disp, true);
 
-	invalidate_image_area(obj);
+	lv_area_copy(&trans_area, &img->trans_area);
+	lv_area_move(&trans_area, obj->coords.x1, obj->coords.y1);
+	lv_obj_invalidate_area(obj, &trans_area);
 }
 
 static void simple_img_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj)

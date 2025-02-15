@@ -254,7 +254,7 @@
 
 		<partition>
 			<address>0x8000</address>
-			<size>0x1f8000</size>
+			<size>0xff8000</size>
 			<type>DATA</type>
 			<name>res_a</name>
 			<file_id>10</file_id>

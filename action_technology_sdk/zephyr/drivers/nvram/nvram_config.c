@@ -625,7 +625,7 @@ static int item_check_validity(struct region_info *region, int item_offs, struct
 			LOG_ERR("item crc error! offset 0x%x, crc 0x%x != item->crc 0x%x",
 				item_offs, crc, item->crc);
 
-			item_update_state(region, item_offs - region->seg_offset, NVRAM_ITEM_STATE_OBSOLETE);
+			item_update_state(region, item_offs, NVRAM_ITEM_STATE_OBSOLETE);
 			return ITEM_STATUS_INVALID;
 		}
 	}
@@ -995,6 +995,7 @@ static int region_get(struct region_info *region, const char *name,
 {
 	struct nvram_item item;
 	uint32_t item_offs, data_offs, len;
+	uint32_t crc;
 
 	if (!name || !data || !max_len)
 		return -EINVAL;
@@ -1005,6 +1006,18 @@ static int region_get(struct region_info *region, const char *name,
 	item_offs = region_find_item(region, name, &item);
 	if ((int32_t)item_offs < 0)
 		return -ENOENT;
+	crc = calc_crc8((u8_t *)&item + NVRAM_REGION_ITEM_CRC_OFFSET,
+		sizeof(struct nvram_item) - NVRAM_REGION_ITEM_CRC_OFFSET, 0);
+
+	crc = calc_crc8(nvram_buf, item.name_size, crc);
+
+	crc = item_calc_data_crc(region, item_offs + sizeof(struct nvram_item) + item.name_size, item.data_size, crc);
+
+	if (item.crc != crc) {
+		LOG_ERR("item crc error! offset 0x%x, crc 0x%x != item->crc 0x%x",
+			item_offs, crc, item.crc);
+		return -EACCES;
+	}
 
 	data_offs = item_offs + sizeof(struct nvram_item) + item.name_size;
 	if (max_len < item.data_size)

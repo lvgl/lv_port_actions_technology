@@ -347,9 +347,9 @@ static void  acts_clk_set_rate_spi(int clock_id, unsigned int rate_hz)
 	}
 
 	sys_write32(val, CMU_SPI0CLK + (clock_id - CLOCK_ID_SPI0)*4);
-
-	printk("SPI%d: set rate %d Hz, real rate %d Hz,CMU_SPICLK=0x%x\n",
-		clock_id - CLOCK_ID_SPI0, rate_hz, real_rate, val);
+	if(CLOCK_ID_SPI2 != clock_id)
+		printk("SPI%d: set rate %d Hz, real rate %d Hz,CMU_SPICLK=0x%x\n",
+			clock_id - CLOCK_ID_SPI0, rate_hz, real_rate, val);
 }
 
 

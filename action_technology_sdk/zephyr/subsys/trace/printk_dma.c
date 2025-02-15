@@ -458,6 +458,10 @@ int check_panic_exe(void)
 {
 	return g_pr_ctx.panic;
 }
+void set_panic_exe(int panic)
+{
+	g_pr_ctx.panic = panic;
+}
 
 
 #if defined(CONFIG_STDOUT_CONSOLE)

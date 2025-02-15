@@ -16,8 +16,6 @@
 /* LVGL */
 #define CONFIG_LVGL 1
 #define CONFIG_LV_COLOR_DEPTH 16
-#define CONFIG_LV_USE_GPU_ACTS 1
-#define CONFIG_LV_MEM_CUSTOM 1
 #define CONFIG_LVGL_USE_BITMAP_FONT 1
 #define CONFIG_LVGL_USE_FREETYPE_FONT 1
 #define CONFIG_LVGL_USE_RES_MANAGER 1
@@ -83,6 +81,7 @@
 
 #define CONFIG_JPEG_HAL 1
 #define CONFIG_JPEG_HW 1
+
 /***********************************************
  * board specific config
  ***********************************************/

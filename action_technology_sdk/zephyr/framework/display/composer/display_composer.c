@@ -112,6 +112,7 @@ typedef struct display_composer {
 	/* post state */
 	uint8_t post_cnt; /* number of posts transferring and waiting to progress */
 	uint8_t post_inprog; /* any post is transferring */
+	uint8_t post_eof; /* flag to indicate End of Frame, used to check post integrity */
 
 	/* control post frame rate */
 	uint8_t post_frame_period;
@@ -122,6 +123,7 @@ typedef struct display_composer {
 	uint8_t disp_has_vsync : 1; /* test really has vsyn signal */
 	uint8_t disp_active : 1;    /* has power or not */
 	uint8_t disp_lowpower : 1;  /* in low power state or not */
+	uint8_t disp_state_prechanged : 1; /* going to change state */
 	uint8_t first_frame : 1;    /* first frame after resume */
 
 	/* test frame crossing vsync or not */
@@ -227,6 +229,7 @@ int display_composer_init(void)
 
 	display_get_capabilities(composer->disp_dev, &composer->disp_cap);
 	composer->post_frame_period = 1;
+	composer->post_eof = LAST_POST_IN_FRAME;
 
 	composer->disp_fb.desc.pixel_format = composer->disp_cap.current_pixel_format;
 	composer->disp_fb.desc.width = composer->disp_cap.x_resolution;
@@ -379,18 +382,18 @@ void display_composer_round(ui_region_t *region)
  */
 static uint32_t _sqrt_internal(uint32_t x, uint32_t mask)
 {
-    x = x << 8; /*To get 4 bit precision. (sqrt(256) = 16 = 4 bit)*/
+	x = x << 8; /*To get 4 bit precision. (sqrt(256) = 16 = 4 bit)*/
 
-    uint32_t root = 0;
-    uint32_t trial;
-    // http://ww1.microchip.com/...en/AppNotes/91040a.pdf
-    do {
-        trial = root + mask;
-        if (trial * trial <= x) root = trial;
-        mask = mask >> 1;
-    } while (mask);
+	uint32_t root = 0;
+	uint32_t trial;
+	// http://ww1.microchip.com/...en/AppNotes/91040a.pdf
+	do {
+		trial = root + mask;
+		if (trial * trial <= x) root = trial;
+		mask = mask >> 1;
+	} while (mask);
 
-    return root >> 4;
+	return root >> 4;
 }
 
 static void _compute_round_screen_areas(uint16_t screen_size, ui_region_t areas[], uint8_t n_areas)
@@ -560,28 +563,40 @@ static void _composer_display_pm_notify_handler(const struct display_callback *c
 	display_composer_t *composer = CONTAINER_OF(callback, display_composer_t, disp_cb);
 
 	if (pm_action == PM_DEVICE_ACTION_EARLY_SUSPEND ||
-		pm_action == PM_DEVICE_ACTION_LOW_POWER) {
+		pm_action == PM_DEVICE_ACTION_LOW_POWER ||
+		pm_action == PM_DEVICE_ACTION_TURN_OFF) {
 		uint8_t wait_post_cnt = _composer_has_gram(composer) ? 0 : 1;
 		int try_cnt = 500;
 
-		composer->disp_active = 0; /* lock the post temporarily */
+		composer->disp_state_prechanged = 1;
 
-		if (composer->user_cb && composer->user_cb->pm_notify) {
-			composer->user_cb->pm_notify(composer->user_cb, pm_action);
-		}
-
-		while (composer->post_cnt > wait_post_cnt && try_cnt-- > 0) {
+		for (; (composer->post_cnt > wait_post_cnt || !composer->post_eof) && try_cnt > 0; try_cnt--) {
 			SYS_LOG_INF("post cnt %d", composer->post_cnt);
 			os_sleep(2);
 		}
+
+		composer->disp_active = 0; /* lock the post temporarily */
+		composer->disp_state_prechanged = 0;
 
 		if (_composer_has_gram(composer) && composer->post_cnt > 0) {
 			SYS_LOG_ERR("wait timeout, drop all post entries");
 			_composer_drop_all_entries(composer);
 		}
 
-		composer->disp_active = (pm_action != PM_DEVICE_ACTION_EARLY_SUSPEND);
-		composer->disp_lowpower = (pm_action != PM_DEVICE_ACTION_EARLY_SUSPEND);
+		/* notify the user to lock the draw and stop posting */
+		if (pm_action != PM_DEVICE_ACTION_TURN_OFF &&
+			composer->user_cb && composer->user_cb->pm_notify) {
+			composer->user_cb->pm_notify(composer->user_cb, pm_action);
+		}
+
+		if (pm_action == PM_DEVICE_ACTION_LOW_POWER) {
+			composer->disp_active = 1;
+			composer->disp_lowpower = 1;
+		} else {
+			composer->disp_has_vsync = 0;
+		}
+
+		composer->post_eof = LAST_POST_IN_FRAME;
 	} else if (composer->disp_lowpower) {
 		composer->disp_lowpower = 0;
 	} else {
@@ -615,6 +630,7 @@ static post_entry_t *_composer_find_free_entry(display_composer_t *composer)
 	if (++composer->free_idx >= NUM_POST_ENTRIES)
 		composer->free_idx = 0;
 
+	memset(entry, 0, sizeof(*entry));
 	return entry;
 }
 
@@ -688,8 +704,6 @@ static void _composer_cleanup_entry(display_composer_t *composer, post_entry_t *
 			entry->cleanup_cb[i](entry->cleanup_data[i]);
 		}
 	}
-
-	memset(entry, 0, sizeof(*entry));
 
 #ifndef CONFIG_COMPOSER_POST_NO_WAIT
 	k_sem_give(&composer->post_sem);
@@ -886,7 +900,8 @@ int display_composer_post(const ui_layer_t *layers, int num_layers, uint32_t pos
 		goto fail_cleanup_cb;
 	}
 
-	if (composer->disp_has_vsync == 0 || composer->disp_active == 0) {
+	if (composer->disp_has_vsync == 0 || composer->disp_active == 0 ||
+		(composer->disp_state_prechanged && composer->post_eof)) {
 		SYS_LOG_DBG("display active %d, has_vsync %d",
 				composer->disp_active, composer->disp_has_vsync);
 		goto fail_cleanup_cb;
@@ -929,8 +944,10 @@ int display_composer_post(const ui_layer_t *layers, int num_layers, uint32_t pos
 	res = _composer_post_inner(layers, num_layers, post_flags);
 #endif
 
-	if (res == 0)
+	if (res == 0) {
 		composer->first_frame = 0;
+		composer->post_eof = (post_flags & LAST_POST_IN_FRAME);
+	}
 
 	return res;
 fail_cleanup_cb:

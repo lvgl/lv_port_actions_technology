@@ -18,14 +18,8 @@
 #ifdef CONFIG_UI_MANAGER
 #  include <ui_mem.h>
 #endif
-#ifdef CONFIG_FREETYPE_FONT
-#ifdef CONFIG_SD_FS
-#  include <sdfs.h>
-#endif
-#  include <ft2build.h>
-#  include FT_BBOX_H
-#  include FT_OUTLINE_H
-#  include <freetype_font_api.h>
+#ifdef CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH
+#  include <svg_font.h>
 #endif
 
 #include "svg_img.h"
@@ -54,7 +48,7 @@ typedef struct {
 	uint16_t rotation;    /* Rotation angle in 0.1 degree [0, 3600) of the image */
 	uint16_t scale;
 
-#ifdef CONFIG_FREETYPE_FONT
+#ifdef CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH
 	void * ft_face;
 #endif
 } svg_img_t;
@@ -86,10 +80,6 @@ const lv_obj_class_t svg_img_class = {
 	.base_class = &lv_obj_class,
 	.name = "svg-img",
 };
-
-#ifdef CONFIG_FREETYPE_FONT
-static FT_Library g_ft_library;
-#endif
 
 /**********************
  *      MACROS
@@ -189,46 +179,19 @@ out_exit:
 
 lv_result_t svg_img_set_font(lv_obj_t *obj, const char * filename)
 {
-#ifdef CONFIG_FREETYPE_FONT
+#ifdef CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH
 	LV_ASSERT_OBJ(obj, MY_CLASS);
 
 	svg_img_t * svg = (svg_img_t *)obj;
+	if (svg->ft_face)
+		svgfont_close(svg->ft_face);
 
-	if (g_ft_library == NULL) {
-		g_ft_library = freetype_font_init(0);
-		if (g_ft_library == NULL)
-			return LV_RESULT_INVALID;
-	}
-
-	if (svg->ft_face) {
-		FT_Done_Face(svg->ft_face);
-		svg->ft_face = NULL;
-	}
-
-	void *font_faddr = NULL;
-	int font_fsize = 0;
-	int err = -1;
-
-#ifdef CONFIG_SD_FS
-	err = sd_fmap(filename, &font_faddr, &font_fsize);
-#endif
-
-	if (err == 0) {
-		err = FT_New_Memory_Face(g_ft_library, font_faddr, font_fsize, 0, (FT_Face *)&svg->ft_face);
-	} else {
-		err = FT_New_Face(g_ft_library, filename, 0, (FT_Face *)&svg->ft_face);
-	}
-
-	if (err == 0) {
-		FT_Set_Pixel_Sizes(svg->ft_face, 1, 0);
-		return LV_RESULT_OK;
-	}
-
-	return LV_RESULT_INVALID;
+	svg->ft_face = svgfont_open(filename, 1);
+	return svg->ft_face ? LV_RESULT_OK : LV_RESULT_INVALID;
 
 #else
 	return LV_RESULT_OK;
-#endif /* CONFIG_FREETYPE_FONT */
+#endif /* CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH */
 }
 
 void svg_img_set_pivot(lv_obj_t * obj, lv_coord_t pivot_x, lv_coord_t pivot_y)
@@ -341,9 +304,9 @@ static void svg_img_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
 	if (svg->image)
 		deleteSVGImage(svg->image);
 
-#ifdef CONFIG_FREETYPE_FONT
+#ifdef CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH
 	if (svg->ft_face)
-		FT_Done_Face(svg->ft_face);
+		svgfont_close(svg->ft_face);
 #endif
 }
 
@@ -455,7 +418,7 @@ static void draw_vector_custom_cb(lv_draw_task_t * task, lv_layer_t * layer, voi
 	vg_lite_buffer_t fb;
 	lvx_vglite_map_draw_buf(&fb, layer->draw_buf);
 
-#ifdef CONFIG_FREETYPE_FONT
+#ifdef CONFIG_FREETYPE_FONT_ENABLE_SVG_PATH
 	renderSVGImage(svg->image, &fb, &matrix, 1.0f, svg->ft_face);
 #else
 	renderSVGImage(svg->image, &fb, &matrix, 1.0f, NULL);

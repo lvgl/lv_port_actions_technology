@@ -23,4 +23,10 @@ config SOC_SPICACHE_PROFILE_STAT
 	help
 	  Enable SPI cache profile stat for actions SoC
 
+config SOC_DSP_EXT_RAM_SIZE
+	int "DSP ext ram size Kbytes"
+	default 224
+	help
+	  sizeof dsp ext ram size kbytes.
+
 endif # SOC_LEOPARD

@@ -75,6 +75,7 @@
 #define KEY_GESTURE_UP      111 /* GESTURE_DROP_UP */
 #define KEY_GESTURE_LEFT    112 /* GESTURE_DROP_LEFT */
 #define KEY_GESTURE_RIGHT   113 /* GESTURE_DROP_RIGHT */
+#define KEY_TP_RELEASE      114 /* TP RELEASE */
 
 #define KEY_MAX			0x2ff
 #define KEY_CNT			(KEY_MAX+1)

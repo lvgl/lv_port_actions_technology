@@ -263,6 +263,7 @@ struct bt_avdtp_conn {
 	uint8_t get_seid_num:4;
 	uint8_t get_rsid_cap_index:4;
 	uint8_t pending_ahead_start:1;
+	uint8_t cur_rsid_cap_index:4;
 	struct net_buf *pending_resp_buf;
 };
 

@@ -16,12 +16,6 @@
 #include "lvgl_inner.h"
 
 /**********************
- *  STATIC VARIABLES
- **********************/
-
-static lv_fs_drv_t fs_drv;
-
-/**********************
  *  STATIC PROTOTYPES
  **********************/
 
@@ -40,6 +34,12 @@ static lv_fs_res_t lvgl_fs_tell(lv_fs_drv_t * drv, void * file, uint32_t * pos_p
 static void *lvgl_fs_dir_open(lv_fs_drv_t * drv, const char * path);
 static lv_fs_res_t lvgl_fs_dir_read(lv_fs_drv_t * drv, void * dir, char * fn, uint32_t fn_len);
 static lv_fs_res_t lvgl_fs_dir_close(lv_fs_drv_t * drv, void * dir);
+
+/**********************
+ *  STATIC VARIABLES
+ **********************/
+
+static lv_fs_drv_t fs_drv;
 
 /**********************
  *   GLOBAL FUNCTIONS
@@ -83,38 +83,38 @@ static bool lvgl_fs_ready(lv_fs_drv_t * drv)
 
 static lv_fs_res_t errno_to_lv_fs_res(int err)
 {
-    switch (err) {
-    case 0:
-        return LV_FS_RES_OK;
-    case -EIO:
-        /*Low level hardware error*/
-        return LV_FS_RES_HW_ERR;
-    case -EBADF:
-        /*Error in the file system structure */
-        return LV_FS_RES_FS_ERR;
-    case -ENOENT:
-        /*Driver, file or directory is not exists*/
-        return LV_FS_RES_NOT_EX;
-    case -EFBIG:
-        /*Disk full*/
-        return LV_FS_RES_FULL;
-    case -EACCES:
-        /*Access denied. Check 'fs_open' modes and write protect*/
-        return LV_FS_RES_DENIED;
-    case -EBUSY:
-        /*The file system now can't handle it, try later*/
-        return LV_FS_RES_BUSY;
-    case -ENOMEM:
-        /*Not enough memory for an internal operation*/
-        return LV_FS_RES_OUT_OF_MEM;
-    case -EINVAL:
-        /*Invalid parameter among arguments*/
-        return LV_FS_RES_INV_PARAM;
-    case -ENOTSUP:
-        /*Not supported by the filesystem*/
-        return LV_FS_RES_NOT_IMP;
-    default:
-        return LV_FS_RES_UNKNOWN;
+    switch(err) {
+        case 0:
+            return LV_FS_RES_OK;
+        case -EIO:
+            /*Low level hardware error*/
+            return LV_FS_RES_HW_ERR;
+        case -EBADF:
+            /*Error in the file system structure */
+            return LV_FS_RES_FS_ERR;
+        case -ENOENT:
+            /*Driver, file or directory is not exists*/
+            return LV_FS_RES_NOT_EX;
+        case -EFBIG:
+            /*Disk full*/
+            return LV_FS_RES_FULL;
+        case -EACCES:
+            /*Access denied. Check 'fs_open' modes and write protect*/
+            return LV_FS_RES_DENIED;
+        case -EBUSY:
+            /*The file system now can't handle it, try later*/
+            return LV_FS_RES_BUSY;
+        case -ENOMEM:
+            /*Not enough memory for an internal operation*/
+            return LV_FS_RES_OUT_OF_MEM;
+        case -EINVAL:
+            /*Invalid parameter among arguments*/
+            return LV_FS_RES_INV_PARAM;
+        case -ENOTSUP:
+            /*Not supported by the filesystem*/
+            return LV_FS_RES_NOT_IMP;
+        default:
+            return LV_FS_RES_UNKNOWN;
     }
 }
 
@@ -133,14 +133,14 @@ static void *lvgl_fs_open(lv_fs_drv_t * drv, const char * path, lv_fs_mode_t mod
     zmode |= (mode & LV_FS_MODE_RD) ? FS_O_READ : 0;
 
     file = lv_malloc(sizeof(struct fs_file_t));
-    if (!file) {
+    if(!file) {
         return NULL;
     }
 
     fs_file_t_init((struct fs_file_t *)file);
 
     err = fs_open((struct fs_file_t *)file, path, zmode);
-    if (err) {
+    if(err) {
         lv_free(file);
         return NULL;
     }
@@ -153,6 +153,7 @@ static lv_fs_res_t lvgl_fs_close(lv_fs_drv_t * drv, void * file)
     int err;
 
     err = fs_close((struct fs_file_t *)file);
+    lv_free(file);
     return errno_to_lv_fs_res(err);
 }
 
@@ -162,12 +163,13 @@ static lv_fs_res_t lvgl_fs_read(lv_fs_drv_t * drv, void * file, void * buf, uint
     int err;
 
     err = fs_read((struct fs_file_t *)file, buf, btr);
-    if (err > 0) {
-        if (br != NULL) {
+    if(err > 0) {
+        if(br != NULL) {
             *br = err;
         }
         err = 0;
-    } else if (br != NULL) {
+    }
+    else if(br != NULL) {
         *br = 0U;
     }
     return errno_to_lv_fs_res(err);
@@ -179,17 +181,19 @@ static lv_fs_res_t lvgl_fs_write(lv_fs_drv_t * drv, void * file, const void * bu
     int err;
 
     err = fs_write((struct fs_file_t *)file, buf, btw);
-    if (err == btw) {
-        if (bw != NULL) {
+    if(err == btw) {
+        if(bw != NULL) {
             *bw = btw;
         }
         err = 0;
-    } else if (err < 0) {
-        if (bw != NULL) {
+    }
+    else if(err < 0) {
+        if(bw != NULL) {
             *bw = 0U;
         }
-    } else {
-        if (bw != NULL) {
+    }
+    else {
+        if(bw != NULL) {
             *bw = err;
         }
         err = -EFBIG;
@@ -202,17 +206,17 @@ static lv_fs_res_t lvgl_fs_seek(lv_fs_drv_t * drv, void * file, uint32_t pos,
 {
     int err, fs_whence;
 
-    switch (whence) {
-    case LV_FS_SEEK_END:
-        fs_whence = FS_SEEK_END;
-        break;
-    case LV_FS_SEEK_CUR:
-        fs_whence = FS_SEEK_CUR;
-        break;
-    case LV_FS_SEEK_SET:
-    default:
-        fs_whence = FS_SEEK_SET;
-        break;
+    switch(whence) {
+        case LV_FS_SEEK_END:
+            fs_whence = FS_SEEK_END;
+            break;
+        case LV_FS_SEEK_CUR:
+            fs_whence = FS_SEEK_CUR;
+            break;
+        case LV_FS_SEEK_SET:
+        default:
+            fs_whence = FS_SEEK_SET;
+            break;
     }
 
     err = fs_seek((struct fs_file_t *)file, pos, fs_whence);
@@ -224,7 +228,7 @@ static lv_fs_res_t lvgl_fs_tell(lv_fs_drv_t * drv, void * file, uint32_t * pos_p
     off_t pos;
 
     pos = fs_tell((struct fs_file_t *)file);
-    if (pos < 0) {
+    if(pos < 0) {
         return errno_to_lv_fs_res(pos);
     }
 
@@ -243,13 +247,13 @@ static void *lvgl_fs_dir_open(lv_fs_drv_t * drv, const char * path)
     path--;
 
     dir = lv_malloc(sizeof(struct fs_dir_t));
-    if (!dir) {
+    if(!dir) {
         return NULL;
     }
 
     fs_dir_t_init((struct fs_dir_t *)dir);
     err = fs_opendir((struct fs_dir_t *)dir, path);
-    if (err) {
+    if(err) {
         lv_free(dir);
         return NULL;
     }

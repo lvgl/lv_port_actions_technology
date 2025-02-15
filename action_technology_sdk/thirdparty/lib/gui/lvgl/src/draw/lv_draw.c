@@ -162,7 +162,7 @@ void lv_draw_finalize_task_creation(lv_layer_t * layer, lv_draw_task_t * t)
 
 void lv_draw_wait_for_finish(void)
 {
-#if LV_USE_OS
+#if 1 /*LV_USE_OS*/
     lv_draw_unit_t * u = _draw_info.unit_head;
     while(u) {
         if(u->wait_for_finish_cb)

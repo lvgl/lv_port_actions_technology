@@ -233,3 +233,31 @@ int atomic_set(int *target, int value)
 	os_irq_unlock(key);
 	return ret;
 }
+
+int atomic_and(int* target, int value)
+{
+	int key;
+	int ret;
+
+	key = os_irq_lock();
+
+	ret = *target;
+	*target &= value;
+
+	os_irq_unlock(key);
+	return ret;
+}
+
+int atomic_or(int* target, int value)
+{
+	int key;
+	int ret;
+
+	key = os_irq_lock();
+
+	ret = *target;
+	*target |= value;
+
+	os_irq_unlock(key);
+	return ret;
+}

@@ -235,15 +235,31 @@
 			<mirror_id>0</mirror_id>
 		</partition>
 
-
 		<partition>
 			<address>0x0</address>
-			<size>0x1000000</size>
+			<size>0x8000</size>
+			<type>BOOT</type>
+			<name>mbr</name>
+			<file_id>1</file_id>
+			<file_name>u_mbr.bin</file_name>
+			<file_address>0x0</file_address>
+			<enable_crc>false</enable_crc>
+			<enable_encryption>false</enable_encryption>
+			<enable_ota>false</enable_ota>
+			<enable_raw>true</enable_raw>
+			<enable_dfu>true</enable_dfu>
+			<storage_id>1</storage_id>
+			<mirror_id>0</mirror_id>
+		</partition>
+
+		<partition>
+			<address>0x8000</address>
+			<size>0xff8000</size>
 			<type>DATA</type>
 			<name>res_a</name>
 			<file_id>10</file_id>
 			<file_name>res.bin</file_name>
-			<file_address>0x0</file_address>
+			<file_address>0x8000</file_address>
 			<enable_crc>false</enable_crc>
 			<enable_encryption>false</enable_encryption>
 			<enable_ota>false</enable_ota>
@@ -287,7 +303,7 @@
 
 		<partition>
 			<address>0x4790000</address>
-			<size>0x80000</size>
+			<size>0x100000</size>
 			<type>DATA</type>
 			<name>fw0_sdfs</name>
 			<file_id>20</file_id>
@@ -303,12 +319,12 @@
 		</partition>
 
 		<partition>
-			<address>0x4810000</address>
-			<size>0x4F0000</size>
+			<address>0x4890000</address>
+			<size>0x470000</size>
 			<type>TEMP</type>
 			<name>fw0_temp</name>
 			<file_id>254</file_id>
-			<file_address>0x4810000</file_address>
+			<file_address>0x4890000</file_address>
 			<enable_crc>false</enable_crc>
 			<enable_encryption>false</enable_encryption>
 			<enable_ota>false</enable_ota>

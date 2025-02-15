@@ -8,8 +8,10 @@
 #define __BT_MANAGER_IPS_H__
 
 #include <ctype.h>
+#include <acts_bluetooth/addr.h>
 
 #define BT_IPS_NAME_MAX (16)
+#define BT_IPS_SUBS_MAX (5)
 
 enum {
 	BT_IPS_TX_CODEC_LC3, //LC3编码
@@ -72,6 +74,8 @@ struct bt_ips_init_info {
 	uint8_t ch_mode; //单声道或双声道
 	uint8_t samp_freq; //采样率8KHZ or 16KHZ
 	uint8_t bit_width; // 位宽8bits or 16bits
+	uint8_t cnt_subscriber;
+	bt_addr_t subs_mac[BT_IPS_SUBS_MAX];
 };
 
 struct bt_ips_sync_info {
@@ -137,6 +141,8 @@ struct bt_ips_search_rt {
 	uint16_t t_num; //搜索到的总设备数量
 	uint8_t role; //搜索到设备的角色
 	uint8_t name[BT_IPS_NAME_MAX]; //当前搜索到的设备名称
+	uint8_t cnt_subscriber;
+	bt_addr_t subs_mac[BT_IPS_SUBS_MAX];
 };
 
 typedef void ips_search_cb(struct bt_ips_search_rt *rt);
@@ -196,6 +202,14 @@ int bt_manager_ips_search_open(struct bt_ips_search_init *info);
  *  @return  0  success, -1 fail.
  */
 int bt_manager_ips_search_close(void);
+
+/** @brief 
+ *
+ *  返回当前对讲状态
+ *
+ *  @return  BT_IPS_STATUS_X.
+ */
+uint8_t bt_manager_ips_status_get(void);
 
 #endif  /* __BT_MANAGER_IPS_H__ */
 

@@ -197,7 +197,12 @@ static inline int dsp_check_hw_idle(void)
 	return sys_read32(DSP_STATUS_EXT_CTL) & PSU_DSP_IDLE;
 }
 
+#if CONFIG_SOC_DSP_EXT_RAM_SIZE == 224
+#define DSPRAM_CLK_SRC  ((1 << 22) | (1 << 20) | (1 << 18) | (1 << 16) | (1 << 14)) | (1 << 12)
+#elif CONFIG_SOC_DSP_EXT_RAM_SIZE == 80
 #define DSPRAM_CLK_SRC  ((1 << 22) | (1 << 20))
+#endif
+
 #define DSPTCRAMCLK (1U << 0)
 static inline int dsp_soc_request_addr(int cpu_addr)
 {

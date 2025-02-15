@@ -645,8 +645,8 @@ static void lv_image_event(const lv_obj_class_t * class_p, lv_event_t * e)
             lv_image_buf_get_transformed_area(&a, w, h, img->rotation, img->scale_x, img->scale_y, &pivot_px);
             *s = LV_MAX(*s, -a.x1);
             *s = LV_MAX(*s, -a.y1);
-            *s = LV_MAX(*s, a.x2 - w);
-            *s = LV_MAX(*s, a.y2 - h);
+            *s = LV_MAX(*s, a.x2 - w + 1);
+            *s = LV_MAX(*s, a.y2 - h + 1);
         }
     }
     else if(code == LV_EVENT_HIT_TEST) {

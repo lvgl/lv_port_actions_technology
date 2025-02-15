@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2019 Actions Semi Co., Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -36,7 +36,7 @@
 #define BT_IPS_LC3_FRAME_NUM_MAX	(4)
 #define BT_IPS_OPUS_FRAME_LEN	(40)
 #define BT_IPS_AMR_FRAME_LEN	(40)
-#define BT_IPS_CHANNEL_MAX (5)
+#define BT_IPS_CHANNEL_MAX (BT_IPS_SUBS_MAX-1)
 
 #define IPS_SERIVCE_UUID	0xFCCF // Notice: Modification not allowed
 #define IPS_SERIVCE_VERSION	0x0100 // ver 1.0
@@ -45,7 +45,8 @@
 #define BT_IPS_DATA_HEAD_TYPE	(0x2)
 
 #define BT_IPS_SEARCH_ADV		(0x0)
-#define BT_IPS_RESTART_ADV		(0x1)
+#define BT_IPS_START_ADV		(0x1)
+#define BT_IPS_RESTART_ADV		(0x2)
 
 //#define BT_IPS_NULL_HEAD_LEN	(7)
 
@@ -54,13 +55,17 @@ struct ips_pa_st {
 	bt_addr_le_t per_addr;
 	uint8_t pa_pending_release;
 	uint8_t per_sid;
-	uint8_t pa_synced;
+	uint8_t pa_synced : 1;
+	uint8_t role : 2;
+	uint8_t pa_comp : 1;
+	uint8_t subs_number : 3;
+	uint8_t res : 1;
+
 	struct bt_le_per_adv_sync *adv_sync;
 	uint8_t seq_pa; //
 	uint8_t first_pkg_num; // 上一次接收包的起始包序号
 	uint8_t cur_pkg_num; //
 
-	uint8_t role;
 	char sync_name[BT_IPS_NAME_MAX];
 	uint8_t rx_codec; //PA的编码格式
 	uint8_t comp_ratio; // 编码压缩比
@@ -81,17 +86,23 @@ struct ips_search_st {
 	uint8_t cur_role;
 	uint32_t match_id; // 匹配码, 4bytes 随机数
 	uint8_t searching;
+	uint16_t seq;
 	char cur_name[BT_IPS_NAME_MAX];
 	struct bt_le_ext_adv *s_adv;
 	struct ips_search_value_st v_st[BT_IPS_CHANNEL_MAX];
+	bt_addr_le_t local_addr;
 };
 
 struct ips_mgr_st {
 	uint32_t match_id; // 匹配码, 4bytes 随机数
-	uint8_t adv_role;
 	uint8_t ch_max; //最多允许接收的音频通道数量
 	char pa_name[BT_IPS_NAME_MAX];
+	bt_addr_le_t local_addr;
 
+	bt_addr_t subs_mac[BT_IPS_SUBS_MAX];
+	uint8_t subs_number : 3;
+	uint8_t cnt_subscriber : 3;
+	uint8_t adv_role : 2;
 	// adv
 	uint8_t tx_codec; //本机广播的编码格式
 	uint8_t comp_ratio; // 编码压缩比
@@ -101,12 +112,19 @@ struct ips_mgr_st {
 	uint8_t advertising;
 	uint8_t pending_release;
 	struct bt_le_ext_adv *ips_adv;
-	uint8_t adv_seq; //
+	uint8_t per_seq; //
 	uint8_t f_seq_start; //
 	uint8_t f_seq_end; //
 	uint8_t last_f_num;
 	uint32_t last_time;
-
+	//uint16_t local_adv_10ms;
+	//uint16_t remote_adv_10ms;
+	uint8_t adv_enable : 1;
+	uint8_t pa_enable : 1;
+	uint8_t pa_comp : 1;
+	uint8_t adv_work_exist : 1;
+	uint8_t refer_num;
+	uint16_t adv_seq;
 	//scan
 	struct ips_pa_st pa_st[BT_IPS_CHANNEL_MAX];
 	struct bt_ips_cb *pa_cbs;
@@ -115,11 +133,18 @@ struct ips_mgr_st {
 	u8_t per_synced_count;
 
 	void *ap_handle;
+
+	uint16_t remote_seq_max;
+	uint8_t r_seq_subs_number : 3;
+	//bt_addr_t max_a;
 };
 
 static struct ips_search_st is_st;
 static struct ips_mgr_st entity;
 static struct ips_mgr_st *ips_st;
+static os_delayed_work ips_adv_work;
+uint8_t cur_adv_type;
+static os_delayed_work ips_sort_wait_work;
 
 struct ips_pkg_data_head {
 	uint8_t seq; //总序号，所有PA包的序号，累加
@@ -153,16 +178,24 @@ struct ips_ext_adv_data {
 	uint16_t s_uuid; //IPS_SERIVCE_UUID
 	uint16_t s_ver; // IPS_SERIVCE_VERSION
 	uint32_t match_id;//
+	uint16_t seq;
+	uint8_t adv_status;
 	uint8_t adv_role : 2; //
 	uint8_t ch_max : 3; //
-	uint8_t adv_status : 1; //
-	uint8_t res : 2; //
+	uint8_t per_adv : 1; //
+	uint8_t comp : 1; //
+	uint8_t res1 : 1; //
 	uint8_t tx_codec;
 	uint8_t comp_ratio;
 	uint8_t ch_mode;
 	uint8_t samp_freq;
 	uint8_t bit_width;
 	char ips_name[BT_IPS_NAME_MAX];
+	//uint16_t adv_10ms;
+	uint8_t subs_number : 3;
+	uint8_t cnt_subscriber: 3;
+	uint8_t res2: 2;
+	bt_addr_t subs_mac[BT_IPS_SUBS_MAX];
 } __attribute__((__packed__));
 
 #define  BT_IPS_SEND_BUF_MAX (BT_IPS_LC3_FRAME_NUM_MAX*(2+BT_IPS_LC3_FRAME_LEN) + sizeof(struct ips_pkg_data_head))
@@ -170,7 +203,7 @@ struct ips_ext_adv_data {
 static const struct bt_le_scan_param ips_scan_params = {
 	/* BT_LE_EXT_ADV_NCONN */
 	.type = BT_LE_SCAN_TYPE_PASSIVE,
-	.options = BT_LE_SCAN_OPT_NONE,
+	.options = BT_LE_SCAN_OPT_NONE | BT_LE_SCAN_OPT_CODED,
 	//.interval = 0x60,
 	//.window = 0x30,
 	/* [65ms, 110ms], almost 60% duty cycle by default */
@@ -183,10 +216,15 @@ static const struct bt_le_scan_param ips_scan_params = {
 
 static struct bt_le_adv_param ips_ext_adv_params = {
 	/* BT_LE_EXT_ADV_NCONN */
+
+#if (CONFIG_BT_ID_MAX > 1)
+	.id = 1,
+#else
 	.id = BT_ID_DEFAULT,
-	/* [100ms, 150ms] by default */
+#endif
+	/* [100ms, 100ms] by default */
 	.interval_min = BT_GAP_ADV_FAST_INT_MIN_2,
-	.interval_max = BT_GAP_ADV_FAST_INT_MAX_2,
+	.interval_max = BT_GAP_ADV_FAST_INT_MIN_2,
 	.options = BT_LE_ADV_OPT_EXT_ADV | BT_LE_ADV_OPT_USE_IDENTITY /*| BT_LE_ADV_OPT_CODED | BT_LE_ADV_OPT_NO_2M*/,
 	.sid = BT_EXT_ADV_SID_BROADCAST,
 };
@@ -208,6 +246,11 @@ static int ips_search_device_add(bt_addr_le_t *addr, char *name, u8_t role)
 			memcpy(&is_st.v_st[i].s_addr, addr, sizeof(bt_addr_le_t));
 			memcpy(&is_st.v_st[i].s_name, name, BT_IPS_NAME_MAX);
 			is_st.v_st[i].role = role;
+#if 0
+			printk("add %d %02X:%02X:%02X:%02X:%02X:%02X\n",i,
+						is_st.v_st[i].s_addr.a.val[5], is_st.v_st[i].s_addr.a.val[4], is_st.v_st[i].s_addr.a.val[3],
+						is_st.v_st[i].s_addr.a.val[2], is_st.v_st[i].s_addr.a.val[1], is_st.v_st[i].s_addr.a.val[0]);
+#endif
 			break;
 		}
 	}
@@ -259,7 +302,7 @@ static struct ips_search_value_st *ips_search_device_get(bt_addr_le_t *addr)
 
 	for (i = 0; i < BT_IPS_CHANNEL_MAX; i++) {
 		if (is_st.v_st[i].inuse &&
-				(!memcmp(&is_st.v_st[i].s_addr, addr, sizeof(bt_addr_le_t)))) {
+				(!memcmp(&is_st.v_st[i].s_addr.a, &addr->a, sizeof(bt_addr_t)))) {
 			os_mutex_unlock(&search_mutex);
 			return &is_st.v_st[i];
 		}
@@ -288,6 +331,29 @@ static uint8_t ips_search_device_num(void)
 	return j;
 }
 
+static struct ips_search_value_st *ips_search_device_by_id(uint8_t index)
+{
+	int i = index;
+
+	if (index >= BT_IPS_CHANNEL_MAX)
+		return NULL;
+
+	os_mutex_lock(&search_mutex, OS_FOREVER);
+
+	if (is_st.v_st[index].inuse) {
+		os_mutex_unlock(&search_mutex);
+#if 0
+		printk("add %d %02X:%02X:%02X:%02X:%02X:%02X\n",i,
+					is_st.v_st[i].s_addr.a.val[5], is_st.v_st[i].s_addr.a.val[4], is_st.v_st[i].s_addr.a.val[3],
+					is_st.v_st[i].s_addr.a.val[2], is_st.v_st[i].s_addr.a.val[1], is_st.v_st[i].s_addr.a.val[0]);
+#endif
+		return &is_st.v_st[i];
+	}
+
+	os_mutex_unlock(&search_mutex);
+	return NULL;
+}
+
 static int ips_add_pa(void *sync)
 {
 	int i;
@@ -299,7 +365,7 @@ static int ips_add_pa(void *sync)
 	for (i = 0; i < BT_IPS_CHANNEL_MAX; i++) {
 		if (ips_st->pa_st[i].adv_sync == NULL) {
 			ips_st->pa_st[i].adv_sync = sync;
-			//SYS_LOG_INF("a sync (%p) %p\n", sync,&ips_st->pa_st[i]);
+			SYS_LOG_INF("a sync (%p) %p\n", sync,&ips_st->pa_st[i]);
 			break;
 		}
 	}
@@ -324,7 +390,7 @@ static int ips_remove_pa(void *sync)
 	for (i = 0; i < BT_IPS_CHANNEL_MAX; i++) {
 		if (ips_st->pa_st[i].adv_sync == sync) {
 			//ips_st->pa_st[i].adv_sync = NULL;
-			//SYS_LOG_INF("r sync (%p) %p\n", sync,&ips_st->pa_st[i]);
+			SYS_LOG_INF("r sync (%p) %p\n", sync,&ips_st->pa_st[i]);
 			memset(&ips_st->pa_st[i], 0 ,sizeof(struct ips_pa_st));
 			break;
 		}
@@ -351,7 +417,7 @@ static struct ips_pa_st *ips_pa_st_get(void *sync)
 
 	for (i = 0; i < BT_IPS_CHANNEL_MAX; i++) {
 		adv_sync = ips_st->pa_st[i].adv_sync;
-		//SYS_LOG_INF("g sync (%p) %p\n", adv_sync,&ips_st->pa_st[i]);
+		SYS_LOG_INF("g sync (%p) %p\n", adv_sync,&ips_st->pa_st[i]);
 		if (adv_sync == sync) {
 			os_mutex_unlock(&ips_mutex);
 			return &ips_st->pa_st[i];
@@ -374,8 +440,10 @@ static struct ips_pa_st *ips_pa_st_by_mac(bt_addr_le_t *addr)
 
 	for (i = 0; i < BT_IPS_CHANNEL_MAX; i++) {
 		adv_sync = ips_st->pa_st[i].adv_sync;
+		SYS_LOG_INF("adv_sync %p.\n",adv_sync);
+
 		if (adv_sync &&
-			!memcmp(&ips_st->pa_st[i].per_addr, addr, sizeof(bt_addr_le_t))) {
+			!memcmp(&ips_st->pa_st[i].per_addr.a, &addr->a, sizeof(bt_addr_t))) {
 			os_mutex_unlock(&ips_mutex);
 			return &ips_st->pa_st[i];
 		}
@@ -429,6 +497,25 @@ static uint8_t ips_pa_sync_num(void)
 	return j;
 }
 
+static void le_ips_mac_addr_get(bt_addr_le_t *addr)
+{
+	bt_addr_le_t le_addr[CONFIG_BT_ID_MAX];
+	hostif_bt_le_get_mac((bt_addr_le_t *)le_addr);
+#if 0
+	printk("addr_get 0 %02X:%02X:%02X:%02X:%02X:%02X\n",
+				le_addr[0].a.val[5], le_addr[0].a.val[4], le_addr[0].a.val[3],
+				le_addr[0].a.val[2], le_addr[0].a.val[1], le_addr[0].a.val[0]);
+	printk("addr_get 1 %02X:%02X:%02X:%02X:%02X:%02X\n",
+				le_addr[1].a.val[5], le_addr[1].a.val[4], le_addr[1].a.val[3],
+				le_addr[1].a.val[2], le_addr[1].a.val[1], le_addr[1].a.val[0]);
+#endif
+#if (CONFIG_BT_ID_MAX > 1)
+	memcpy(addr, &le_addr[1], sizeof(bt_addr_le_t));
+#else
+	memcpy(addr, &le_addr[0], sizeof(bt_addr_le_t));
+#endif
+}
+
 static uint8_t codec_frame_num_calc(uint8_t codec)
 {
 	return BT_IPS_LC3_FRAME_NUM_MAX;
@@ -453,8 +540,10 @@ static int __ips_ext_adv(u8_t type)
 	struct ips_ext_adv_data adv_data;
 	struct bt_data ad[1];
 	int items = 0;
-	struct bt_le_ext_adv *cur_adv;
+	struct bt_le_ext_adv *cur_adv = NULL;
+	//uint8_t eadv[sizeof(struct ips_ext_adv_data) + BT_IPS_NAME_MAX*6];
 
+	memset(&adv_data, 0, sizeof(struct ips_ext_adv_data));
 	//UUID
 	adv_data.s_uuid = IPS_SERIVCE_UUID;
 	//version, Notice: Do not modify
@@ -467,7 +556,8 @@ static int __ips_ext_adv(u8_t type)
 		adv_data.adv_status = BT_IPS_SEARCH_ADV;
 		memcpy(adv_data.ips_name, is_st.cur_name, BT_IPS_NAME_MAX);
 		cur_adv = is_st.s_adv;
-	} else if (BT_IPS_RESTART_ADV == type) {
+		adv_data.seq = is_st.seq++;
+	} else if (BT_IPS_START_ADV == type) {
 		adv_data.match_id = ips_st->match_id;
 		adv_data.adv_role = ips_st->adv_role;
 		adv_data.tx_codec = ips_st->tx_codec;
@@ -477,24 +567,75 @@ static int __ips_ext_adv(u8_t type)
 		adv_data.bit_width = ips_st->bit_width;
 		adv_data.ch_max = ips_st->ch_max;
 		// SYS_LOG_INF("adv_data.ch_max: %d", adv_data.ch_max);
+		adv_data.adv_status = BT_IPS_START_ADV;
+		memcpy(adv_data.ips_name, ips_st->pa_name, BT_IPS_NAME_MAX);
+		cur_adv = ips_st->ips_adv;
+		adv_data.subs_number = ips_st->subs_number;
+		adv_data.cnt_subscriber = ips_st->cnt_subscriber;
+
+		if (adv_data.cnt_subscriber > 0 && adv_data.cnt_subscriber <= BT_IPS_SUBS_MAX) {
+			//memcpy(&eadv[sizeof(struct ips_ext_adv_data)], &ips_st->subs_mac[0], adv_data.cnt_subscriber*6);
+			memcpy(adv_data.subs_mac, &ips_st->subs_mac[0], adv_data.cnt_subscriber*6);
+		}
+		adv_data.seq = ips_st->adv_seq++;
+	} else if (BT_IPS_RESTART_ADV == type) {
+		adv_data.match_id = ips_st->match_id;
+		adv_data.adv_role = ips_st->adv_role;
+		adv_data.tx_codec = ips_st->tx_codec;
+		adv_data.comp_ratio = ips_st->comp_ratio;
+		adv_data.ch_mode = ips_st->ch_mode;
+		adv_data.samp_freq = ips_st->samp_freq;
+		adv_data.bit_width = ips_st->bit_width;
+		adv_data.ch_max = ips_st->ch_max;
+		adv_data.per_adv = 1;
+		adv_data.comp = ips_st->pa_comp;
+		// SYS_LOG_INF("adv_data.ch_max: %d", adv_data.ch_max);
 		adv_data.adv_status = BT_IPS_RESTART_ADV;
 		memcpy(adv_data.ips_name, ips_st->pa_name, BT_IPS_NAME_MAX);
 		cur_adv = ips_st->ips_adv;
+		adv_data.subs_number = ips_st->subs_number;
+		adv_data.cnt_subscriber = ips_st->cnt_subscriber;
+		if (adv_data.cnt_subscriber > 0 && adv_data.cnt_subscriber <= BT_IPS_SUBS_MAX) {
+			//memcpy(&eadv[sizeof(struct ips_ext_adv_data)], &ips_st->subs_mac[0], adv_data.cnt_subscriber*6);
+			memcpy(&adv_data.subs_mac[0], &ips_st->subs_mac[0], adv_data.cnt_subscriber*6);
+		}
+		adv_data.seq = ips_st->adv_seq++;
 	}
+	//memcpy(eadv, &adv_data, sizeof(struct ips_ext_adv_data));
 
 	ad[items].type = BT_DATA_MANUFACTURER_DATA;
-	ad[items].data_len = sizeof(struct ips_ext_adv_data);
+	ad[items].data_len = sizeof(struct ips_ext_adv_data);// + adv_data.cnt_subscriber*6;
+	//ad[items].data = (uint8_t *)&eadv[0];
 	ad[items].data = (uint8_t *)&adv_data;
 	items++;
 
-	err = hostif_bt_le_ext_adv_set_data(cur_adv, ad,
-				items, NULL, 0);
-	if (err) {
-		SYS_LOG_INF("set data: %d", err);
-		return err;
+	if (cur_adv) {
+		err = hostif_bt_le_ext_adv_set_data(cur_adv, ad,
+					items, NULL, 0);
+		if (err) {
+			SYS_LOG_INF("set data: %d", err);
+			return err;
+		}
 	}
 
 	return 0;
+}
+
+static void ips_adv_active_loop(struct k_work *work)
+{
+	if (BT_IPS_SEARCH_ADV == cur_adv_type && 0 == is_st.searching) 
+		return;
+
+	if (!ips_st && 
+		(BT_IPS_START_ADV == cur_adv_type ||
+		BT_IPS_RESTART_ADV == cur_adv_type))
+		return;
+
+	if (ips_st && 0 == ips_st->adv_enable)
+		return;
+
+	__ips_ext_adv(cur_adv_type);
+	os_delayed_work_submit(&ips_adv_work, 100);
 }
 
 static uint8_t ips_send_buf[BT_IPS_SEND_BUF_MAX];
@@ -511,7 +652,7 @@ static int __ips_per_adv(uint8_t type, uint8_t status, uint8_t num, uint8_t *dat
 
 	if (BT_IPS_DATA_HEAD_TYPE == type) {
 		#if 0
-		ver_data[offset++] = ips_st->adv_seq++;
+		ver_data[offset++] = ips_st->per_seq++;
 		ver_data[offset++] = BT_IPS_DATA_HEAD_TYPE;
 		ver_data[offset++] = BT_IPS_STATUS_TALK;
 		ver_data[offset++] = ips_st->tx_codec;
@@ -523,7 +664,7 @@ static int __ips_per_adv(uint8_t type, uint8_t status, uint8_t num, uint8_t *dat
 		memcpy(ips_send_buf, ver_data, offset);
 		#endif
 
-		data_head.seq = ips_st->adv_seq++;
+		data_head.seq = ips_st->per_seq++;
 		data_head.type = BT_IPS_DATA_HEAD_TYPE;
 		data_head.status = BT_IPS_STATUS_TALK;
 		data_head.codec = ips_st->tx_codec;
@@ -583,14 +724,14 @@ static int __ips_per_adv(uint8_t type, uint8_t status, uint8_t num, uint8_t *dat
 		ad_data[items].data = ips_send_buf;
 	} else {
 	#if 0
-		ver_data[offset++] = ips_st->adv_seq++;
+		ver_data[offset++] = ips_st->per_seq++;
 		ver_data[offset++] = BT_IPS_NULL_HEAD_TYPE;
 		ver_data[offset++] = 0x30;
 		ver_data[offset++] = 0x85;
 		ver_data[offset++] = status;
 		ver_data[offset++] = num;
 	#endif
-		status_head.seq = ips_st->adv_seq++;
+		status_head.seq = ips_st->per_seq++;
 		status_head.type = BT_IPS_NULL_HEAD_TYPE;
 		status_head.status = status;
 		status_head.byte1 = 0x30;
@@ -624,22 +765,38 @@ static int __ips_adv_start(u8_t type)
 	struct bt_le_per_adv_param per_adv_params = { 0 };
 	struct bt_le_ext_adv *cur_adv;
 
+	if (ips_st && 1 == ips_st->adv_enable) {
+		SYS_LOG_INF("adv already start: %d", ips_st->adv_enable);
+		return -EBUSY;
+	}
+
 	if (BT_IPS_SEARCH_ADV == type) {
 		ips_ext_adv_params.options &= (~BT_LE_ADV_OPT_CODED);
 		//ips_ext_adv_params.options = BT_LE_ADV_OPT_EXT_ADV | BT_LE_ADV_OPT_USE_IDENTITY;// | BT_LE_ADV_OPT_NO_2M;
 		err = hostif_bt_le_ext_adv_create(&ips_ext_adv_params, NULL, &(is_st.s_adv));
 		cur_adv = is_st.s_adv;
+		is_st.seq = 0;
+	} else if (BT_IPS_START_ADV == type) {
+		if (ips_st->ch_max < 2) {
+			ips_ext_adv_params.options |= BT_LE_ADV_OPT_CODED;
+		} else {
+			ips_ext_adv_params.options &= (~BT_LE_ADV_OPT_CODED);
+		}
+		err = hostif_bt_le_ext_adv_create(&ips_ext_adv_params, NULL, &(ips_st->ips_adv));
+		cur_adv = ips_st->ips_adv;
+		ips_st->adv_seq = 0;
 	} else if (BT_IPS_RESTART_ADV == type) {
 		if (ips_st->ch_max < 2) {
 			//ips_ext_adv_params.options = BT_LE_ADV_OPT_EXT_ADV | BT_LE_ADV_OPT_USE_IDENTITY | BT_LE_ADV_OPT_CODED;// | BT_LE_ADV_OPT_NO_2M;
-			//ips_ext_adv_params.options |= BT_LE_ADV_OPT_CODED;
-			ips_ext_adv_params.options &= (~BT_LE_ADV_OPT_CODED); // need to modify
+			ips_ext_adv_params.options |= BT_LE_ADV_OPT_CODED;
+			//ips_ext_adv_params.options &= (~BT_LE_ADV_OPT_CODED); // need to modify
 		} else {
 			//ips_ext_adv_params.options = BT_LE_ADV_OPT_EXT_ADV | BT_LE_ADV_OPT_USE_IDENTITY;// | BT_LE_ADV_OPT_NO_2M;
 			ips_ext_adv_params.options &= (~BT_LE_ADV_OPT_CODED);
 		}
 		err = hostif_bt_le_ext_adv_create(&ips_ext_adv_params, NULL, &(ips_st->ips_adv));
 		cur_adv = ips_st->ips_adv;
+		ips_st->adv_seq = 0;
 	}
 
 	/* Create a non-connectable non-scannable advertising set */
@@ -649,6 +806,7 @@ static int __ips_adv_start(u8_t type)
 	}
 
 	if (BT_IPS_RESTART_ADV == type) {
+		ips_st->pa_enable = 1;
 		/* Set periodic advertising parameters */
 		per_adv_params.interval_min = 16; //20ms
 		per_adv_params.interval_max = 16; //20ms
@@ -678,19 +836,41 @@ static int __ips_adv_start(u8_t type)
 	if (BT_IPS_RESTART_ADV == type)
 		__ips_per_adv(BT_IPS_NULL_HEAD_TYPE, BT_IPS_STATUS_MATCHING, 0, NULL, 0);
 
+	os_delayed_work_init(&ips_adv_work, ips_adv_active_loop);
+	os_delayed_work_cancel(&ips_adv_work);
+	os_delayed_work_submit(&ips_adv_work, 100);
+	if (ips_st)
+		ips_st->adv_enable = 1;
+	cur_adv_type = type;
+
 	return 0;
 }
 
 static int __ips_adv_stop(u8_t type)
 {
 	int err;
-	struct bt_le_ext_adv *cur_adv;
+	struct bt_le_ext_adv *cur_adv = NULL;
+
+	if (ips_st && 0 == ips_st->adv_enable) {
+		SYS_LOG_INF("adv already stop: %d", ips_st->adv_enable);
+		return -EALREADY;
+	}
 
 	if (BT_IPS_SEARCH_ADV == type) {
 		cur_adv = is_st.s_adv;
+	} else if (BT_IPS_START_ADV == type) {
+		os_delayed_work_cancel(&ips_sort_wait_work);
+		ips_st->adv_work_exist = 0;
+		cur_adv = ips_st->ips_adv;
+		ips_st->pa_enable = 0;
+		ips_st->adv_enable = 0;
 	} else if (BT_IPS_RESTART_ADV == type) {
 		cur_adv = ips_st->ips_adv;
+		ips_st->pa_enable = 0;
+		ips_st->adv_enable = 0;
 	}
+
+	os_delayed_work_cancel(&ips_adv_work);
 
 	if (cur_adv) {
 		/* Stop periodic advertising */
@@ -823,6 +1003,8 @@ static void ips_scan_recv(const struct bt_le_scan_recv_info *info, struct net_bu
 	struct net_buf_simple_state state;
 	struct bt_le_per_adv_sync_param sync_create_param;
 	struct bt_ips_search_rt rt;
+	int i;
+	struct ips_search_value_st *v_st;
 
 	if (info->adv_type != BT_GAP_ADV_TYPE_EXT_ADV) {
 		return;
@@ -835,7 +1017,7 @@ static void ips_scan_recv(const struct bt_le_scan_recv_info *info, struct net_bu
 	SYS_LOG_INF("rssi %d, 0x%x.\n",info->rssi, info->addr->a.val[0]);
 	memset(&adv_data, 0, sizeof(adv_data));
 	net_buf_simple_save(buf, &state);
-	bt_data_parse(buf, filter_data_cb, &adv_data);
+	bt_data_parse(buf, filter_data_cb, (void *)&adv_data);
 	net_buf_simple_restore(buf, &state);
 
 	if (adv_data.s_uuid != IPS_SERIVCE_UUID) {
@@ -855,15 +1037,43 @@ static void ips_scan_recv(const struct bt_le_scan_recv_info *info, struct net_bu
 
 		if (BT_IPS_ROLE_INITIATOR == is_st.cur_role &&
 			(BT_IPS_ROLE_SUBSCRIBER == adv_data.adv_role)) {
-		if (ips_search_device_get((bt_addr_le_t *)info->addr)) {
-			SYS_LOG_INF("already search..");
-			return;
-		}
-
+			if (ips_search_device_get((bt_addr_le_t *)info->addr)) {
+				SYS_LOG_INF("already search..");
+				return;
+			}
+#if 0
+			printk("info %02X:%02X:%02X:%02X:%02X:%02X\n",
+						info->addr->a.val[5], info->addr->a.val[4], info->addr->a.val[3],
+						info->addr->a.val[2], info->addr->a.val[1], info->addr->a.val[0]);
+#endif
 			ips_search_device_add((bt_addr_le_t *)info->addr, (char *)adv_data.ips_name, adv_data.adv_role);
 			rt.t_num = ips_search_device_num();
 			rt.role = BT_IPS_ROLE_SUBSCRIBER;
 			memcpy(rt.name, adv_data.ips_name, BT_IPS_NAME_MAX);
+
+			rt.cnt_subscriber = rt.t_num + 1;
+#if 0
+			printk("ass %02X:%02X:%02X:%02X:%02X:%02X\n",
+						is_st.local_addr.a.val[5], is_st.local_addr.a.val[4], is_st.local_addr.a.val[3],
+						is_st.local_addr.a.val[2], is_st.local_addr.a.val[1], is_st.local_addr.a.val[0]);
+#endif
+			memcpy(&rt.subs_mac[0], &is_st.local_addr.a, 6);
+			if (rt.cnt_subscriber > 1 && rt.cnt_subscriber <= BT_IPS_SUBS_MAX) {
+				for (i = 0; i + 1 < rt.cnt_subscriber; i++) {
+					v_st = ips_search_device_by_id(i);
+					if (v_st) {
+						memcpy(&rt.subs_mac[i+1], &v_st->s_addr.a, 6);
+					}
+				}
+			}
+#if 0
+			printk("0 %02X:%02X:%02X:%02X:%02X:%02X\n",
+						rt.subs_mac[0].val[5], rt.subs_mac[0].val[4], rt.subs_mac[0].val[3],
+						rt.subs_mac[0].val[2], rt.subs_mac[0].val[1], rt.subs_mac[0].val[0]);
+			printk("1 %02X:%02X:%02X:%02X:%02X:%02X\n",
+						rt.subs_mac[1].val[5], rt.subs_mac[1].val[4], rt.subs_mac[1].val[3],
+						rt.subs_mac[1].val[2], rt.subs_mac[1].val[1], rt.subs_mac[1].val[0]);
+#endif
 			if (is_st.s_cb)
 				is_st.s_cb(&rt);
 		} else if (BT_IPS_ROLE_SUBSCRIBER == is_st.cur_role &&
@@ -876,6 +1086,18 @@ static void ips_scan_recv(const struct bt_le_scan_recv_info *info, struct net_bu
 			rt.t_num = adv_data.ch_max;
 			memcpy(rt.name, adv_data.ips_name, BT_IPS_NAME_MAX);
 			rt.role = BT_IPS_ROLE_INITIATOR;
+			rt.cnt_subscriber = adv_data.cnt_subscriber;
+			if (rt.cnt_subscriber > 0 && rt.cnt_subscriber <= BT_IPS_SUBS_MAX) {
+				memcpy(&rt.subs_mac[0], &adv_data.subs_mac[0], rt.cnt_subscriber*6);
+			}
+#if 0
+			printk("0 %d. %02X:%02X:%02X:%02X:%02X:%02X\n",rt.cnt_subscriber,
+						rt.subs_mac[0].val[5], rt.subs_mac[0].val[4], rt.subs_mac[0].val[3],
+						rt.subs_mac[0].val[2], rt.subs_mac[0].val[1], rt.subs_mac[0].val[0]);
+			printk("1 %02X:%02X:%02X:%02X:%02X:%02X\n",
+						rt.subs_mac[1].val[5], rt.subs_mac[1].val[4], rt.subs_mac[1].val[3],
+						rt.subs_mac[1].val[2], rt.subs_mac[1].val[1], rt.subs_mac[1].val[0]);
+#endif
 			if (is_st.s_cb)
 				is_st.s_cb(&rt);
 		}
@@ -889,12 +1111,33 @@ static void ips_scan_recv(const struct bt_le_scan_recv_info *info, struct net_bu
 		return;
 	}
 
+	SYS_LOG_INF("remote_seq_max %d_%d_%d_%d .", ips_st->remote_seq_max,ips_st->adv_seq,ips_st->subs_number,adv_data.subs_number);
+
+	if (BT_IPS_START_ADV == adv_data.adv_status) {
+		if (ips_st->remote_seq_max < adv_data.seq) {
+			ips_st->remote_seq_max = adv_data.seq;
+			ips_st->r_seq_subs_number = adv_data.subs_number;
+			if (BT_IPS_START_ADV == cur_adv_type) {
+				if (0 == ips_st->adv_work_exist) {
+					ips_st->adv_work_exist = 1;
+					os_delayed_work_cancel(&ips_sort_wait_work);
+					os_delayed_work_submit(&ips_sort_wait_work, 5000);
+				}
+			}
+		}
+		return;
+	}
+
 	if (ips_pa_st_by_mac((bt_addr_le_t *)info->addr)) {
 		SYS_LOG_INF(" pa exist.");
 		return;
 	}
 
 	if (BT_IPS_CHANNEL_MAX == ips_pa_sync_num()) {
+		return;
+	}
+	
+	if (0 == adv_data.per_adv) {
 		return;
 	}
 
@@ -904,11 +1147,15 @@ static void ips_scan_recv(const struct bt_le_scan_recv_info *info, struct net_bu
 		sync_create_param.options = 0;
 		sync_create_param.sid = info->sid;
 		sync_create_param.skip = 0;
-		sync_create_param.timeout = 0xaa;
+		sync_create_param.timeout = 0xaa*2;
 		err = hostif_bt_le_per_adv_sync_create(&sync_create_param, &(pa_sync));
 		if (err) {
 			SYS_LOG_ERR("Failed to create sync (err %d)\n", err);
 			return;
+		}
+
+		if (0 == ips_st->pa_enable) {
+			__ips_adv_stop(cur_adv_type);
 		}
 
 		SYS_LOG_INF("pa_sync (%p)\n", pa_sync);
@@ -924,6 +1171,8 @@ static void ips_scan_recv(const struct bt_le_scan_recv_info *info, struct net_bu
 				pa_st->ch_mode = adv_data.ch_mode; //单声道或双声道
 				pa_st->samp_freq = adv_data.samp_freq; //采样率8KHZ or 16KHZ
 				pa_st->bit_width = adv_data.bit_width; // 位宽8bits or 16bits
+				pa_st->pa_comp = adv_data.comp; // 基准
+				pa_st->subs_number = adv_data.subs_number;
 				memcpy(pa_st->sync_name, adv_data.ips_name, BT_IPS_NAME_MAX);
 			}
 		}
@@ -933,6 +1182,94 @@ static void ips_scan_recv(const struct bt_le_scan_recv_info *info, struct net_bu
 static struct bt_le_scan_cb ips_scan_callbacks = {
 	.recv = ips_scan_recv,
 };
+
+static struct ips_pa_st* ips_comp_pa_st_get(void)
+{
+	int i;
+	struct ips_pa_st *pa_st;
+	struct ips_pa_st *cur_pa_st = NULL;
+	uint8_t c_subs_number = 0xFF;
+	uint8_t comp_exit = 0;
+
+	for (i = 0; i < BT_IPS_CHANNEL_MAX; i++) {
+		pa_st = ips_pa_st_by_id(i);
+		if (pa_st) {
+			if (0 == comp_exit && 1 == pa_st->pa_comp) {
+				cur_pa_st = pa_st;
+				c_subs_number = pa_st->subs_number;
+				comp_exit = 1;
+			} else if (comp_exit == pa_st->pa_comp) {
+				if (c_subs_number > pa_st->subs_number) {
+					cur_pa_st = pa_st;
+					c_subs_number = pa_st->subs_number;
+				}
+			} else {
+				//
+			}
+		}
+	}
+	return cur_pa_st;
+}
+
+static int ips_per_comp_addr_set(struct bt_le_per_adv_sync *sync, bt_addr_le_t *le_addr)
+{
+	int i;
+	uint8_t subs_number = BT_IPS_SUBS_MAX + 1;
+	int ret = -1;
+	uint8_t of = 0;
+	uint8_t en = 0;
+
+	for (i = 0; i < ips_st->cnt_subscriber; i++) {
+		if (!memcmp(&ips_st->subs_mac[i], &le_addr->a, 6)) {
+			subs_number = i;
+			ret = 0;
+			break;
+		}
+	}
+	SYS_LOG_INF("c_subs %d_%d_%d.",ips_st->cnt_subscriber, subs_number,ret);
+
+	if (0 == ret) {
+		if (subs_number > ips_st->subs_number) {
+			of = subs_number-ips_st->subs_number;
+			of |= 0x80;
+			en = true;
+		} else if (subs_number < ips_st->subs_number) {
+			of = ips_st->subs_number-subs_number;
+			en = true;
+		} else {
+			of = 0;
+			en = false;
+		}
+		hostif_bt_le_per_adv_sync_comp_set(sync, en, of);
+	}
+
+	return ret;
+}
+
+static int ips_per_comp_adjust(void)
+{
+	struct ips_pa_st *c_pa_st;
+
+	c_pa_st = ips_comp_pa_st_get();
+	if (!c_pa_st)
+		return 0;
+
+	if ((1 == c_pa_st->pa_comp && 0 == ips_st->pa_comp) ||
+		(c_pa_st->pa_comp == ips_st->pa_comp && 
+		c_pa_st->subs_number < ips_st->subs_number)) {
+		c_pa_st->pa_comp = 1;
+		ips_st->pa_comp = 0;
+		if (ips_per_comp_addr_set(c_pa_st->adv_sync, &c_pa_st->per_addr)) {
+			SYS_LOG_ERR("c_pa_st %p", c_pa_st);
+		}
+	} else {
+		c_pa_st->pa_comp = 0;
+		ips_st->pa_comp = 1;
+		SYS_LOG_INF("cur pa_comp %d.", ips_st->pa_comp);
+	}
+
+	return 0;
+}
 
 static void ips_sync_cb(struct bt_le_per_adv_sync *sync, struct bt_le_per_adv_sync_synced_info *info)
 {
@@ -978,6 +1315,13 @@ static void ips_sync_cb(struct bt_le_per_adv_sync *sync, struct bt_le_per_adv_sy
 	memcpy(sync_info.name, pa_st->sync_name, BT_IPS_NAME_MAX);
 	if (ips_st && ips_st->pa_cbs)
 		ips_st->pa_cbs->ips_synced(sync, &sync_info);
+
+	ips_per_comp_adjust();
+
+	if (0 == ips_st->pa_enable) {
+		__ips_adv_stop(BT_IPS_START_ADV);
+		__ips_adv_start(BT_IPS_RESTART_ADV);
+	}
 }
 
 static void ips_term_cb(struct bt_le_per_adv_sync *sync,
@@ -986,6 +1330,7 @@ static void ips_term_cb(struct bt_le_per_adv_sync *sync,
 	char le_addr[BT_ADDR_LE_STR_LEN];
 	struct ips_pa_st *pa_st;
 	int err;
+	uint8_t comp_remove = 0;
 
 	bt_addr_le_to_str(info->addr, le_addr, sizeof(le_addr));
 
@@ -997,22 +1342,35 @@ static void ips_term_cb(struct bt_le_per_adv_sync *sync,
 	}
 
 	if (0 == pa_st->pa_synced) {
-		SYS_LOG_ERR("pa_synced %p",pa_st->pa_synced);
-		return;
+		SYS_LOG_ERR("pa_synced %d",pa_st->pa_synced);
+		//return;
 	}
 
-	//pa_st->pa_synced = 0;
-	hostif_bt_le_per_adv_sync_delete(pa_st->adv_sync);
-	if (ips_st->per_synced_count > 0) {
-		ips_st->per_synced_count--;
-	} else {
-		SYS_LOG_ERR("per_synced_count %d",ips_st->per_synced_count);
-	}
-	SYS_LOG_INF("per_synced_count %d",ips_st->per_synced_count);
+	if (1 == pa_st->pa_synced) {
+		//pa_st->pa_synced = 0;
+		hostif_bt_le_per_adv_sync_delete(pa_st->adv_sync);
+		if (ips_st->per_synced_count > 0) {
+			ips_st->per_synced_count--;
+		} else {
+			SYS_LOG_ERR("per_synced_count %d",ips_st->per_synced_count);
+		}
 
+		SYS_LOG_INF("per_synced_count %d",ips_st->per_synced_count);
+
+		if (1 == pa_st->pa_comp) {
+			comp_remove = 1;
+		}
+
+		if (ips_st && ips_st->pa_cbs)
+			ips_st->pa_cbs->ips_term(sync);
+
+		if (0 == ips_st->per_synced_count) {
+			ips_st->pa_comp = 1;
+		} else if (1 == pa_st->pa_comp) {
+			ips_per_comp_adjust();
+		}
+	}
 	ips_remove_pa(sync);
-	if (ips_st && ips_st->pa_cbs)
-		ips_st->pa_cbs->ips_term(sync);
 
 	//if (info->reason != 0x16) {
 		/*restart scan*/
@@ -1099,6 +1457,30 @@ static int __ips_scan_stop(void)
 	return err;
 }
 
+static void ips_sort_wait_complete(struct k_work *work)
+{
+	SYS_LOG_INF("pa_enable %d .", ips_st->pa_enable);
+	SYS_LOG_INF("remote_seq_max %d_%d_%d_%d .", ips_st->remote_seq_max,ips_st->adv_seq,ips_st->subs_number,ips_st->r_seq_subs_number);
+
+	if (0 == ips_st->adv_enable)
+		return;
+
+	if ((ips_st->remote_seq_max < ips_st->adv_seq) ||
+			((ips_st->subs_number < ips_st->r_seq_subs_number &&
+					ips_st->adv_seq == ips_st->remote_seq_max))) {
+		if (1 == ips_st->pa_enable) {
+			SYS_LOG_ERR("status err, pa_enable %d.", ips_st->pa_enable);
+		} else {
+			__ips_adv_stop(BT_IPS_START_ADV);
+			ips_st->pa_comp = 1;
+			__ips_adv_start(BT_IPS_RESTART_ADV);
+		}
+	} else {
+		ips_st->pa_comp = 0;
+		//
+	}
+}
+
 /** @brief 启动对讲功能, 开启广播和扫描
  *
  *  调用接口后会进行周期性广播和广播扫描.
@@ -1111,6 +1493,8 @@ static int __ips_scan_stop(void)
 int bt_manager_ips_start(void **handle,
 				struct bt_ips_init_info *ips_info, struct bt_ips_cb *ips_cb)
 {
+	int i;
+
 	if (is_st.searching) {
 		SYS_LOG_ERR("need to stop searching.");
 		return -EBUSY;
@@ -1133,6 +1517,7 @@ int bt_manager_ips_start(void **handle,
 		return -EALREADY;
 	}
 	ips_st->match_id = ips_info->match_id; // 匹配码, 4bytes 随机数
+	SYS_LOG_INF("ips_st->match_id 0x%x.", ips_st->match_id);
 	ips_st->adv_role = ips_info->role;
 	ips_st->ch_max = ips_info->ch_max; //最多允许接收的音频通道数量
 	if (ips_st->ch_max > BT_IPS_CHANNEL_MAX) {
@@ -1144,12 +1529,33 @@ int bt_manager_ips_start(void **handle,
 	ips_st->samp_freq = ips_info->samp_freq; //采样率8KHZ or 16KHZ
 	ips_st->bit_width = ips_info->bit_width; // 位宽8bits or 16bits
 	memcpy(ips_st->pa_name, ips_info->name, BT_IPS_NAME_MAX);
+	le_ips_mac_addr_get(&ips_st->local_addr);
+
+	ips_st->cnt_subscriber = ips_info->cnt_subscriber & 0x7;
+	if (ips_st->cnt_subscriber <= BT_IPS_SUBS_MAX) {
+		memcpy(&ips_st->subs_mac[0], &ips_info->subs_mac[0], ips_st->cnt_subscriber*6);
+		for (i = 0; i < ips_st->cnt_subscriber; i++) {
+			if (!memcmp(&ips_st->subs_mac[i], &ips_st->local_addr.a, 6)) {
+				ips_st->subs_number = i;
+				break;
+			}
+		}
+	}
 
 	SYS_LOG_INF(":\n");
 	ips_st->pa_cbs = ips_cb;
-	__ips_adv_start(BT_IPS_RESTART_ADV);
+	if (0 == ips_st->subs_number && BT_IPS_ROLE_INITIATOR == ips_st->adv_role) {
+		ips_st->pa_comp = 1;
+		SYS_LOG_INF("enter pa_comp %d.", ips_st->pa_comp);
+		__ips_adv_start(BT_IPS_RESTART_ADV);
+	} else {
+		ips_st->pa_comp = 0;
+		__ips_adv_start(BT_IPS_START_ADV);
+	}
+	
 	__ips_scan_start();
 
+	os_delayed_work_init(&ips_sort_wait_work, ips_sort_wait_complete);
 	ips_st->advertising = 1;
 	ips_st->ap_handle = (void *)&ips_st;
 	*handle = ips_st->ap_handle;
@@ -1174,6 +1580,7 @@ int bt_manager_ips_stop(void *handle)
 
 	__ips_adv_stop(BT_IPS_RESTART_ADV);
 	__ips_scan_stop();
+	ips_st->pa_comp = 0;
 	ips_st->advertising = 0;
 	ips_st->ap_handle = NULL;
 	ips_st = NULL;
@@ -1195,7 +1602,7 @@ int bt_manager_ips_send_codec(void *handle, struct bt_ips_send_info *info, uint8
 	uint8_t f_len;
 	int err;
 
-	if (!ips_st || !handle || !info || ips_st->ap_handle != handle) {
+	if (!ips_st || !ips_st->pa_enable || !handle || !info || ips_st->ap_handle != handle) {
 		SYS_LOG_ERR("Handle invalid.");
 		return -EALREADY;
 	}
@@ -1251,8 +1658,16 @@ int bt_manager_ips_search_open(struct bt_ips_search_init *info)
 	is_st.searching = 1;
 	is_st.cur_role = info->role;
 	is_st.match_id = info->match_id;
+	SYS_LOG_INF("is_st.match_id 0x%x.", is_st.match_id);
 	is_st.s_cb = info->s_cb;
 	memcpy(is_st.cur_name, info->name, BT_IPS_NAME_MAX);
+
+	le_ips_mac_addr_get(&is_st.local_addr);
+#if 0
+	printk("aaass %02X:%02X:%02X:%02X:%02X:%02X\n",
+				is_st.local_addr.a.val[5], is_st.local_addr.a.val[4], is_st.local_addr.a.val[3],
+				is_st.local_addr.a.val[2], is_st.local_addr.a.val[1], is_st.local_addr.a.val[0]);
+#endif
 	__ips_adv_start(BT_IPS_SEARCH_ADV);
 	__ips_scan_start();
 	return 0;
@@ -1267,6 +1682,19 @@ int bt_manager_ips_search_close(void)
 	is_st.searching = 0;
 	__ips_scan_stop();
 	__ips_adv_stop(BT_IPS_SEARCH_ADV);
+
+	return 0;
+}
+
+uint8_t bt_manager_ips_status_get(void)
+{
+	if (is_st.searching) {
+		return BT_IPS_STATUS_MATCHING;
+	}
+
+	if (ips_st) {
+		return BT_IPS_STATUS_READY;
+	}
 
 	return 0;
 }

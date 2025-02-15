@@ -64,12 +64,15 @@ VGLiteEngine::~VGLiteEngine() { vg_lite_finish(); }
 
 void VGLiteEngine::drawRects(const Rect *rects, int count, const Brush &brush) {
   int error = VG_LITE_SUCCESS;
+  vg_lite_int32_t scissor[4] = { -1, -1, -1, -1 };
+  vg_lite_get_parameter(VG_LITE_SCISSOR_RECT, 4, (vg_lite_pointer)scissor);
   vg_lite_set_scissor(clip().left(), clip().top(), clip().right() + 1,
                       clip().bottom() + 1);
+
   // GPU_LOG_I("GPU drawRects.\n");
   if (brush.type() == Brush::Color) {
     if (transferMode() != Painter::DstIn && brush.color().argb() < 0x01000000)
-      return; // do nothing if color is transparent
+      goto restore_scissor; // do nothing if color is transparent
     for (int i = 0; i < count && error == VG_LITE_SUCCESS; i++)
       error = vglite_draw_rect(rects[i] + origin(),
                                gx_color_to_vglite(brush.color()));
@@ -87,12 +90,18 @@ void VGLiteEngine::drawRects(const Rect *rects, int count, const Brush &brush) {
     vg_lite_finish();
     PixmapPaintEngine::drawRects(rects, count, brush);
   }
+
+restore_scissor:
+  vg_lite_set_scissor(scissor[0], scissor[1], scissor[2], scissor[3]);
 }
 
 void VGLiteEngine::drawPath(const VectorPath &path, const Pen &pen) {
   int error = VG_LITE_SUCCESS;
+  vg_lite_int32_t scissor[4] = { -1, -1, -1, -1 };
+  vg_lite_get_parameter(VG_LITE_SCISSOR_RECT, 4, (vg_lite_pointer)scissor);
   vg_lite_set_scissor(clip().left(), clip().top(), clip().right() + 1,
                       clip().bottom() + 1);
+
   // GPU_LOG_I("GPU drawPath.\n");
   error = vglite_fill_path(path.outline(pen), gx_color_to_vglite(pen.color()));
   if (error != VG_LITE_SUCCESS) {
@@ -100,15 +109,20 @@ void VGLiteEngine::drawPath(const VectorPath &path, const Pen &pen) {
     vg_lite_finish();
     PixmapPaintEngine::drawPath(path, pen);
   }
+
+  vg_lite_set_scissor(scissor[0], scissor[1], scissor[2], scissor[3]);
 }
 
 void VGLiteEngine::fillPath(const VectorPath &path, const Brush &brush) {
   int error = VG_LITE_SUCCESS;
+  vg_lite_int32_t scissor[4] = { -1, -1, -1, -1 };
+  vg_lite_get_parameter(VG_LITE_SCISSOR_RECT, 4, (vg_lite_pointer)scissor);
   vg_lite_set_scissor(clip().left(), clip().top(), clip().right() + 1,
                       clip().bottom() + 1);
+
   if (brush.type() == Brush::Color) {
     if (transferMode() != Painter::DstIn && brush.color().argb() < 0x01000000)
-      return; // do nothing if color is transparent
+      goto restore_scissor; // do nothing if color is transparent
     error = vglite_fill_path(path, gx_color_to_vglite(brush.color()));
   } else if (brush.type() == Brush::Image) {
     Image::Texture texture = brush.image().texture();
@@ -122,13 +136,19 @@ void VGLiteEngine::fillPath(const VectorPath &path, const Brush &brush) {
     vg_lite_finish();
     PixmapPaintEngine::fillPath(path, brush);
   }
+
+restore_scissor:
+  vg_lite_set_scissor(scissor[0], scissor[1], scissor[2], scissor[3]);
 }
 
 void VGLiteEngine::drawTexture(const Rect &dr, const Texture &texture,
                                const Rect &sr, const Brush &br) {
   int error = VG_LITE_SUCCESS;
+  vg_lite_int32_t scissor[4] = { -1, -1, -1, -1 };
+  vg_lite_get_parameter(VG_LITE_SCISSOR_RECT, 4, (vg_lite_pointer)scissor);
   vg_lite_set_scissor(clip().left(), clip().top(), clip().right() + 1,
                       clip().bottom() + 1);
+
   if (transform()) {
     error = vglite_blit_transform(dr, texture, sr, br.color());
   } else {
@@ -147,6 +167,8 @@ void VGLiteEngine::drawTexture(const Rect &dr, const Texture &texture,
     vg_lite_finish();
     PixmapPaintEngine::drawTexture(dr, texture, sr, br);
   }
+
+  vg_lite_set_scissor(scissor[0], scissor[1], scissor[2], scissor[3]);
 }
 
 int VGLiteEngine::vglite_buffer_init(vg_lite_buffer_t &dst,

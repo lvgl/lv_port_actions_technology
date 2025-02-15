@@ -96,6 +96,11 @@ int ui_switch_effect_set_type(uint8_t type)
 	return ui_message_send_async2(VIEW_INVALID_ID, MSG_VIEW_USER_OFFSET, type, _switch_effect_msg_cb);
 }
 
+uint8_t ui_switch_effect_get_type(void)
+{
+	return switch_ctx.type;
+}
+
 void ui_switch_effect_set_total_frames(uint16_t frame)
 {
 	if (frame > 0)

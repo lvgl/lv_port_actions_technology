@@ -291,7 +291,7 @@ static int _aod_clock_view_paint(view_data_t *view_data, bool first)
 	watch_clock_set_time(data->obj_clock, time.tm_hour, time.tm_min, 0);
 
 	/* refresh immediately */
-	lv_refr_now(view_data->display);
+	view_refresh(AOD_CLOCK_VIEW);
 	view_wait_for_refresh(AOD_CLOCK_VIEW, -1);
 
 out_exit:

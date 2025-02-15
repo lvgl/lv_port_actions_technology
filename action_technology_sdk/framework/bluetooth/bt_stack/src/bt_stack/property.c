@@ -310,6 +310,20 @@ static int commit(void)
 		bt_property_save_id();
 	}
 
+#ifdef CONFIG_BT_BLE_IPS
+	int id_count = CONFIG_BT_ID_MAX;
+	bt_id_get(NULL, &id_count);
+	if (id_count < CONFIG_BT_ID_MAX) {
+		int id;
+
+		id = bt_id_create(NULL, NULL);
+		if (id < 0) {
+			BT_ERR("Create id failed (%d)\n", id);
+		} else {
+			BT_INFO("New id: %d\n", id);
+		}
+	}
+#endif
 	return 0;
 }
 

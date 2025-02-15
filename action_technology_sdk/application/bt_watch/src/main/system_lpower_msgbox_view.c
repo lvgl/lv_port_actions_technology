@@ -106,7 +106,7 @@ static void _lpower_create_btn(lv_obj_t *par, lv_obj_t **pobj, lv_point_t *pt,
 	*pobj = lv_imagebutton_create(par);
 	lv_obj_set_pos(*pobj, pt->x, pt->y);
 	lv_obj_set_size(*pobj, def->header.w, def->header.h);
-	lv_obj_add_event_cb(*pobj, _lpower_btn_evt_handler, LV_EVENT_ALL, NULL);
+	lv_obj_add_event_cb(*pobj, _lpower_btn_evt_handler, LV_EVENT_SHORT_CLICKED, user_data);
 
 	lv_imagebutton_set_src(*pobj, LV_IMAGEBUTTON_STATE_RELEASED, NULL, def, NULL);
 	lv_imagebutton_set_src(*pobj, LV_IMAGEBUTTON_STATE_PRESSED, NULL, sel, NULL);

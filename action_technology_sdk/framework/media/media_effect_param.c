@@ -26,6 +26,7 @@ int medie_effect_set_user_param(uint8_t stream_type, uint8_t effect_type, const 
 
 	switch (stream_type) {
 	case AUDIO_STREAM_VOICE:
+	case AUDIO_STREAM_LE_AUDIO:
 		user_addr = &btcall_effect_user_addr;
 		expected_size = sizeof(asqt_para_bin_t);
 		break;
@@ -75,6 +76,7 @@ const void *media_effect_get_param(uint8_t stream_type, uint8_t effect_type, int
 	case AUDIO_STREAM_TTS: /* not use effect file */
 		return NULL;
 	case AUDIO_STREAM_VOICE:
+	case AUDIO_STREAM_LE_AUDIO:
 		user_addr = btcall_effect_user_addr;
 		efx_pattern = BTCALL_EFX_PATTERN;
 		expected_size = sizeof(asqt_para_bin_t);

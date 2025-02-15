@@ -293,11 +293,13 @@ static void _lvgl_draw_buf_init_shared_vdb(lv_display_t * disp)
 #ifdef CONFIG_UI_MEM_VDB_SHARE_SURFACE_BUFFER
 	uint8_t *bufs[CONFIG_LV_VDB_NUM];
 	unsigned int total_size = ui_mem_get_share_surface_buffer_size();
-	unsigned int buf_size = ((total_size / CONFIG_LV_VDB_NUM) & ~(BUFFER_ALIGN - 1));
+	unsigned int buf_size = (CONFIG_LV_VDB_NUM == 1) ?
+			total_size : ((total_size / CONFIG_LV_VDB_NUM) & ~(BUFFER_ALIGN - 1));
 	int i;
 
 	if (CONFIG_LV_VDB_SIZE > 0 && CONFIG_LV_VDB_SIZE < buf_size) {
-		buf_size = (CONFIG_LV_VDB_SIZE + BUFFER_ALIGN - 1) & ~(BUFFER_ALIGN - 1);
+		buf_size = (CONFIG_LV_VDB_NUM == 1) ? CONFIG_LV_VDB_SIZE :
+				(CONFIG_LV_VDB_SIZE + BUFFER_ALIGN - 1) & ~(BUFFER_ALIGN - 1);
 	}
 
 	bufs[0] = ui_mem_get_share_surface_buffer();
@@ -384,7 +386,7 @@ static void _lvgl_flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t 
 	}
 
 	LV_LOG_TRACE("lvgl flush: flag %x, buf %p, area (%d %d %d %d)\n",
-			drv_data->flush_flag, color_p, area->x1, area->y1, area->x2, area->y2);
+			drv_data->flush_flag, px_map, area->x1, area->y1, area->x2, area->y2);
 
 	if (disp->render_mode == LV_DISPLAY_RENDER_MODE_DIRECT) {
 		if (drv_data->flush_flag & SURFACE_LAST_DRAW) {

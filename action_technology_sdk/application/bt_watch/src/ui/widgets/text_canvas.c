@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <ui_mem.h>
 #include <memory/mem_cache.h>
+#include <display/sw_draw.h>
 #include <lvgl/src/lvgl_private.h>
 #include <lvgl/lvgl_bitmap_font.h>
 #include <lvgl/src/misc/lv_text_ap.h>
@@ -165,8 +166,8 @@ void text_canvas_set_text(lv_obj_t * obj, const char * text)
 
 	text_canvas_t * canvas = (text_canvas_t *)obj;
 
-	if (text == NULL) {
-		text_canvas_set_text_static(obj, text);
+	if (text == NULL || text[0] == '\0') {
+		text_canvas_set_text_static(obj, NULL);
 		return;
 	}
 
@@ -427,7 +428,6 @@ static void text_canvas_refr_text(lv_obj_t *obj)
 
 	if (canvas_text == NULL) {
 		canvas->dsc.header.h = 0;
-		lv_obj_refresh_self_size(obj);
 		goto out_exit;
 	}
 
@@ -535,6 +535,8 @@ static void text_canvas_refr_text(lv_obj_t *obj)
 				/* In SROLL and SROLL_CIRC mode the CENTER and RIGHT are pointless so remove them.
 				* (In addition they will result misalignment is this case)*/
 				draw_dsc.align = LV_TEXT_ALIGN_LEFT;
+			} else {
+				canvas->dsc_w = txt_w;
 			}
 
 			size.y = canvas->dsc.header.h;
@@ -603,7 +605,7 @@ static void text_canvas_refr_text(lv_obj_t *obj)
 			canvas->dsc.header.h, canvas->dsc.data, canvas->dsc.data_size);
 
 	if (canvas->dsc.data == NULL) {
-		LV_LOG_ERROR("text_canvas: fail to allocate dsc data %u bytes", buf_size);
+		LV_LOG_ERROR("text_canvas: text %s fail to allocate dsc data %u bytes", canvas_text, buf_size);
 		canvas->dsc.header.h = 0;
 		goto out_exit;
 	}
@@ -800,10 +802,6 @@ static void refr_text_to_img(lv_obj_t *obj, lv_draw_label_dsc_t *draw_dsc)
 	lv_image_dsc_t * img_dsc = &canvas->dsc;
 	uint32_t buf_size = img_dsc->header.stride * img_dsc->header.h;
 
-#ifdef CONFIG_LVGL_USE_FREETYPE_FONT
-	lvgl_freetype_force_bitmap((lv_font_t *)draw_dsc->font, true);
-#endif
-
 	lv_memzero((void *)img_dsc->data, buf_size);
 
 	text_canvas_draw_unit_t draw_unit;
@@ -814,13 +812,17 @@ static void refr_text_to_img(lv_obj_t *obj, lv_draw_label_dsc_t *draw_dsc)
 	lv_area_t clip_area = {0, 0, img_dsc->header.w - 1, img_dsc->header.h - 1 };
 	draw_unit.base.clip_area = &clip_area;
 
+#ifdef CONFIG_LVGL_USE_FREETYPE_FONT
+	int force_bitmap = lvgl_freetype_force_bitmap((lv_font_t *)draw_dsc->font, 1);
+#endif
+
 	lv_draw_label_iterate_characters(&draw_unit.base, draw_dsc, &canvas_area, draw_letter_cb);
 
-	mem_dcache_clean(img_dsc->data, buf_size);
-
 #ifdef CONFIG_LVGL_USE_FREETYPE_FONT
-	lvgl_freetype_force_bitmap((lv_font_t *)draw_dsc->font, false);
+	lvgl_freetype_force_bitmap((lv_font_t *)draw_dsc->font, force_bitmap);
 #endif
+
+	mem_dcache_clean(img_dsc->data, buf_size);
 }
 
 static lv_color_format_t get_text_font_color_format(lv_obj_t *obj, const lv_font_t *font)
@@ -830,6 +832,10 @@ static lv_color_format_t get_text_font_color_format(lv_obj_t *obj, const lv_font
 
 	if (canvas->force_a8)
 		return LV_COLOR_FORMAT_A8;
+
+#ifdef CONFIG_LVGL_USE_FREETYPE_FONT
+	int force_bitmap = lvgl_freetype_force_bitmap((lv_font_t *)font, 1);
+#endif
 
 	const lv_font_fmt_txt_dsc_t * font_dsc = font->dsc;
 	if (font_dsc && font_dsc->bpp >= LV_FONT_GLYPH_FORMAT_A1 && font_dsc->bpp <= LV_FONT_GLYPH_FORMAT_A8) {
@@ -841,7 +847,7 @@ static lv_color_format_t get_text_font_color_format(lv_obj_t *obj, const lv_font
 	}
 
 #ifdef CONFIG_LVGL_USE_FREETYPE_FONT
-	lvgl_freetype_force_bitmap((lv_font_t*)font, 0);
+	lvgl_freetype_force_bitmap((lv_font_t*)font, force_bitmap);
 #endif
 
 	LV_LOG_INFO("font bpp %d\n", dsc_out.bpp);
@@ -960,42 +966,8 @@ static void draw_letter_cb(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * dsc
 			dst_p += dst_buf->header.stride;
 		}
 	} else {
-		static const lv_opa_t alpha1t8_opa_table[] = { 0, 255 };
-		static const lv_opa_t alpha2t8_opa_table[] = { 0, 85, 170, 255 };
-		static const lv_opa_t alpha4t8_opa_table[] = {
-			0,  17, 34,  51, 68, 85, 102, 119,
-			136, 153, 170, 187, 204, 221, 238, 255
-        };
-		const lv_opa_t *opa_table = (bpp == 1) ? alpha1t8_opa_table :
-					(bpp == 2 ? alpha2t8_opa_table : alpha4t8_opa_table);
-
-		for (row = num_rows; row > 0; row--) {
-			uint8_t *dst_p_tmp = dst_p;
-			uint8_t *map_p_tmp = map_p;
-			uint8_t map_bofs = map_bofs_init;
-			uint8_t map_px = *map_p;
-
-			for (col = num_cols; col > 0; col--) {
-				/*Load the pixel's opacity into the mask*/
-				uint8_t letter_px = (map_px >> map_bofs) & bitmask;
-				if (letter_px) {
-					*dst_p_tmp = opa_table[letter_px];
-				}
-
-				/*Go to the next column*/
-				if (map_bofs > 0) {
-					map_bofs -= bpp;
-				} else {
-					map_bofs = col_bit_max;
-					map_px = *(++map_p_tmp);
-				}
-
-				dst_p_tmp++;
-			}
-
-			map_p += map_buf->header.stride;
-			dst_p += dst_buf->header.stride;
-		}
+		sw_convert_a124_to_a8(dst_p, map_p, dst_buf->header.stride,
+				map_buf->header.stride << 3, (bofs & 0x7), bpp, num_cols, num_rows);
 	}
 }
 

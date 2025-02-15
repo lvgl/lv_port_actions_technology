@@ -44,7 +44,7 @@ int lvgl_freetype_font_get_emoji_dsc(const lv_font_t* lv_font, uint32_t unicode,
 int lvgl_freetype_font_set_default_code(lv_font_t* font, uint32_t word_code, uint32_t emoji_code);
 int lvgl_freetype_font_set_default_bitmap(lv_font_t* font, uint8_t* bitmap, uint32_t width, uint32_t height, uint32_t gap, uint32_t bpp);
 int lvgl_freetype_font_cache_preset(freetype_font_cache_preset_t* preset, int count);
-void lvgl_freetype_force_bitmap(lv_font_t* font, int enable);
+int lvgl_freetype_force_bitmap(lv_font_t* font, int enable);
 
 /**********************
  *      MACROS

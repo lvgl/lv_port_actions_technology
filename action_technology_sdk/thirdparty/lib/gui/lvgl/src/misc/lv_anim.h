@@ -428,7 +428,7 @@ uint32_t lv_anim_speed(uint32_t speed);
  * It will be converted to time internally based on the start and end values
  * @param speed         the speed of the animation in as unit / sec resolution in 0..10k range
  * @param min_time      the minimum time in 0..10k range
- * @param max_time      the maximum time in 0..10k range
+ * @param max_time      the maximum time in 0..20k range
  * @return              a special value in where all three values are stored and can be used as an animation time
  * @note                internally speed is stored as 10 unit/sec
  * @note                internally min/max_time are stored with 10 ms unit

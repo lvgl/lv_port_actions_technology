@@ -10,14 +10,13 @@
 
 #include <zephyr.h>
 #include "lvgl_inner.h"
-#include "../gpu/lvgl_gpu.h"
 
 #if LV_USE_THORVG
-#  if LV_USE_THORVG_EXTERNAL
-#    include <thorvg_capi.h>
-#  else
-#    include "../../src/libs/thorvg/thorvg_capi.h"
-#  endif
+    #if LV_USE_THORVG_EXTERNAL
+        #include <thorvg_capi.h>
+    #else
+        #include "../../src/libs/thorvg/thorvg_capi.h"
+    #endif
 #endif
 
 #include <logging/log.h>
@@ -57,7 +56,7 @@ lv_result_t lvx_port_init(void)
 #endif
 
 #if !defined(CONFIG_UI_SERVICE)
-    if (lv_port_display_init()) {
+    if(lv_port_display_init()) {
         return LV_RESULT_INVALID;
     }
 
@@ -74,22 +73,24 @@ lv_result_t lvx_port_init(void)
 #if LV_USE_LOG
 static void lvgl_log(lv_log_level_t level, const char * buf)
 {
-    switch (level) {
-    case LV_LOG_LEVEL_ERROR:
-        LOG_ERR("%s", buf);
-        break;
-    case LV_LOG_LEVEL_WARN:
-        LOG_WRN("%s", buf);
-        break;
-    case LV_LOG_LEVEL_INFO:
-    case LV_LOG_LEVEL_USER:
-        LOG_INF("%s", buf);
-        break;
-    case LV_LOG_LEVEL_TRACE:
-        LOG_DBG("%s", buf);
-        break;
-    default:
-        break;
+    switch(level) {
+        case LV_LOG_LEVEL_ERROR:
+            LOG_ERR("%s", buf + (sizeof("[Error] ") - 1));
+            break;
+        case LV_LOG_LEVEL_WARN:
+            LOG_WRN("%s", buf + (sizeof("[Warn] ") - 1));
+            break;
+        case LV_LOG_LEVEL_INFO:
+            LOG_INF("%s", buf + (sizeof("[Info] ") - 1));
+            break;
+        case LV_LOG_LEVEL_USER:
+            LOG_INF("%s", buf + (sizeof("[User] ") - 1));
+            break;
+        case LV_LOG_LEVEL_TRACE:
+            LOG_DBG("%s", buf + (sizeof("[Trace] ") - 1));
+            break;
+        default:
+            break;
     }
 }
 #endif /* LV_USE_LOG */

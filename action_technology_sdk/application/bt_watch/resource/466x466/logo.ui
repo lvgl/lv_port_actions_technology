@@ -5,16 +5,16 @@
     <property name="prj_language" value="0x0" />
     <property name="prj_screen_width" value="0x1d2" />
     <property name="prj_screen_height" value="0x1d2" />
-    <property name="prj_res_file" value="..\..\boards\ats3085s_dev_watch_ext_nor\sdfs_k\logo.res" />
-    <property name="prj_res_str_dir" value="..\..\boards\ats3085s_dev_watch_ext_nor\sdfs_k" />
+    <property name="prj_res_file" value="..\..\fs_sdfs\sdfs_k\logo.res" />
+    <property name="prj_res_str_dir" value="..\..\fs_sdfs\sdfs_k" />
     <property name="prj_res_head_file" value="..\454x454\logo_pic.h" />
     <property name="prj_res_str_head_file" value="..\454x454\logo_str.h" />
     <property name="prj_sty_head_file" value=".\logo_sty.h" />
-    <property name="prj_sty_file" value="..\..\boards\ats3085s_dev_watch_ext_nor\sdfs_k\logo.sty" />
+    <property name="prj_sty_file" value="..\..\fs_sdfs\sdfs_k\logo.sty" />
     <property name="prj_build_res_type" value="0x1" />
     <property name="prj_build_res_mode" value="0x0" />
     <property name="prj_case_path" value="..\466x466" />
-    <property name="prj_sdk_path" value="..\454x454" />
+    <property name="prj_sdk_path" value="..\466x466" />
     <property name="desktop_file_create" value="0x0" />
     <property name="desktop_file_path" value="" />
     <property name="desktop_file_comment" value="" />
@@ -107,8 +107,37 @@
         </element>
     </scene>
     <resource>
-        <picture value=".\logo\logo.jpg" />
-        <picture value=".\logo\ota.jpg" />
-        <picture value=".\logo\goodby.jpg" />
+        <picture value=".\logo\logo.jpg" LayerID="1" />
+        <picture value=".\logo\ota.jpg" LayerID="2" />
+        <picture value=".\logo\goodby.jpg" LayerID="3" />
     </resource>
+    <config>
+        <property name="blockHeight" value="78" />
+        <property name="blockWidth" value="78" />
+        <property name="cacheID" value="E8E37C144C31D4C8A3E3F1AD049FB15A" />
+        <property name="compressFormat" value="2" />
+        <property name="etc2CompSpeed" value="1" />
+        <property name="index_algorithm" value="0" />
+        <property name="index_frameDelay" value="-1" />
+        <property name="index_isDithering" value="0" />
+        <property name="isBlockCompress" value="0" />
+        <property name="isCompressRes" value="1" />
+        <property name="isDither" value="0" />
+        <property name="isPNGARGBToETC2" value="0" />
+        <property name="isPNGIndex8Comp" value="1" />
+        <property name="isRawJpeg" value="1" />
+        <property name="isRebuildETC2Res" value="0" />
+        <property name="isSplitPack" value="0" />
+        <property name="isSplitRes" value="0" />
+        <property name="picResFormat" value="0" />
+        <property name="rawJpeg_Quar" value="80" />
+        <property name="rawJpeg_blockHeight" value="466" />
+        <property name="rawJpeg_blockWidth" value="466" />
+        <property name="rawJpeg_minHeight" value="160" />
+        <property name="rawJpeg_minWidth" value="160" />
+        <property name="rawJpeg_perPixBytes" value="2" />
+        <property name="resMode" value="0" />
+        <property name="splitPackStart" value="0" />
+        <property name="splitResSize" value="10" />
+    </config>
 </ui-rad>
