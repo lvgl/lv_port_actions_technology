@@ -3,7 +3,7 @@
     "maintainer": "LVGL",
     "hostOperatingsystem": [
         "Windows",
-        "Linux",
+        "Linux"
     ],
     "environment": [
         "make",
