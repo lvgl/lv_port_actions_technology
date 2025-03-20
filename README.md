@@ -13,7 +13,7 @@ is expected.
 
 ## Buy
 
-Contact Actions Technology Sales to acquire a board: https://www.actionstech.com/index.php?id=contactus&siteId=4
+Contact Actions Technology Sales to acquire a board: https://www.actionstech.com/index.php?id=contactus
 
 
 ## Benchmark
