@@ -7,7 +7,7 @@
     ],
     "environment": [
         "make",
-        "cmake",
+        "CMake",
         "Linux"
     ],
     "hardware": {
