@@ -23,6 +23,26 @@ using the SoC GPU, which is compatible to the VGLite API. On this configuration 
 get a smooth perfomance of 30FPS with a 17% of CPU usage in average cases considering the smartwatch
 case on the SDK which uses a round display of 466 x 466 pixels.
 
+| Name                      | Avg. CPU | Avg. FPS | render time | flush time |
+| :------------------------ | -------: | -------: | ----------: | ---------: |
+| Empty screen              | 8%       | 58       | 16          | 0          |
+| Moving wallpaper          | 5%       | 58       | 13          | 0          |
+| Single rectangle          | 7%       | 58       | 12          | 0          |
+| Multiple rectangles       | 9%       | 58       | 12          | 0          |
+| Multiple RGB images       | 9%       | 58       | 12          | 0          |
+| Multiple ARGB images      | 9%       | 58       | 12          | 0          |
+| Rotated ARGB images       | 8%       | 44       | 36          | 0          |
+| Multiple labels           | 7%       | 58       | 18          | 0          |
+| Screen sized text         | 33%      | 3        | 266         | 0          |
+| Multiple arcs             | 43%      | 58       | 11          | 0          |
+| Containers                | 9%       | 58       | 6           | 0          |
+| Containers with overlay   | 4%       | 58       | 23          | 0          |
+| Containers with opa       | 4%       | 58       | 6           | 0          |
+| Containers with opa_layer | 3%       | 58       | 16          | 0          |
+| Containers with scrolling | 9%       | 58       | 25          | 0          |
+| Widgets demo              | 13%      | 50       | 29          | 0          |
+| All scenes avg.           | 8%       | 52       | 19          | 0          |
+
 
 ## Specification
 
