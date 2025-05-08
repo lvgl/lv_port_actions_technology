@@ -14,5 +14,6 @@ source "lib/open-amp/Kconfig"
 source "lib/rbuf/Kconfig"
 source "lib/util/Kconfig"
 source "lib/cjson/Kconfig"
+source "lib/libdl/Kconfig"
 
 endmenu

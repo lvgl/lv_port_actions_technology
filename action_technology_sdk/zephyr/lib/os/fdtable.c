@@ -279,6 +279,17 @@ off_t lseek(int fd, off_t offset, int whence)
 }
 FUNC_ALIAS(lseek, _lseek, off_t);
 
+int fstat(int fd, struct stat *buf)
+{
+	if (_check_fd(fd) < 0) {
+		return -1;
+	}
+
+	return z_fdtable_call_ioctl(fdtable[fd].vtable, fdtable[fd].obj, ZFD_IOCTL_STAT, buf);
+}
+
+FUNC_ALIAS(fstat, _fstat, int);
+
 int ioctl(int fd, unsigned long request, ...)
 {
 	va_list args;

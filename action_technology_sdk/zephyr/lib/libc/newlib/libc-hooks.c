@@ -21,6 +21,7 @@
 #include <sys/mutex.h>
 #include <sys/mem_manage.h>
 #include <sys/time.h>
+#include <sys/times.h>
 
 #define LIBC_BSS	K_APP_BMEM(z_libc_partition)
 #define LIBC_DATA	K_APP_DMEM(z_libc_partition)
@@ -252,6 +253,20 @@ int _lseek(int file, int ptr, int dir)
 	return 0;
 }
 __weak FUNC_ALIAS(_lseek, lseek, int);
+
+int _fstat(int file, struct stat *st)
+{
+	st->st_mode = S_IFCHR;
+	return 0;
+}
+__weak FUNC_ALIAS(_fstat, fstat, int);
+
+int _rmdir(const char *path)
+{
+	return 0;
+}
+__weak FUNC_ALIAS(_rmdir, rmdir, int);
+
 #else
 extern ssize_t write(int file, const char *buffer, size_t count);
 #define _write	write
@@ -274,13 +289,6 @@ int _getpid(void)
 	return 0;
 }
 __weak FUNC_ALIAS(_getpid, getpid, int);
-
-int _fstat(int file, struct stat *st)
-{
-	st->st_mode = S_IFCHR;
-	return 0;
-}
-__weak FUNC_ALIAS(_fstat, fstat, int);
 
 __weak void _exit(int status)
 {
@@ -561,6 +569,17 @@ int _gettimeofday(struct timeval *__tp, void *__tzp)
 	return gettimeofday(__tp, __tzp);
 }
 
+clock_t _times(struct tms *t)
+{
+	t->tms_utime = 0;
+	t->tms_stime = k_uptime_get_32() * CLOCKS_PER_SEC / 1000;
+	t->tms_cutime = 0;
+	t->tms_cstime = 0;
+
+	return 0;
+}
+
 void libc_heap_dump(void)
 {
 }
+

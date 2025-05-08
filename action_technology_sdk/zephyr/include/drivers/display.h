@@ -66,6 +66,8 @@ enum display_pixel_format {
 	PIXEL_FORMAT_XBGR_8888		= BIT(23),
 	PIXEL_FORMAT_RGBA_5658		= BIT(24),
 	PIXEL_FORMAT_BGR_565_SWAP		= BIT(25),
+
+	PIXEL_FORMAT_L8	= BIT(26),
 };
 
 enum display_screen_info {
@@ -115,6 +117,18 @@ enum display_orientation {
 	DISPLAY_ORIENTATION_ROTATED_90,
 	DISPLAY_ORIENTATION_ROTATED_180,
 	DISPLAY_ORIENTATION_ROTATED_270,
+};
+
+/**
+ * @enum display_screen_state
+ * @brief Enumeration with possible display screen state
+ *
+ */
+enum display_screen_state {
+	DISPLAY_STATE_ON,   /* screen on */
+	DISPLAY_STATE_IDLE, /* screen on and idle */
+	DISPLAY_STATE_OFF,  /* screen off */
+	DISPLAY_STATE_ALWAYS_OFF, /* screen off and never turned on */
 };
 
 /**
@@ -207,7 +221,7 @@ struct display_callback {
 	void (*vsync)(const struct display_callback * callback, uint32_t timestamp);
 	/* (*complete)() is called when refresh complete (called in isr) */
 	void (*complete)(const struct display_callback * callback);
-	/* (*pm_notify) is called when pm state changed */
+	/* (*pm_notify) is called when display state changed */
 	void (*pm_notify)(const struct display_callback * callback, uint32_t pm_action);
 };
 
@@ -224,6 +238,34 @@ typedef int (*display_blanking_on_api)(const struct device *dev);
  * See display_blanking_off() for argument description
  */
 typedef int (*display_blanking_off_api)(const struct device *dev);
+
+/**
+ * @typedef display_aod_on_api
+ * @brief Callback API to set AOD mode
+ * See display_aod_on() for argument description
+ */
+typedef int (*display_idle_on_api)(const struct device *dev);
+
+/**
+ * @typedef display_aod_off_api
+ * @brief Callback API to set AOD mode
+ * See display_aod_off() for argument description
+ */
+typedef int (*display_idle_off_api)(const struct device *dev);
+
+/**
+ * @typedef display_set_aod_mode_api
+ * @brief Callback API to set AOD mode
+ * See display_set_aod_mode() for argument description
+ */
+typedef int (*display_set_aod_mode_api)(const struct device *dev, uint8_t mode);
+
+/**
+ * @typedef display_get_aod_mode_api
+ * @brief Callback API to get AOD mode
+ * See display_get_aod_mode() for argument description
+ */
+typedef uint8_t (*display_get_aod_mode_api)(const struct device *dev);
 
 /**
  * @typedef display_write_api
@@ -265,7 +307,7 @@ typedef int (*display_set_brightness_api)(const struct device *dev,
 * @brief Callback API to get display brightness
 * See display_get_brightness() for argument description
 */
-typedef int (*display_get_brightness_api)(const struct device *dev);
+typedef uint8_t (*display_get_brightness_api)(const struct device *dev);
 
 /**
  * @typedef display_set_contrast_api
@@ -325,6 +367,10 @@ typedef int (*display_unregister_callback_api)(const struct device *dev,
 struct display_driver_api {
 	display_blanking_on_api blanking_on;
 	display_blanking_off_api blanking_off;
+	display_idle_on_api idle_on;
+	display_idle_off_api idle_off;
+	display_set_aod_mode_api set_aod_mode;
+	display_get_aod_mode_api get_aod_mode;
 	display_write_api write;
 	display_read_api read;
 	display_get_framebuffer_api get_framebuffer;
@@ -445,6 +491,70 @@ static inline int display_blanking_off(const struct device *dev)
 }
 
 /**
+ * @brief Turn display Idle mode on
+ *
+ * @param dev Pointer to device structure
+ *
+ * @retval 0 on success else negative errno code.
+ */
+static inline int display_idle_on(const struct device *dev)
+{
+	struct display_driver_api *api =
+		(struct display_driver_api *)dev->api;
+
+	return api->idle_on(dev);
+}
+
+/**
+ * @brief Turn display Idle mode off
+ *
+ * @param dev Pointer to device structure
+ *
+ * @retval 0 on success else negative errno code.
+ */
+static inline int display_idle_off(const struct device *dev)
+{
+	struct display_driver_api *api =
+		(struct display_driver_api *)dev->api;
+
+	return api->idle_off(dev);
+}
+
+/**
+ * @brief Set display AOD mode
+ *
+ * When AOD mode enabled, the display will enter Idle mode in early-suspend
+ * otherwise it will blank on.
+ *
+ * @param dev Pointer to device structure
+ * @param mode AOD mode. accepted possible values are: 0 to disable AOD, 1 to enable AOD
+ *
+ * @retval 0 on success else negative errno code.
+ */
+static inline int display_set_aod_mode(const struct device *dev, uint8_t mode)
+{
+	struct display_driver_api *api =
+		(struct display_driver_api *)dev->api;
+
+	return api->set_aod_mode(dev, mode);
+}
+
+/**
+ * @brief Get display AOD mode
+ *
+ * @param dev Pointer to device structure
+ *
+ * @retval AOD mode.
+ */
+static inline uint8_t display_get_aod_mode(const struct device *dev)
+{
+	struct display_driver_api *api =
+		(struct display_driver_api *)dev->api;
+
+	return api->get_aod_mode(dev);
+}
+
+/**
  * @brief Set the brightness of the display
  *
  * Set the brightness of the display in steps of 1/256, where 255 is full
@@ -464,23 +574,23 @@ static inline int display_set_brightness(const struct device *dev,
 	return api->set_brightness(dev, brightness);
 }
 
- /**
-  * @brief Get the brightness of the display
-  *
-  * Get the brightness of the display in steps of 1/256, where 255 is full
-  * brightness and 0 is minimal.
-  *
-  * @param dev Pointer to device structure
-  *
-  * @retval 0~255 on success else negative errno code.
-  */
- static inline int display_get_brightness(const struct device *dev)
- {
-	 struct display_driver_api *api =
-		 (struct display_driver_api *)dev->api;
- 
-	 return api->get_brightness(dev);
- }
+/**
+ * @brief Get the brightness of the display
+ *
+ * Get the brightness of the display in steps of 1/256, where 255 is full
+ * brightness and 0 is minimal.
+ *
+ * @param dev Pointer to device structure
+ *
+ * @retval Brightness in steps of 1/256.
+ */
+static inline uint8_t display_get_brightness(const struct device *dev)
+{
+	struct display_driver_api *api =
+		(struct display_driver_api *)dev->api;
+
+	return api->get_brightness(dev);
+}
 
 /**
  * @brief Set the contrast of the display

@@ -14,7 +14,7 @@
 #ifdef CONFIG_PROPERTY
 #  include <property_manager.h>
 #endif
-#include <view_stack.h>
+#include "../launcher_app.h"
 #include "applist_ui.h"
 #include "compass_view.h"
 #include "../alipay/alipay_ui.h"
@@ -167,11 +167,7 @@ static void _applist_view_toggle_vibrator(void)
 
 static bool _applist_view_aod_mode_is_on(void)
 {
-#ifndef CONFIG_SIMULATOR
-	return soc_get_aod_mode();
-#else
-	return 0;
-#endif
+	return launcher_get_aod_mode();
 }
 
 static void _applist_view_toggle_aod_mode(void)
@@ -179,9 +175,9 @@ static void _applist_view_toggle_aod_mode(void)
 #ifndef CONFIG_SIMULATOR
 	/* AOD mode supported */
 	if (clocksel_get_aod_clock_dsc() != NULL) {
-		soc_set_aod_mode(!soc_get_aod_mode());
+		launcher_set_aod_mode(!launcher_get_aod_mode());
 #ifdef CONFIG_PROPERTY
-		property_set_int(CFG_AOD_MODE, soc_get_aod_mode());
+		property_set_int(CFG_AOD_MODE, launcher_get_aod_mode());
 		property_flush(CFG_AOD_MODE);
 #endif
 	}

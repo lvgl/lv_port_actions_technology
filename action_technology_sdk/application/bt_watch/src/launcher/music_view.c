@@ -1699,7 +1699,7 @@ static void _music_event_handler(lv_event_t * e)
 
 static void text_arc_tuning_cb(uint32_t letter, int16_t *st_angle, int16_t *end_angle)
 {
-	char tuning_str[20] = {"creow（）"};
+	/*char tuning_str[20] = {"creow（）"};
 	uint32_t ofs_1 = 0;
 	if(letter == lv_text_encoded_next(tuning_str, &ofs_1)) {
 		*st_angle -= 1;
@@ -1717,7 +1717,7 @@ static void text_arc_tuning_cb(uint32_t letter, int16_t *st_angle, int16_t *end_
 		*end_angle += 4;
 	} else if(letter == lv_text_encoded_next(tuning_str, &ofs_1)) {
 		*st_angle += 4;
-	}
+	}*/
 }
 
 static int _music_view_layout_update(view_data_t *view_data, bool first_layout)
@@ -1830,10 +1830,9 @@ static int _music_view_layout(view_data_t *view_data)
 
 	data = view_data->user_data;
 	data->timer = lv_timer_create(_music_view_update_process_task_cb, MUSIC_INFO_UPDATE_PERIOD, data);
+	_music_view_update_process_task_cb(data->timer);
 
-	lv_refr_now(view_data->display);
 	SYS_LOG_INF("_lcmusic_view_layout\n");
-
 	return 0;
 }
 

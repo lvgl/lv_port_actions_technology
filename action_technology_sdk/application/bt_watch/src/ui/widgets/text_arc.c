@@ -81,23 +81,14 @@ const lv_obj_class_t text_arc_class = {
 static void canvas_delete_event_cb(lv_event_t * e)
 {
 	lv_obj_t *canvas = lv_event_get_target(e);
-	void *buffer = (void *)lv_canvas_get_buf(canvas);
-	ui_mem_free(MEM_RES, buffer);
+	lv_draw_buf_destroy(lv_canvas_get_draw_buf(canvas));
 }
 
 static void text_arc_letter_angle_calculate(text_arc_t *text_arc, lv_font_glyph_dsc_t *font_g, text_id_t *letter_data, uint32_t letter, int32_t radius)
 {
-	int32_t box_w = font_g->box_w / 2;
-#if 0
-	float c_angle = asin((float)(box_w - font_g.ofs_x) / radius);
-	letter_data->st_angle = (int16_t)(c_angle * 180.0 / PI);
-	c_angle = asin((float)(box_w) / radius);
-	letter_data->end_angle = (int16_t)(c_angle * 180.0 / PI);
-#else
-	float c_angle = asin((float)(box_w) / radius);
+	float c_angle = asin((float)(font_g->adv_w/2) / radius);
 	letter_data->st_angle = (int16_t)(c_angle * 180.0 / PI);
 	letter_data->end_angle = letter_data->st_angle;
-#endif
 	/* Part unicode fine tuning angle*/
 	if (text_arc->fine_tuning_angle_cb)
 		text_arc->fine_tuning_angle_cb(letter, &letter_data->st_angle, &letter_data->end_angle);
@@ -111,24 +102,30 @@ static void text_arc_up(text_arc_t *text_arc)
 	if (text_arc->text == NULL || text_arc->text[0] == '\0')
 		return;
 
-	const lv_font_t *font = lv_obj_get_style_text_font(obj, LV_PART_MAIN);;
+	const lv_font_t *font = lv_obj_get_style_text_font(obj, LV_PART_MAIN);
+	const uint16_t letter_h = lv_font_get_line_height(font);
+	lv_font_glyph_dsc_t font_g = {0};
+	uint32_t letter = lv_text_encoded_next(".", NULL);
+	lv_font_get_glyph_dsc(font, &font_g, letter, letter);
+	int32_t radius = text_arc->radius - letter_h;	//More minus letter_h, Prevention size exceed
+	text_id_t letter_ret = {0};
+	text_arc_letter_angle_calculate(text_arc, &font_g, &letter_ret, letter, radius);
+	int32_t angle_ret = letter_ret.st_angle + letter_ret.end_angle + text_arc->interval_angle;
 	const char *text = text_arc->text;
 	uint32_t ofs = 0;
-	uint32_t letter = lv_text_encoded_next(text, &ofs);
+	letter = lv_text_encoded_next(text, &ofs);
 	uint32_t letter_next = 0;
-	const uint16_t letter_space = 0; /* add space for special characters */
-	const uint16_t letter_h = lv_font_get_line_height(font) + letter_space * 2;
 	int32_t angle = text_arc->angle_st;
 
 	uint32_t letter_len = 0;
 	uint32_t mem_size = 10;
-	text_id_t *letter_data = lv_malloc(sizeof(text_id_t) * mem_size);
+	uint8_t dot_num = 3;
+	text_id_t *letter_data = lv_malloc(sizeof(text_id_t) * (mem_size + dot_num));
 	if(letter_data == NULL) {
 		LV_LOG_ERROR("letter_data alloc failed");
 		return;
 	}
 	int32_t all_angle = 0;
-	int32_t radius = text_arc->radius - letter_h;
 	for (; letter != 0; letter = letter_next) {
 		letter_data[letter_len].letter = letter;
 
@@ -137,30 +134,25 @@ static void text_arc_up(text_arc_t *text_arc)
 		ofs = 0;
 
 		letter_next = lv_text_encoded_next(text, &ofs);
-
-		lv_font_glyph_dsc_t font_g;
 		lv_font_get_glyph_dsc(font, &font_g, letter, letter_next);
 		text_arc_letter_angle_calculate(text_arc, &font_g, &letter_data[letter_len], letter, radius);
-		if(all_angle > 360) {
-			if(letter_len)
+		if(all_angle + letter_data->st_angle + letter_data->end_angle
+				 + text_arc->interval_angle + angle_ret > 360) {
+			for (uint8_t i = 0 ; i < dot_num; i++) {
+				if(all_angle + angle_ret * (dot_num + 1) < 360)
+					break;
 				letter_len--;
-			letter = lv_text_encoded_next(".", NULL);
-			lv_font_get_glyph_dsc(font, &font_g, letter, letter);
-			text_id_t letter_ret = {0};
-			text_arc_letter_angle_calculate(text_arc, &font_g, &letter_ret, letter, radius);
-			int32_t angle_ret = letter_ret.st_angle + letter_ret.end_angle + text_arc->interval_angle;
-			uint32_t letter_id = letter_len;
-			for (uint8_t i = 0 ; i < 3; i++) {
-				all_angle -= letter_data[letter_id].st_angle + letter_data[letter_id].end_angle + text_arc->interval_angle;
-				letter_data[letter_id].letter = '.';
-				letter_data[letter_id].st_angle = letter_ret.st_angle;
-				letter_data[letter_id].end_angle = letter_ret.end_angle;
-				all_angle += angle_ret;
-				letter_id--;
-				if(letter_id == 0)
+				all_angle -= letter_data[letter_len].st_angle + letter_data[letter_len].end_angle + text_arc->interval_angle;
+				if(letter_len == 0)
 					break;
 			}
-			letter_len++;
+			for (uint8_t i = 0 ; i < dot_num; i++) {
+				all_angle += angle_ret;
+				letter_data[letter_len].letter = '.';
+				letter_data[letter_len].st_angle = letter_ret.st_angle;
+				letter_data[letter_len].end_angle = letter_ret.end_angle;
+				letter_len++;
+			}
 			break;
 		} else {
 			all_angle += letter_data[letter_len].st_angle + letter_data[letter_len].end_angle + text_arc->interval_angle;
@@ -168,7 +160,7 @@ static void text_arc_up(text_arc_t *text_arc)
 		letter_len++;
 		if(letter_len >= mem_size) {
 			mem_size += 10;
-			letter_data = lv_realloc(letter_data, sizeof(text_id_t) * mem_size);
+			letter_data = lv_realloc(letter_data, sizeof(text_id_t) * (mem_size + dot_num));
 			if(letter_data == NULL) {
 				letter_len = 0;
 				LV_LOG_ERROR("letter_data realloc failed");
@@ -217,34 +209,20 @@ static void text_arc_up(text_arc_t *text_arc)
 			break;
 		}
 
-		uint32_t letter_buf_size = (uint32_t)font_g.box_w * font_g.box_h;
-		void *buf = ui_mem_aligned_alloc(MEM_RES, 64, letter_buf_size, __func__);
-		if (buf == NULL) {
-			LV_LOG_ERROR("letter buffer alloc failed %d",letter_buf_size);
+		lv_draw_buf_t *canvas_drawbuf = lv_draw_buf_create(font_g.box_w, font_g.box_h, LV_COLOR_FORMAT_A8, font_g.box_w);
+		if (canvas_drawbuf == NULL) {
+			LV_LOG_ERROR("letter buffer alloc failed");
 			lv_font_glyph_release_draw_data(&font_g);
 			break;
 		}
 
 		if (bmp_drawbuf->header.cf == LV_COLOR_FORMAT_A8) {
-			if (bmp_drawbuf->header.stride == bmp_drawbuf->header.w) {
-				lv_memcpy(buf, bmp_drawbuf->data, letter_buf_size);
-			} else {
-				uint8_t *buf8 = buf;
-				uint8_t *data8 = bmp_drawbuf->data;
-				for (i = 0; i < bmp_drawbuf->header.h; i++) {
-					lv_memcpy(buf8, data8, font_g.box_w);
-					buf8 += font_g.box_w;
-					data8 += bmp_drawbuf->header.stride;
-				}
-			}
+			lv_draw_buf_copy(canvas_drawbuf, NULL, bmp_drawbuf, NULL);
 		} else {
-			sw_convert_a124_to_a8(buf, bmp_drawbuf->data, font_g.box_w,
+			sw_convert_a124_to_a8(canvas_drawbuf->data, bmp_drawbuf->data, font_g.box_w,
 				bmp_drawbuf->header.stride * 8, 0, lv_color_format_get_bpp(bmp_drawbuf->header.cf),
 				font_g.box_w, font_g.box_h);
 		}
-
-		mem_dcache_clean(buf, letter_buf_size);
-		mem_dcache_sync();
 
 		lv_font_glyph_release_draw_data(&font_g);
 
@@ -255,18 +233,12 @@ static void text_arc_up(text_arc_t *text_arc)
 
 		// create canvas to hold letter
 		lv_obj_t *canvas = lv_canvas_create(obj);
-		if (canvas == NULL) {
-			LV_LOG_ERROR("canvas obj create failed");
-			ui_mem_free(MEM_RES, buf);
-			break;
-		}
-
-		lv_canvas_set_buffer(canvas, buf, font_g.box_w, font_g.box_h, LV_COLOR_FORMAT_A8);
-		lv_obj_set_pos(canvas, pivot.x - font_g.adv_w / 2 + letter_h,
-				pivot.y + letter_h - font->base_line - font_g.box_h - font_g.ofs_y);
+		lv_canvas_set_draw_buf(canvas, canvas_drawbuf);
+		lv_obj_set_pos(canvas, pivot.x - font_g.adv_w / 2 + font_g.ofs_x + letter_h,
+				pivot.y + letter_h - font_g.box_h - font_g.ofs_y);
 		lv_obj_add_style(canvas, &text_arc->style, LV_PART_MAIN);
 		lv_obj_add_event_cb(canvas, canvas_delete_event_cb, LV_EVENT_DELETE, NULL);
-		lv_image_set_pivot(canvas, font_g.box_w / 2, font->base_line + font_g.box_h + font_g.ofs_y);
+		lv_image_set_pivot(canvas, font_g.adv_w / 2 - font_g.ofs_x, font_g.box_h);
 		lv_image_set_rotation(canvas, (angle + overturn_a) * 10);
 
 		angle += at_letter->end_angle;

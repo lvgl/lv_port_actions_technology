@@ -34,7 +34,9 @@ static OS_MUTEX_DEFINE(media_srv_mutex);
 
 static int media_player_ref_cnt;
 static bool force_disable_player = false;
+#ifdef CONFIG_SYS_WAKELOCK
 static bool g_wlock_lock = false;
+#endif
 
 static media_player_t *current_media_dumpable_player;
 static media_player_t *current_media_main_player;
@@ -191,7 +193,12 @@ media_player_t *media_player_open(media_init_param_t *init_param)
 	if (!handle) {
 		return NULL;
 	}
-
+#ifdef CONFIG_SYS_WAKELOCK
+	if (!g_wlock_lock) {
+		sys_wake_lock_ext(PARTIAL_WAKE_LOCK, MEDIA_WAKE_LOCK_USER);
+		g_wlock_lock = true;
+	}
+#endif
 	/* fall back to media player handle */
 	if (!init_param->user_data)
 		init_param->user_data = handle;
@@ -307,11 +314,6 @@ media_player_t *media_player_open(media_init_param_t *init_param)
 #endif
 	}
 
-#ifdef CONFIG_SYS_WAKELOCK
-	sys_wake_lock_ext(PARTIAL_WAKE_LOCK, MEDIA_WAKE_LOCK_USER);
-	g_wlock_lock = true;
-#endif
-
 	os_mutex_unlock(&media_srv_mutex);
 
 	_notify_player_lifecycle_changed(handle, PLAYER_EVENT_OPEN, init_param, sizeof(*init_param));
@@ -321,6 +323,18 @@ error_exit:
 #ifdef CONFIG_ACTS_DVFS_DYNAMIC_LEVEL
 	SYS_LOG_INF("unset tws %d type %d dvfs %d\n", is_tws, init_param->stream_type, dvfs_level);
 	dvfs_unset_level(dvfs_level, "media");
+#endif
+#ifdef CONFIG_SYS_WAKELOCK
+	if (g_wlock_lock) {
+		sys_wake_unlock_ext(PARTIAL_WAKE_LOCK, MEDIA_WAKE_LOCK_USER);
+		g_wlock_lock = false;
+	}
+#endif
+#ifdef CONFIG_SYS_WAKELOCK
+	if (g_wlock_lock) {
+		sys_wake_unlock_ext(PARTIAL_WAKE_LOCK, MEDIA_WAKE_LOCK_USER);
+		g_wlock_lock = false;
+	}
 #endif
 
 	os_mutex_unlock(&media_srv_mutex);
@@ -846,3 +860,47 @@ int media_player_set_mix_stream(media_player_t *handle, mix_service_param_t *ini
 
 }
 
+#ifdef CONFIG_VOICE_RECORDER
+int media_player_enable_voice_record(media_player_t* handle, int enable)
+{
+	struct app_msg msg = {0};
+	media_srv_param_t *srv_param = NULL;
+	os_sem return_notify;
+
+	if (!handle || !handle->media_srv_handle) {
+		return -EINVAL;
+	}
+
+	srv_param = media_mem_malloc(sizeof(*srv_param), MCU_MEMORY);
+	if (!srv_param)
+		return -ENOMEM;
+
+	os_sem_init(&return_notify, 0, 1);
+
+	os_mutex_lock(&media_srv_mutex, OS_FOREVER);
+
+	srv_param->handle = handle->media_srv_handle;
+	srv_param->param.type = enable;
+
+	msg.type = MSG_MEDIA_SRV_ENABLE_VOICE_RECORD;
+	msg.ptr = srv_param;
+	msg.callback = _media_service_default_callback;
+	msg.sync_sem = &return_notify;
+
+	if (false == send_async_msg(MEDIA_SERVICE_NAME, &msg)) {
+		media_mem_free(srv_param);
+		os_mutex_unlock(&media_srv_mutex);
+		return -EBUSY;
+	}
+	
+	if (os_sem_take(&return_notify, OS_FOREVER)) {
+		media_mem_free(srv_param);
+		os_mutex_unlock(&media_srv_mutex);
+		return -ETIME;
+	}
+
+	media_mem_free(srv_param);
+	os_mutex_unlock(&media_srv_mutex);	
+	return 0;
+}
+#endif

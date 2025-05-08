@@ -81,6 +81,11 @@ uint32_t lvx_color_format_to_display(lv_color_format_t cf, uint8_t * bits_per_pi
             bpp = 1;
             break;
 
+        case LV_COLOR_FORMAT_L8:
+            format = HAL_PIXEL_FORMAT_L8;
+            bpp = 8;
+            break;
+
         default:
             break;
     }
@@ -139,6 +144,10 @@ lv_color_format_t lvx_color_format_from_display(uint32_t format)
             cf = LV_COLOR_FORMAT_I1;
             break;
 
+        case HAL_PIXEL_FORMAT_L8:
+            cf = LV_COLOR_FORMAT_L8;
+            break;
+
         default:
             cf = LV_COLOR_FORMAT_UNKNOWN;
             break;
@@ -147,6 +156,18 @@ lv_color_format_t lvx_color_format_from_display(uint32_t format)
     return cf;
 }
 
+lv_result_t lvx_draw_buffer_from_graphic(lv_draw_buf_t * draw_buf, const graphic_buffer_t * gbuf)
+{
+    lv_color_format_t cf = lvx_color_format_from_display(gbuf->pixel_format);
+
+    if(cf != LV_COLOR_FORMAT_UNKNOWN) {
+        uint32_t stride = graphic_buffer_get_bytes_per_line(gbuf);
+        return lv_draw_buf_init(draw_buf, gbuf->width, gbuf->height, cf,
+                    stride, gbuf->data, gbuf->height * stride);
+    }
+
+    return LV_RESULT_INVALID;
+}
 
 #ifdef CONFIG_VG_LITE
 
@@ -191,9 +212,19 @@ int lvx_color_format_to_vglite(lv_color_format_t cf, uint8_t * bits_per_pixel)
             bpp = 8;
             break;
 
+        case LV_COLOR_FORMAT_L8:
+            format = VG_LITE_L8;
+            bpp = 8;
+            break;
+
         case LV_COLOR_FORMAT_ETC2_EAC:
             format = VG_LITE_RGBA8888_ETC2_EAC;
             bpp = 8;
+            break;
+
+        case LV_COLOR_FORMAT_YUY2:
+            format = VG_LITE_YUY2;
+            bpp = 16;
             break;
 
         default:
@@ -209,7 +240,7 @@ int lvx_color_format_to_vglite(lv_color_format_t cf, uint8_t * bits_per_pixel)
 
 int lvx_vglite_map_draw_buf(vg_lite_buffer_t * vgbuf, const lv_draw_buf_t * draw_buf)
 {
-    if(vgbuf == NULL || draw_buf == NULL)
+    if(vgbuf == NULL || draw_buf == NULL || draw_buf->data == NULL)
         return -EINVAL;
 
     int format = lvx_color_format_to_vglite(draw_buf->header.cf, NULL);
@@ -232,15 +263,13 @@ int lvx_vglite_unmap(vg_lite_buffer_t * vgbuf)
     return vglite_buf_unmap(vgbuf);
 }
 
-int lvx_vglite_set_image_palette(const lv_image_dsc_t * img_dsc)
+int lvx_vglite_set_image_palette(lv_color_format_t cf, const uint32_t * palette)
 {
-    vg_lite_uint32_t *palette = (vg_lite_uint32_t *)img_dsc->data;
-
-    switch(img_dsc->header.cf) {
-    case LV_COLOR_FORMAT_I8:
-        return vg_lite_set_CLUT(256, palette);
-    default:
-        return -EINVAL;
+    switch(cf) {
+        case LV_COLOR_FORMAT_I8:
+            return vg_lite_set_CLUT(256, (void *)palette);
+        default:
+            return -EINVAL;
     }
 }
 

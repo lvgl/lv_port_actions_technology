@@ -257,6 +257,7 @@ struct sppble_stream_init_param {
 	int32_t read_timeout;
 	int32_t write_timeout;
 	int32_t read_buf_size;
+	int32_t keep_connect;
 };
 
 /** bt manager pbap vcard filter bit */
@@ -1335,6 +1336,13 @@ int bt_manager_set_status(int state);
  * @return None
  */
 void bt_manager_check_mac_name(void);
+
+/**
+ * @brief bt manager get array 
+ *
+ * @return 8 bytes mac
+ */
+uint8_t *bt_manager_get_mac_array(void);
 
 /**
  * @cond INTERNAL_HIDDEN

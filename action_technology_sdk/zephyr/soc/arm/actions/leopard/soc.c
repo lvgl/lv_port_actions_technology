@@ -17,7 +17,14 @@
 #include "soc_atp.h"
 #include <linker/linker-defs.h>
 //#include <arch/arm/aarch32/cortex_m/cmsis.h>
+#include <string.h>
 
+int soc_get_app_version(char *ver, int maxlen)
+{
+	strncpy(ver, (void*)(CONFIG_FLASH_BASE_ADDRESS+64), maxlen-1);
+	ver[maxlen-1] = 0;
+	return strlen(ver);
+}
 
 static void jtag_config(unsigned int group_id)
 {
@@ -136,7 +143,7 @@ static int leopard_init(const struct device *arg)
 {
 	uint32_t key;
 	uint32_t val;
-
+	char app_ver[64];
 
 	ARG_UNUSED(arg);
 	soc_udelay(50);
@@ -222,6 +229,8 @@ static int leopard_init(const struct device *arg)
 	//val = (val & ~(0xFff)) | 0xedd;   // vdd set 1.2
 	//sys_write32(val, VOUT_CTL1_S1M);
 	//sys_write32(0x12, CMU_SYSCLK);// cpu 200
+	soc_get_app_version(app_ver, 64);
+	printk("app ver=%s\n", app_ver);
 	return 0;
 }
 

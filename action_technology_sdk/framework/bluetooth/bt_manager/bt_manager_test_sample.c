@@ -2153,7 +2153,12 @@ void test_ips_recv_codec(void *sync_handle, struct bt_ips_recv_info *info, uint8
 
 void test_ips_status(void *sync_handle, uint8_t status, uint8_t num_synced)
 {
-	SYS_LOG_INF("status %d %d.", status, num_synced);
+	//SYS_LOG_INF("status %d %d.", status, num_synced);
+}
+
+void test_ips_token_get(void *sync_handle, bool enable)
+{
+	SYS_LOG_INF("sync_handle %p %d.", sync_handle, enable);
 }
 
 static const struct bt_ips_cb test_ips_cb = {
@@ -2161,6 +2166,7 @@ static const struct bt_ips_cb test_ips_cb = {
 	.ips_term = test_ips_term,
 	.ips_recv_codec = test_ips_recv_codec,
 	.ips_status = test_ips_status,
+	.ips_token_get = test_ips_token_get,
 };
 
 #if 0
@@ -2207,6 +2213,15 @@ static void shell_ips_adv_loop_work(struct k_work *work)
 
 static uint8_t g_cnt_subscriber;
 static bt_addr_t g_subs_mac[BT_IPS_SUBS_MAX];
+static uint8_t g_t_num = 1;
+
+static int shell_cmd_ips_t_num(const struct shell *shell, size_t argc, char *argv[])
+{
+	g_t_num = strtoul(argv[1], NULL, 16);
+
+	SYS_LOG_INF("g_t_num %x.", g_t_num);
+	return 0;
+}
 
 void shell_ips_search_cb(struct bt_ips_search_rt *rt)
 {
@@ -2216,7 +2231,7 @@ void shell_ips_search_cb(struct bt_ips_search_rt *rt)
 	SYS_LOG_INF("search t_num %d role %d %s.", rt->t_num, rt->role, rt->name);
 	if (BT_IPS_ROLE_INITIATOR == rt->role && rt->t_num > 0) {
 		role = BT_IPS_ROLE_SUBSCRIBER;
-	} else if (BT_IPS_ROLE_SUBSCRIBER == rt->role && (1) == rt->t_num) {
+	} else if (BT_IPS_ROLE_SUBSCRIBER == rt->role && g_t_num == rt->t_num) {
 		role = BT_IPS_ROLE_INITIATOR;
 	} else {
 		return;
@@ -2295,6 +2310,14 @@ static int shell_cmd_ips_start(const struct shell *shell, size_t argc, char *arg
 {
 	struct bt_ips_init_info init_info;
 	uint16_t ch = 1, role = BT_IPS_ROLE_INITIATOR;
+	if (0 == g_cnt_subscriber) {
+		SYS_LOG_ERR("g_cnt_subscriber is %d.", g_cnt_subscriber);
+		return 0;
+	}
+
+	if (g_cnt_subscriber > 2 && BT_IPS_SUBS_MAX >= g_cnt_subscriber) {
+		ch = g_cnt_subscriber - 1;
+	}
 
 	if (argc >= 2) {
 		role = strtoul(argv[1], NULL, 16);
@@ -2458,6 +2481,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(bt_mgr_cmds,
 	SHELL_CMD(bt_crash, NULL, "bt core crash", shell_cmd_bt_crash),
 
 #ifdef CONFIG_BT_BLE_IPS
+	SHELL_CMD(bt_ips_num, NULL, "ips_num", shell_cmd_ips_t_num),
 	SHELL_CMD(bt_ips_search, NULL, "ips_start", shell_cmd_ips_search),
 	SHELL_CMD(bt_ips_search_stop, NULL, "ips_stop", shell_cmd_ips_search_stop),
 	SHELL_CMD(bt_ips_start, NULL, "ips_start", shell_cmd_ips_start),

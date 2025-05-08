@@ -2412,6 +2412,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\thirdparty\lib\gui\lvgl\porting\win32\lvgl_mem.c">
       <Filter>lvgl\porting\win32</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\framework\display\ui_service\recorder\input_recorder.c">
+      <Filter>framework\display\ui_service\recorder</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bt_watch_simulator.h" />
@@ -3699,6 +3702,9 @@
     </Filter>
     <Filter Include="lvgl\src\draw\actions">
       <UniqueIdentifier>{adb52cf7-ea7a-4396-a22d-9bcdfb204fc2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\display\ui_service\recorder">
+      <UniqueIdentifier>{0c8c5d85-a81f-4a09-a154-83a2d89d2bb0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

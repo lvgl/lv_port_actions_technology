@@ -337,6 +337,41 @@ static inline display_color_t display_color_blue(void)
 	return display_color_make(0x00, 0x00, 0xff, 0xff);
 }
 
+static inline uint8_t display_rgb16_luminance(uint16_t rgb16)
+{
+	return (uint8_t)((635u * (rgb16 >> 11) + 613u * ((rgb16 & 0x7e0) >> 5) + 231u * (rgb16 & 0x1f)) >> 8);
+}
+
+static inline uint8_t display_rgb24_luminance(uint8_t r, uint8_t g, uint8_t b)
+{
+	return (uint8_t)((77u * r + 151u * g + 28u * b) >> 8);
+}
+
+static inline uint8_t display_color_luminance(display_color_t color)
+{
+	return display_rgb24_luminance(color.r, color.g, color.b);
+}
+
+static inline uint8_t display_rgb32_luminance(uint32_t rgb32)
+{
+	return display_color_luminance(display_color_hex(rgb32));
+}
+
+static inline uint32_t display_luminance_to_rgb32(uint8_t luminance)
+{
+	return 0xff000000 | (luminance << 16) | (luminance << 8) | luminance;
+}
+
+static inline uint16_t display_luminance_to_rgb16(uint8_t luminance)
+{
+	return ((luminance & 0xf8) << 8) | ((luminance & 0xfc) << 3) | (luminance >> 3);
+}
+
+static inline display_color_t display_luminance_to_color(uint8_t luminance)
+{
+	return display_color_hex(display_luminance_to_rgb32(luminance));
+}
+
 /**
  * @brief Fill color to display buffer
  *
@@ -526,4 +561,3 @@ void display_rect_merge(display_rect_t *dest, const display_rect_t *src);
  */
 
 #endif /* ZEPHYR_INCLUDE_DRIVERS_DISPLAY_DISPLAY_GRAPHICS_H_ */
-

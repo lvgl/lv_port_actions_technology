@@ -113,12 +113,14 @@ static void _msg_callback(struct app_msg *msg, int res, void *data)
 	uint32_t opa_format;
 	uint32_t trans_format;
 
-	if (LV_COLOR_DEPTH == 16) {
+	if (LV_COLOR_DEPTH <= 8) {
+		opa_format = HAL_PIXEL_FORMAT_L8;
+		trans_format = HAL_PIXEL_FORMAT_ARGB_8565;
+	} else if (LV_COLOR_DEPTH <= 16) {
 		opa_format = HAL_PIXEL_FORMAT_RGB_565;
 		trans_format = HAL_PIXEL_FORMAT_ARGB_8565;
 	} else {
-		opa_format = (surface_get_max_possible_buffer_count() > 0) ?
-					HAL_PIXEL_FORMAT_BGR_888 : HAL_PIXEL_FORMAT_XRGB_8888;
+		opa_format = HAL_PIXEL_FORMAT_RGB_888;
 		trans_format = HAL_PIXEL_FORMAT_ARGB_8888;
 	}
 

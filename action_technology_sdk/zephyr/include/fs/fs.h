@@ -422,6 +422,18 @@ int fs_truncate(struct fs_file_t *zfp, off_t length);
 int fs_sync(struct fs_file_t *zfp);
 
 /**
+ * @brief Get file size
+ *
+ * The function gets the size of an open file
+ *
+ * @param zfp Pointer to the file object
+ *
+ * @retval >=0 a number of bytes, on success;
+ * @retval <0 a negative errno code on error.
+ */
+int fs_size(struct fs_file_t *zfp);
+
+/**
  * @brief Directory create
  *
  * Creates a new directory using specified path.

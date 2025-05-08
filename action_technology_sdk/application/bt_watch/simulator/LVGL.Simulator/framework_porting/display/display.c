@@ -11,31 +11,19 @@
 
 #include <drivers/display/display_graphics.h>
 
-bool display_format_is_opaque(uint32_t pixel_format)
-{
-	return (pixel_format &
-		(PIXEL_FORMAT_ARGB_8888 | PIXEL_FORMAT_BGRA_5658 |
-			PIXEL_FORMAT_BGRA_6666 | PIXEL_FORMAT_RGBA_6666 |
-			PIXEL_FORMAT_BGRA_5551 | PIXEL_FORMAT_I8 |
-			PIXEL_FORMAT_I4 | PIXEL_FORMAT_I2 | PIXEL_FORMAT_I1 |
-			PIXEL_FORMAT_A8 | PIXEL_FORMAT_A4 | PIXEL_FORMAT_A2 |
-			PIXEL_FORMAT_A1 | PIXEL_FORMAT_A4_LE | PIXEL_FORMAT_A1_LE)) ?
-		false : true;
-}
-
 uint8_t display_format_get_bits_per_pixel(uint32_t pixel_format)
 {
-	if (pixel_format & (PIXEL_FORMAT_BGR_565 | PIXEL_FORMAT_RGB_565 | PIXEL_FORMAT_BGRA_5551))
+	if (pixel_format & (PIXEL_FORMAT_BGR_565 | PIXEL_FORMAT_RGB_565 | PIXEL_FORMAT_BGR_565_SWAP | PIXEL_FORMAT_BGRA_5551))
 		return 16;
 
-	if (pixel_format & (PIXEL_FORMAT_ARGB_8888 | PIXEL_FORMAT_XRGB_8888))
+	if (pixel_format & (PIXEL_FORMAT_ARGB_8888 | PIXEL_FORMAT_XRGB_8888 | PIXEL_FORMAT_ABGR_8888 | PIXEL_FORMAT_XBGR_8888))
 		return 32;
 
-	if (pixel_format & (PIXEL_FORMAT_RGB_888 | PIXEL_FORMAT_BGR_888 | PIXEL_FORMAT_BGRA_5658 |
+	if (pixel_format & (PIXEL_FORMAT_RGB_888 | PIXEL_FORMAT_BGR_888 | PIXEL_FORMAT_BGRA_5658 | PIXEL_FORMAT_RGBA_5658 |
 		                PIXEL_FORMAT_BGRA_6666 | PIXEL_FORMAT_RGBA_6666))
 		return 24;
 
-	if (pixel_format & (PIXEL_FORMAT_A8 | PIXEL_FORMAT_I8))
+	if (pixel_format & (PIXEL_FORMAT_A8 | PIXEL_FORMAT_I8 | PIXEL_FORMAT_L8))
 		return 8;
 
 	if (pixel_format & (PIXEL_FORMAT_A4 | PIXEL_FORMAT_A4_LE | PIXEL_FORMAT_I4))
@@ -56,10 +44,16 @@ const char * display_format_get_name(uint32_t pixel_format)
 	switch (pixel_format) {
 	case PIXEL_FORMAT_ARGB_8888:
 		return "ARGB_8888";
+	case PIXEL_FORMAT_ABGR_8888:
+		return "ABGR_8888";
 	case PIXEL_FORMAT_XRGB_8888:
 		return "XRGB_8888";
+	case PIXEL_FORMAT_XBGR_8888:
+		return "XBGR_8888";
 	case PIXEL_FORMAT_BGR_565:
 		return "RGB_565";
+	case PIXEL_FORMAT_BGR_565_SWAP:
+		return "BGR_565";
 	case PIXEL_FORMAT_RGB_565:
 		return "RGB_565_BE";
 	case PIXEL_FORMAT_BGRA_5551:
@@ -70,6 +64,8 @@ const char * display_format_get_name(uint32_t pixel_format)
 		return "RGB_888";
 	case PIXEL_FORMAT_BGRA_5658:
 		return "ARGB_8565";
+	case PIXEL_FORMAT_RGBA_5658:
+		return "ABGR_8565";
 	case PIXEL_FORMAT_BGRA_6666:
 		return "ARGB_6666";
 	case PIXEL_FORMAT_RGBA_6666:
@@ -94,6 +90,8 @@ const char * display_format_get_name(uint32_t pixel_format)
 		return "I2";
 	case PIXEL_FORMAT_I1:
 		return "I1";
+	case PIXEL_FORMAT_L8:
+		return "L8";
 	case PIXEL_FORMAT_MONO01: /* 0=Black 1=White */
 		return "MONO_01";
 	case PIXEL_FORMAT_MONO10: /* 1=Black 0=White */

@@ -133,11 +133,15 @@
 /* Supported cipher modes */
 
 #if defined(CONFIG_MBEDTLS_CIPHER_AES_ENABLED)
+#ifndef CONFIG_AEM_WATCH_SUPPORT
 #define MBEDTLS_AES_C
+#endif
 #endif
 
 #if defined(CONFIG_MBEDTLS_AES_ROM_TABLES)
+#ifndef CONFIG_AEM_WATCH_SUPPORT
 #define MBEDTLS_AES_ROM_TABLES
+#endif
 #endif
 
 #if defined(CONFIG_MBEDTLS_CIPHER_CAMELLIA_ENABLED)
@@ -253,7 +257,9 @@
 #endif
 
 #if defined(CONFIG_MBEDTLS_MAC_MD5_ENABLED)
+#ifndef CONFIG_AEM_WATCH_SUPPORT
 #define MBEDTLS_MD5_C
+#endif
 #endif
 
 #if defined(CONFIG_MBEDTLS_MAC_SHA1_ENABLED)
@@ -282,11 +288,15 @@
 
 /* mbedTLS modules */
 #if defined(CONFIG_MBEDTLS_CTR_DRBG_ENABLED)
+#ifndef CONFIG_AEM_WATCH_SUPPORT
 #define MBEDTLS_CTR_DRBG_C
+#endif
 #endif
 
 #if defined(CONFIG_MBEDTLS_HMAC_DRBG_ENABLED)
+#ifndef CONFIG_AEM_WATCH_SUPPORT
 #define MBEDTLS_HMAC_DRBG_C
+#endif
 #endif
 
 #if defined(CONFIG_MBEDTLS_DEBUG)

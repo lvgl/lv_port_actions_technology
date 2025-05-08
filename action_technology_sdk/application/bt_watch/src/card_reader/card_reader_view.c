@@ -131,7 +131,7 @@ static void _unload_resource(card_reader_view_data_t *data)
 void card_reader_view_init(void)
 {
 #ifdef CONFIG_UI_MANAGER
-	ui_view_create(CARD_READER_VIEW, NULL, UI_CREATE_FLAG_SHOW);
+	view_stack_push_view(CARD_READER_VIEW, NULL);
 #endif
 	SYS_LOG_INF("ok\n");
 }
@@ -139,7 +139,7 @@ void card_reader_view_init(void)
 void card_reader_view_deinit(void)
 {
 #ifdef CONFIG_UI_MANAGER
-	ui_view_delete(CARD_READER_VIEW);
+	view_stack_back_prev();
 #endif
 
 	SYS_LOG_INF("ok\n");

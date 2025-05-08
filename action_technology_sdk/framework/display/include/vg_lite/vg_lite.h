@@ -53,7 +53,7 @@ extern "C" {
 
 #define VGLITE_API_VERSION_3_0      VGLITE_MAKE_VERSION(3, 0, 0)
 
-#define VGLITE_RELEASE_VERSION      VGLITE_MAKE_VERSION(4,0,106)
+#define VGLITE_RELEASE_VERSION      VGLITE_MAKE_VERSION(4,0,110)
 
 #define VGL_FALSE                   0
 #define VGL_TRUE                    1
@@ -245,6 +245,7 @@ typedef unsigned int        vg_lite_color_t;
         gcFEATURE_BIT_VG_YUV_ALIGNED_CHECK,
         gcFEATURE_BIT_VG_512_PARALLEL_PATHS,
         gcFEATURE_BIT_VG_DEC_COMPRESS_2_1,
+        gcFEATURE_BIT_24BIT_PLANAR_SW,
         gcFEATURE_COUNT
     } vg_lite_feature_t;
 
@@ -738,10 +739,13 @@ typedef unsigned int        vg_lite_color_t;
         vg_lite_uint32_t alpha_stride;          /*! Alpha stride. */
         vg_lite_uint32_t uv_height;             /*! UV(U) height. */
         vg_lite_uint32_t v_height;              /*! V height. */
+        vg_lite_uint32_t alpha_height;          /*! Alpha height. */
         vg_lite_pointer uv_memory;              /*! The logical pointer to the UV(U) planar memory. */
         vg_lite_pointer v_memory;               /*! The logical pointer to the V planar memory. */
+        vg_lite_pointer alpha_memory;           /*! The logical pointer to the Alpha planar memory. */
         vg_lite_pointer uv_handle;              /*! The memory handle of the UV(U) planar. */
         vg_lite_pointer v_handle;               /*! The memory handle of the V planar. */
+        vg_lite_pointer alpha_handle;           /*! The memory handle of the Alpha planar. */
     } vg_lite_yuvinfo_t;
 
     typedef struct vg_lite_path_point* vg_lite_path_point_ptr;
@@ -927,6 +931,8 @@ typedef unsigned int        vg_lite_color_t;
         vg_lite_uint8_t premultiplied;          /*! The RGB pixel values are alpha-premultipled */
         vg_lite_uint8_t apply_premult;          /*! Need to apply alpha-premultiply */
         struct vg_lite_buffer *lvgl_buffer;     /*! Buffer for SW LVGL blending support */
+        struct vg_lite_buffer *sw24bit_buffer;          /*! Buffer cache for SW 24bit-planar support */
+        struct vg_lite_buffer *sw24bit_planar_buffer;   /*! sw24bit-planar_buffer is the original buffer of sw24bit_buffer */
         vg_lite_color_t bg_color;               /*! Background for edge filter */
         vg_lite_uint8_t screen_copy;            /*! Flag to optimize bandwidth when enable dec and copy image to full dst buffer without blending */
     } vg_lite_buffer_t;
@@ -1499,7 +1505,7 @@ typedef unsigned int        vg_lite_color_t;
      * and set gcdVG_ENABLE_COMMAND_BUFFER_CACHE to 1 in VGLiteKernel\vg_lite_option.h.
      * VGLite command buffers can be saved and re-executed by application.
      */
-    vg_lite_error_t vg_lite_cache_command(vg_lite_cmdcache_operation_t operation);
+    vg_lite_error_t vg_lite_cache_command(vg_lite_cmdcache_operation_t operation, int *buf_index, vg_lite_matrix_t *matrix);
 
     /* This optional API is for enabling/disabling the path-spliting workaround for specific VG cores.
      */

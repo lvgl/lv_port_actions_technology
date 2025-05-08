@@ -126,6 +126,14 @@ int system_volume_up(int stream_type, int increment)
 static void _system_volume_change_notify(uint32_t volume)
 {
 	struct app_msg new_msg = { 0 };
+#if CONFIG_AEM_WATCH_SUPPORT
+#ifdef CONFIG_BT_MANAGER
+    new_msg.type = MSG_BT_EVENT;
+    new_msg.cmd = BT_RMT_VOL_SYNC_EVENT;
+    new_msg.value = volume;
+#endif
+    send_async_msg("main", &new_msg);
+#else
 	char *current_app = app_manager_get_current_app();
 #ifdef CONFIG_BT_MANAGER
 	new_msg.type = MSG_BT_EVENT;
@@ -135,6 +143,7 @@ static void _system_volume_change_notify(uint32_t volume)
 	if (current_app) {
 		send_async_msg(current_app, &new_msg);
 	}
+#endif
 }
 
 void system_volume_sync_remote_to_device(uint32_t stream_type, uint32_t volume)

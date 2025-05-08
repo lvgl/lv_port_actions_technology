@@ -155,11 +155,7 @@ const codec_config_info_t codec_config[] =
 	#ifdef CONFIG_DECODER_WAV_HW_ACCELERATION
 		.hw_acceleration = true,
 		.ops = NULL,
-		#ifdef CONFIG_ENCODER_MP3
-		.dsp_dec_lib = "aeRECORD.dsp",
-		#else
 		.dsp_dec_lib = "adMUSIC.dsp",
-		#endif
 		.dsp_effect_lib = NULL,
 	#else
 		.hw_acceleration = false,
@@ -279,7 +275,11 @@ const codec_config_info_t codec_config[] =
 	#ifdef CONFIG_ENCODER_MP3_HW_ACCELERATION
 		.hw_acceleration = true,
 		.ops = NULL,
+	#if defined(CONFIG_ENCODER_CVSD) || defined(CONFIG_ENCODER_MSBC)
+		.dsp_dec_lib = "adMUSIC.dsp",
+	#else
 		.dsp_dec_lib = "aeRECORD.dsp",
+	#endif
 		.dsp_effect_lib = NULL,
 	#else
 		.hw_acceleration = false,

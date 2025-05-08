@@ -632,6 +632,10 @@ static void bt_manager_ble_notify_complete(struct k_work *work)
 {
 	/* Notify app ble send complete, can send next data. */
 	//SYS_LOG_INF("pending_cb");
+#if CONFIG_AEM_WATCH_SUPPORT
+    extern void aem_ble_notify_complete_cb(void);
+    aem_ble_notify_complete_cb();
+#endif
 	return;
 }
 
@@ -655,6 +659,11 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	}
 
 	if ((hostif_bt_conn_get_info(conn, &info) < 0) || (info.type != BT_CONN_TYPE_LE) || (info.role != BT_HCI_ROLE_SLAVE)) {
+		return;
+	}
+
+	if (BT_ID_DEFAULT != info.id) {
+		SYS_LOG_ERR("info.id %d.", info.id);
 		return;
 	}
 
@@ -1256,6 +1265,21 @@ static void ble_req_enc_work_handler(struct k_work *work)
 }
 #endif
 
+#ifdef CONFIG_AEM_WATCH_SUPPORT
+void bt_manager_ble_req_enc(void)
+{
+    SYS_LOG_INF("bt_manager_ble_req_enc");
+
+    if (ble_info.ble_conn)
+    {
+        if ((hostif_bt_conn_get_security(ble_info.ble_conn) < BT_SECURITY_L2) &&
+            (!hostif_bt_conn_security_is_start(ble_info.ble_conn)))
+        {
+            hostif_bt_conn_set_security(ble_info.ble_conn, BT_SECURITY_L2);
+        }
+    }
+}
+#endif
 //#define LE_AUTH_PASSKEY_DISPLAY		1
 
 //#ifdef LE_AUTH_PASSKEY_DISPLAY
@@ -1572,6 +1596,20 @@ int bt_manager_get_ble_wake_lock(void)
 		return 0;
 	}
 }
+#if CONFIG_AEM_WATCH_SUPPORT
+extern void ancs_incoming_call_handle(struct bt_conn *conn, uint8_t action);
+void bt_manager_ble_ancs_call_accept(bool accept)
+{
+    if (accept)
+    {
+        ancs_incoming_call_handle(ble_info.ble_conn, 0x0 /* ancs_cmd_accept_call */);
+    }
+    else
+    {
+        ancs_incoming_call_handle(ble_info.ble_conn, 0x1 /* ancs_cmd_reject_call */);
+    }
+}
+#endif
 
 int bt_manager_ble_find_linkkey(bt_addr_le_t *le_addr)
 {

@@ -740,6 +740,7 @@ static const struct adc_anc_clk_setting adc_anc_clk_mapping[] = {
     {SAMPLE_RATE_32KHZ, MCLK_768FS, 2, 1},
     {SAMPLE_RATE_44KHZ, MCLK_256FS, 1, 0},
     {SAMPLE_RATE_48KHZ, MCLK_256FS, 1, 0},
+    {SAMPLE_RATE_96KHZ, MCLK_256FS, 1, 0},
 };
 
 /**

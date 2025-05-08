@@ -217,14 +217,8 @@ struct spi_cs_control {
 
 #define  SPI_STAGE_PREPARE 0
 #define  SPI_STAGE_FINSHED 1
-/**
- * @brief SPI callback for asynchronous transfer requests
- *
- * @param dev SPI device which is notifying of transfer completion or error
- * @param stage stage=0 after config rx/tx dma, =1, transfer finshed 
- */
-typedef void (*spi_callback_t)(int stage);
-
+/* SPI_STAGE_PREPARE  return  > 0  wait ms, <=0, stop tranfser,  SPI_STAGE_FINSHED not care*/
+typedef int (*spi_callback_t)(int stage);
 /**
  * @brief SPI controller configuration structure
  *

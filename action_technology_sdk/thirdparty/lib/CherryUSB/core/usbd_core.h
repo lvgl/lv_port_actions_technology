@@ -45,6 +45,9 @@ enum usbd_event_type {
     USBD_EVENT_UNKNOWN
 };
 
+#ifdef CONFIG_USB_ACTIONS_VENDOR_CTRL
+typedef int (*usbd_actions_parase_handler)(uint8_t busid, uint8_t cmd, uint16_t param);
+#endif
 typedef int (*usbd_request_handler)(uint8_t busid, struct usb_setup_packet *setup, uint8_t **data, uint32_t *len);
 typedef void (*usbd_endpoint_callback)(uint8_t busid, uint8_t ep, uint32_t nbytes);
 typedef void (*usbd_notify_handler)(uint8_t busid, uint8_t event, void *arg);
@@ -54,6 +57,13 @@ struct usbd_endpoint {
     usbd_endpoint_callback ep_cb;
 };
 
+#ifdef CONFIG_USBDEV_PREPARSE_DESC
+struct usbd_interface_altsetting {
+    uint16_t intf_desc_offset;
+    uint16_t ep_desc_offset[CONFIG_USBDEV_INTF_MAX_ENDPOINTS];
+};
+#endif
+
 struct usbd_interface {
     usbd_request_handler class_interface_handler;
     usbd_request_handler class_endpoint_handler;
@@ -62,6 +72,9 @@ struct usbd_interface {
     const uint8_t *hid_report_descriptor;
     uint32_t hid_report_descriptor_len;
     uint8_t intf_num;
+#ifdef CONFIG_USBDEV_PREPARSE_DESC
+    struct usbd_interface_altsetting altsetting_desc[CONFIG_USBDEV_MAX_INTF_ALTSETTINGS];
+#endif
 };
 
 struct usb_descriptor {
@@ -91,6 +104,10 @@ extern struct usbd_bus g_usbdev_bus[];
 void usbd_desc_register(uint8_t busid, const struct usb_descriptor *desc);
 #else
 void usbd_desc_register(uint8_t busid, const uint8_t *desc);
+#ifdef CONFIG_USB_ACTIONS_VENDOR_CTRL
+void usbd_actions_cmd_cb_register(uint8_t busid, usbd_actions_parase_handler cb);
+void usbd_actions_get_identity_desc_register(uint8_t busid, struct usb_actions_get_identity_descriptor *desc);
+#endif
 void usbd_msosv1_desc_register(uint8_t busid, struct usb_msosv1_descriptor *desc);
 void usbd_msosv2_desc_register(uint8_t busid, struct usb_msosv2_descriptor *desc);
 void usbd_bos_desc_register(uint8_t busid, struct usb_bos_descriptor *desc);

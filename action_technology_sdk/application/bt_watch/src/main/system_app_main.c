@@ -159,7 +159,8 @@ void main_msg_proc(void *parama1, void *parama2, void *parama3)
 
 		case MSG_POWER_OFF:
 		#ifdef CONFIG_UI_MANAGER
-			ui_view_create(GOODBYE_VIEW, NULL, UI_CREATE_FLAG_SHOW | UI_CREATE_FLAG_NO_PRELOAD);
+			view_stack_set_effect_type(UI_SWITCH_EFFECT_NONE);
+			view_stack_push_view(GOODBYE_VIEW, NULL);
 		#endif
 			os_sleep(500);
 			#ifdef CONFIG_GLYPHIX

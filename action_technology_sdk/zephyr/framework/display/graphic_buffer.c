@@ -8,6 +8,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <os_common_api.h>
 #include <memory/mem_cache.h>
 #include <display/display_hal.h>
 #include <display/graphic_buffer.h>

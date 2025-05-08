@@ -27,9 +27,9 @@ void go_to_m_effect(void)
 {
 #if defined(CONFIG_VG_LITE)
     launcher_app_t *app = launcher_app_get();
-    ui_switch_effect_set_type(UI_SWITCH_EFFECT_NONE);
+    view_stack_set_effect_type(UI_SWITCH_EFFECT_NONE);
     view_stack_push_view(EFFECT_WHEEL_VIEW, NULL);
-    ui_switch_effect_set_type(app->switch_effect_mode);
+    view_stack_set_effect_type(app->switch_effect_mode);
 #endif
 }
 

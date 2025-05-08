@@ -51,6 +51,7 @@ struct sppble_info_t {
 	int32_t read_timeout;
 	int32_t write_timeout;
 	int32_t read_buf_size;
+	int32_t keep_connect;
 	uint8_t *buff;
 	os_mutex read_mutex;
 	os_sem read_sem;
@@ -453,6 +454,7 @@ static int sppble_init(io_stream_t handle, void *param)
 	if (info->read_buf_size == 0) {
 		info->read_buf_size = SPPBLE_BUFF_SIZE;
 	}
+	info->keep_connect = init_param->keep_connect;
 	os_mutex_init(&info->read_mutex);
 	os_sem_init(&info->read_sem, 0, 1);
 	os_mutex_init(&info->write_mutex);
@@ -734,7 +736,7 @@ static int sppble_close(io_stream_t handle)
 	struct sppble_info_t *info = NULL;
 
 	info = (struct sppble_info_t *)handle->data;
-	if (info->connect_type != NONE_CONNECT_TYPE) {
+	if ((info->connect_type != NONE_CONNECT_TYPE) && (info->keep_connect == 0)) {
 		SYS_LOG_INF("Active do %d disconnect", info->connect_type);
 		if (info->connect_type == SPP_CONNECT_TYPE) {
 		#ifdef CONFIG_BT_SPP

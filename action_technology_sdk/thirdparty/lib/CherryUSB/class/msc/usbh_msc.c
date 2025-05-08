@@ -131,7 +131,7 @@ static int usbh_bulk_cbw_csw_xfer(struct usbh_msc *msc_class, struct CBW *cbw, s
     /* Send the CBW */
     nbytes = usbh_msc_bulk_out_transfer(msc_class, (uint8_t *)cbw, USB_SIZEOF_MSC_CBW, timeout);
     if (nbytes < 0) {
-        USB_LOG_ERR("cbw transfer error\r\n");
+        USB_LOG_ERR("cbw transfer error %d\r\n", nbytes);
         goto __err_exit;
     }
 

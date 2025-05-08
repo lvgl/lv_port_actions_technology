@@ -624,6 +624,19 @@ int btif_pts_avrcp_notify_volume_change(uint8_t volume);
 int btif_pts_avrcp_reg_notify_volume_change(void);
 int btif_pts_register_auth_cb(bool reg_auth);
 int btif_pts_set_class_of_device(uint32_t classOfDevice);
+int btif_pts_a2dp_abort(void);
+int btif_pts_a2dp_discover(void);
+int btif_pts_a2dp_get_capabilities(void);
+int btif_pts_a2dp_get_all_capabilities(void);
+int btif_pts_a2dp_set_configuration(void);
+int btif_pts_a2dp_open(void);
+int btif_pts_a2dp_start(void);
+int btif_pts_a2dp_suspend(void);
+int btif_pts_a2dp_close(void);
+int btif_pts_a2dp_disconnect_media_session(void);
+int btif_pts_a2dp_connect(uint8_t type);
+int btif_pts_a2dp_reconfig(void *ptr);
+int btif_pts_a2dp_send_audio_data(uint8_t *data, uint16_t len);
 
 /**
  * @brief dump bt srv info

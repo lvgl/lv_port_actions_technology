@@ -13,6 +13,7 @@ zephyr_sources(
 	HX3605_Port/hx3605_hrs_agc.c
 	HX3605_Port/hx3605_hrv_agc.c
 	HX3605_Port/hx3605_spo2_agc.c
+	HX3605_Port/hx3605_check_touch.c
 )
 
 zephyr_sources(

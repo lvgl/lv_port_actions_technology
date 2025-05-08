@@ -18,7 +18,6 @@
  * @{
  */
 
-#include <os_common_api.h>
 #include <sys/atomic.h>
 #include <sys/util.h>
 #include <display/display_hal.h>

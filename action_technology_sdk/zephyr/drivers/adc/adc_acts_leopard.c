@@ -274,10 +274,11 @@ struct pmuadc_drv_data {
 	bool b_always_on;
 	struct k_sem completion; /* ADC sample synchronization completion semaphare */
 //#endif
-	struct k_sem lock; /* ADC read lock */
+	struct k_mutex lock; /* ADC read mutex lock */
 	union pmuadc_measure_data mdata; /* measuared data */
 	uint16_t channels; /* active channels */
 	uint16_t sample_cnt; /* sample counter */
+	bool adc_busy;
 };
 
 /**
@@ -332,14 +333,20 @@ static s16_t adc_sensor_offset, adc_dc5v_offset, adc_bat_offset;
 static inline void pmuadc_lock(const struct device *dev)
 {
 	struct pmuadc_drv_data *data = dev->data;
-	k_sem_take(&data->lock, K_FOREVER);
+	//k_sem_take(&data->lock, K_FOREVER);
+	k_mutex_lock(&data->lock, K_FOREVER);
+	data->adc_busy = true;
+
 }
 
 /* @brief PMU ADC channel unlock */
 static inline void pmuadc_unlock(const struct device *dev)
 {
 	struct pmuadc_drv_data *data = dev->data;
-	k_sem_give(&data->lock);
+	//k_sem_give(&data->lock);
+	data->adc_busy = false;
+	k_mutex_unlock(&data->lock);
+
 }
 
 //#ifndef CONFIG_ADC_ACTS_ALWAYS_ON
@@ -839,7 +846,9 @@ static int pmuadc_init(const struct device *dev)
 	k_sem_init(&data->completion, 0, 1);
 //#endif
 
-	k_sem_init(&data->lock, 1, 1);
+	//k_sem_init(&data->lock, 1, 1);
+	k_mutex_init(&data->lock);
+
 
 	if (cfg->irq_config)
 		cfg->irq_config();
@@ -920,7 +929,7 @@ int adc_pm_control(const struct device *device, enum pm_device_action action)
 		break;
 	case PM_DEVICE_ACTION_SUSPEND:
 //#ifndef CONFIG_ADC_ACTS_ALWAYS_ON
-		if (!k_sem_count_get(&data->lock)) {
+		if (data->adc_busy) {
 			printk("adc busy, not suspend\n");
 			return -EINVAL;
 		}

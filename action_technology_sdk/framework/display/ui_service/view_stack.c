@@ -36,8 +36,12 @@ typedef struct {
 	uint8_t num;
 	uint8_t inited : 1;
 #ifdef CONFIG_UI_SWITCH_EFFECT
+	uint8_t efx_out_right_changed : 1;
+	uint8_t efx_out_right : 1;
+	uint8_t efx_touch_tracking_changed : 1;
+	uint8_t efx_touch_tracking : 1;
+	uint8_t efx_type_changed : 1;
 	uint8_t efx_type;
-	bool efx_out_right;
 #endif
 } view_stack_ctx_t;
 
@@ -64,22 +68,15 @@ int view_stack_init(void)
 
 #ifdef CONFIG_UI_SWITCH_EFFECT
 	view_stack.efx_type = UI_SWITCH_EFFECT_NONE;
-	view_stack.efx_out_right = false;
+	view_stack.efx_out_right = 0;
+	view_stack.efx_touch_tracking = 0;
 	ui_switch_effect_set_anim_dir(false);
+	ui_switch_effect_set_touch_tracking(false);
 #endif
 
 out_unlock:
 	os_mutex_unlock(&mutex);
 	return res;
-}
-
-void view_stack_deinit(void)
-{
-	os_mutex_lock(&mutex, OS_FOREVER);
-	view_stack.inited = 0;
-	os_mutex_unlock(&mutex);
-
-	view_stack_clean();
 }
 
 uint8_t view_stack_get_num(void)
@@ -148,39 +145,38 @@ void view_stack_clean(void)
 	os_mutex_unlock(&mutex);
 }
 
-int view_stack_pop_home(void)
+int view_stack_back(int mode)
 {
-	int res = -ENODATA;
+	view_stack_data_t *new_data;
+	int res = 0;
+
+	if (mode >= NUM_VIEW_STACK_BACK_MODES)
+		return -EINVAL;
 
 	os_mutex_lock(&mutex, OS_FOREVER);
 
-	if (view_stack.num <= 1) {
-		goto out_unlock;
+	if (mode == VIEW_STACK_BACK_PREV) {
+		if (view_stack.num == 0)
+			goto out_unlock;
+
+		new_data = (view_stack.num > 1) ? &view_stack.data[view_stack.num - 2] : NULL;
+	} else {
+		if (view_stack.num <= 1)
+			goto out_unlock;
+
+		new_data = (mode != VIEW_STACK_BACK_HOME) ? &view_stack.data[view_stack.num - 2] : &view_stack.data[0];
 	}
 
-	res = _view_stack_jump(&view_stack.data[view_stack.num - 1], &view_stack.data[0]);
-	view_stack.num = 1;
+	if (mode != VIEW_STACK_BACK_HOME)
+		_view_stack_change_effect_dir(true);
 
-out_unlock:
-	os_mutex_unlock(&mutex);
-	return res;
-}
+	res = _view_stack_jump(&view_stack.data[view_stack.num - 1], new_data);
 
-int view_stack_pop(void)
-{
-	int res = -ENODATA;
-
-	os_mutex_lock(&mutex, OS_FOREVER);
-
-	if (view_stack.num <= 1) {
-		goto out_unlock;
+	if (mode == VIEW_STACK_BACK_HOME) {
+		view_stack.num = 1;
+	} else {
+		view_stack.num--;
 	}
-
-	_view_stack_change_effect_dir(true);
-
-	res = _view_stack_jump(&view_stack.data[view_stack.num - 1],
-					&view_stack.data[view_stack.num - 2]);
-	view_stack.num--;
 
 out_unlock:
 	os_mutex_unlock(&mutex);
@@ -313,13 +309,41 @@ void view_stack_dump(void)
 	os_mutex_unlock(&mutex);
 }
 
-void view_stack_set_switch_effect(uint8_t type)
+uint8_t view_stack_get_effect_type(void)
+{
+	uint8_t type = UI_SWITCH_EFFECT_NONE;
+
+#ifdef CONFIG_UI_SWITCH_EFFECT
+	os_mutex_lock(&mutex, OS_FOREVER);
+	type = view_stack.efx_type;
+	os_mutex_unlock(&mutex);
+#endif /* CONFIG_UI_SWITCH_EFFECT */
+
+	return type;
+}
+
+void view_stack_set_effect_type(uint8_t type)
 {
 #ifdef CONFIG_UI_SWITCH_EFFECT
 	os_mutex_lock(&mutex, OS_FOREVER);
 
-	if (view_stack.efx_type != type && !ui_switch_effect_set_type(type)) {
+	if (view_stack.efx_type != type) {
 		view_stack.efx_type = type;
+		view_stack.efx_type_changed = 1;
+	}
+
+	os_mutex_unlock(&mutex);
+#endif /* CONFIG_UI_SWITCH_EFFECT */
+}
+
+void view_stack_set_effect_touch_tracking(bool enabled)
+{
+#ifdef CONFIG_UI_SWITCH_EFFECT
+	os_mutex_lock(&mutex, OS_FOREVER);
+
+	if (view_stack.efx_touch_tracking != enabled) {
+		view_stack.efx_touch_tracking = enabled;
+		view_stack.efx_touch_tracking_changed = 1;
 	}
 
 	os_mutex_unlock(&mutex);
@@ -436,6 +460,23 @@ static int _view_stack_jump(view_stack_data_t *old_data,
 	int8_t i;
 	int res = 0;
 
+#ifdef CONFIG_UI_SWITCH_EFFECT
+	if (view_stack.efx_type_changed) {
+		view_stack.efx_type_changed = 0;
+		ui_switch_effect_set_type(view_stack.efx_type);
+	}
+
+	if (view_stack.efx_out_right_changed) {
+		view_stack.efx_out_right_changed = 0;
+		ui_switch_effect_set_anim_dir(view_stack.efx_out_right);
+	}
+
+	if (view_stack.efx_touch_tracking_changed) {
+		view_stack.efx_touch_tracking_changed = 0;
+		ui_switch_effect_set_touch_tracking(view_stack.efx_touch_tracking);
+	}
+#endif
+
 	if (old_data) {
 		if (old_data->cache) {
 			old_view = view_cache_get_focus_view();
@@ -521,7 +562,7 @@ static void _view_stack_change_effect_dir(bool out_right)
 #ifdef CONFIG_UI_SWITCH_EFFECT
 	if (view_stack.efx_out_right != out_right) {
 		view_stack.efx_out_right = out_right;
-		ui_switch_effect_set_anim_dir(out_right);
+		view_stack.efx_out_right_changed = 1;
 	}
 #endif
 }

@@ -295,20 +295,27 @@ static void hub_int_complete_callback(void *arg, int nbytes)
 
     if (nbytes > 0) {
         usbh_hub_thread_wakeup(hub);
-    } else if (nbytes == -USB_ERR_NAK) {
+    } else {
+        if (nbytes != -USB_ERR_NAK) {
+             USB_LOG_ERR("hub intin_urb err %d\r\n", nbytes);
+        }
         /* Restart timer to submit urb again */
         USB_LOG_DBG("Restart timer\r\n");
         usb_osal_timer_start(hub->int_timer);
-    } else {
     }
 }
 
 static void hub_int_timeout(void *arg)
 {
+    int ret;
     struct usbh_hub *hub = (struct usbh_hub *)arg;
 
     usbh_int_urb_fill(&hub->intin_urb, hub->parent, hub->intin, hub->int_buffer, 1, 0, hub_int_complete_callback, hub);
-    usbh_submit_urb(&hub->intin_urb);
+    ret = usbh_submit_urb(&hub->intin_urb);
+    if (ret != 0) {
+        USB_LOG_DBG("hub intin_urb submit err %d\r\n", ret);
+        usb_osal_timer_start(hub->int_timer);
+    }
 }
 
 static int usbh_hub_connect(struct usbh_hubport *hport, uint8_t intf)
@@ -337,11 +344,11 @@ static int usbh_hub_connect(struct usbh_hubport *hport, uint8_t intf)
     }
 
     /*
-	 * Super-Speed hubs need to know their depth to be able to
-	 * parse the bits of the route-string that correspond to
-	 * their downstream port number.
-	 *
-	 */
+     * Super-Speed hubs need to know their depth to be able to
+     * parse the bits of the route-string that correspond to
+     * their downstream port number.
+     *
+     */
     if ((hport->depth != 0) && (hport->speed == USB_SPEED_SUPER)) {
         ret = usbh_hub_set_depth(hub, hport->depth - 1);
         if (ret < 0) {
@@ -358,7 +365,7 @@ static int usbh_hub_connect(struct usbh_hubport *hport, uint8_t intf)
         }
 
         parse_hub_ss_descriptor(&hub->hub_ss_desc, USB_SIZEOF_HUB_SS_DESC);
-        hub->nports = hub->hub_ss_desc.bNbrPorts;
+        hub->nports = MIN(hub->hub_ss_desc.bNbrPorts, ARRAY_SIZE(hub->child));
         hub->powerdelay = hub->hub_ss_desc.bPwrOn2PwrGood * 2;
         hub->tt_think = 0U;
     } else {
@@ -368,7 +375,7 @@ static int usbh_hub_connect(struct usbh_hubport *hport, uint8_t intf)
         }
 
         parse_hub_descriptor(&hub->hub_desc, USB_SIZEOF_HUB_DESC);
-        hub->nports = hub->hub_desc.bNbrPorts;
+        hub->nports = MIN(hub->hub_desc.bNbrPorts, ARRAY_SIZE(hub->child));
         hub->powerdelay = hub->hub_desc.bPwrOn2PwrGood * 2;
         hub->tt_think = ((hub->hub_desc.wHubCharacteristics & HUB_CHAR_TTTT_MASK) >> 5);
     }
@@ -416,7 +423,7 @@ static int usbh_hub_connect(struct usbh_hubport *hport, uint8_t intf)
 
     hub->int_buffer = g_hub_intbuf[hub->bus->busid][hub->index - 1];
 
-    hub->int_timer = usb_osal_timer_create("hubint_tim", USBH_GET_URB_INTERVAL(hub->intin->bInterval, hport->speed), hub_int_timeout, hub, 0);
+    hub->int_timer = usb_osal_timer_create("hubint_tim", USBH_GET_URB_INTERVAL_MS(hub->intin->bInterval, hport->speed), hub_int_timeout, hub, 0);
     if (hub->int_timer == NULL) {
         USB_LOG_ERR("No memory to alloc int_timer\r\n");
         return -USB_ERR_NOMEM;

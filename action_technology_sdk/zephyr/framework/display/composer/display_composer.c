@@ -13,7 +13,7 @@
 #include <assert.h>
 #include <string.h>
 #include <sys/slist.h>
-#include <zephyr.h>
+#include <os_common_api.h>
 #include <drivers/display/display_engine.h>
 #ifdef CONFIG_TRACING
 #  include <tracing/tracing.h>
@@ -259,6 +259,7 @@ int display_composer_init(void)
 	_compute_round_screen_areas(composer->disp_cap.x_resolution, g_screen_areas, NUM_SCREEN_AREAS);
 #endif
 
+	display_blanking_off(composer->disp_dev);
 	SYS_LOG_INF("composer initialized\n");
 	return 0;
 }
@@ -331,15 +332,48 @@ uint8_t display_composer_get_num_layers(void)
 	return composer->max_layers;
 }
 
+uint8_t display_composer_get_brightness(void)
+{
+	display_composer_t *composer = _composer_get();
+
+	if (composer->disp_dev) {
+		return display_get_brightness(composer->disp_dev);
+	}
+
+	return 0;
+}
+
 int display_composer_set_brightness(uint8_t brightness)
 {
 	display_composer_t *composer = _composer_get();
 
-	if (composer->disp_dev == NULL) {
-		return -ENODEV;
+	if (composer->disp_dev) {
+		return display_set_brightness(composer->disp_dev, brightness);
 	}
 
-	return display_set_brightness(composer->disp_dev, brightness);
+	return -ENODEV;
+}
+
+uint8_t display_composer_get_aod_mode(void)
+{
+	display_composer_t *composer = _composer_get();
+
+	if (composer->disp_dev) {
+		return display_get_aod_mode(composer->disp_dev);
+	}
+
+	return 0;
+}
+
+int display_composer_set_aod_mode(uint8_t mode)
+{
+	display_composer_t *composer = _composer_get();
+
+	if (composer->disp_dev) {
+		return display_set_aod_mode(composer->disp_dev, mode);
+	}
+
+	return -ENODEV;
 }
 
 void display_composer_round(ui_region_t *region)

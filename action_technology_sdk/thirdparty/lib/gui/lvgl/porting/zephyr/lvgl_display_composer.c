@@ -152,25 +152,16 @@ lv_result_t lvx_display_flush_wait(void)
 
 lv_result_t lvx_display_read_to_draw_buf(lv_draw_buf_t * draw_buf)
 {
-    graphic_buffer_t *gbuf;
-    uint32_t required_size;
-    int res;
-
-    res = lvx_display_flush_wait();
-    if(res < 0)
+    if(lvx_display_flush_wait())
         return LV_RESULT_INVALID;
 
-    gbuf = surface_get_post_buffer(s_disp_data.surface);
-    required_size = graphic_buffer_get_bytes_per_line(gbuf) * gbuf->height;
-    if(draw_buf == NULL || draw_buf->data_size < required_size)
+    graphic_buffer_t *gbuf = surface_get_post_buffer(s_disp_data.surface);
+
+    lv_draw_buf_t surf_drawbuf;
+    if(LV_RESULT_INVALID == lvx_draw_buffer_from_graphic(&surf_drawbuf, gbuf))
         return LV_RESULT_INVALID;
 
-    draw_buf->header.cf = LV_COLOR_FORMAT_NATIVE;
-    draw_buf->header.w = graphic_buffer_get_width(gbuf);
-    draw_buf->header.h = graphic_buffer_get_height(gbuf);
-    draw_buf->header.stride = graphic_buffer_get_bytes_per_line(gbuf);
-
-    memcpy(draw_buf->data, gbuf->data, required_size);
+    lv_draw_buf_copy(draw_buf, NULL, &surf_drawbuf, NULL);
     return LV_RESULT_OK;
 }
 

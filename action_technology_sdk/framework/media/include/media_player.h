@@ -748,6 +748,10 @@ int media_player_set_mix_stream(media_player_t *handle, mix_service_param_t *ini
 int media_mix_pcm_stream_open(const char *url, int inrate, int outrate);
 int media_mix_pcm_stream_close(void);
 
+#ifdef CONFIG_VOICE_RECORDER
+int media_player_enable_voice_record(media_player_t *handle, int enable);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

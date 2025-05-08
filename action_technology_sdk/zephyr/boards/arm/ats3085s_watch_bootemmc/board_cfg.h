@@ -40,7 +40,7 @@
 #define CONFIG_SIM_FLASH_NAME               "sim_flash"
 #define CONFIG_BLOCK_DEV_FLASH                  1
 #define CONFIG_BLOCK_DEV_FLASH_NAME         "block_dev"
-#define CONFIG_ACTLOG_STORAGE_NAME           CONFIG_SPI_FLASH_NAME
+#define CONFIG_ACTLOG_STORAGE_NAME          "sd"
 
 #define CONFIG_SPINAND_0                    	0
 #define CONFIG_SPINAND_3                    	0

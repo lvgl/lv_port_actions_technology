@@ -18,13 +18,13 @@
 static const clock_dsc_t clock_dsc[NUM_CLOCK_IDS] = {
 	[MAIN_CLOCK_ID] = { "analog", SCENE_CLOCK_VIEW, 100 },
 	[DIGITAL_CLOCK_ID] = { "digital", SCENE_DIGITAL_CLOCK_VIEW, 1000 },
+	[DIGITAL1_CLOCK_ID] = { "digital1", SCENE_DIGITAL1_CLOCK, 60000 },
+#ifdef CONFIG_VIDEO_APP
+	[VIDEO_CLOCK_ID] = {"video" , SCENE_CLOCK_VIEW , 100},
+#endif
 	/* AOD clock must place last */
 #ifdef SCENE_AOD_CLOCK_VIEW
 	[AOD_CLOCK_ID] = { "aod", SCENE_AOD_CLOCK_VIEW, 60000 },
-#endif
-	[DIGITAL1_CLOCK_ID] = { "digital1", SCENE_DIGITAL1_CLOCK, 1000 },
-#ifdef CONFIG_VIDEO_APP
-	[VIDEO_CLOCK_ID] = {"video" , SCENE_CLOCK_VIEW , 100},
 #endif
 };
 
@@ -82,10 +82,11 @@ static void _clock_selector_view_set_clock_id(uint8_t id)
 		launcher_apply_clock_id(id);
 	}
 
-	view_stack_pop();
+	view_stack_back_prev_or_home();
 }
 
 int clocksel_ui_enter(void)
 {
-	return view_stack_push_view(CLOCK_SELECTOR_VIEW, &clock_selector_view_presenter);
+	view_stack_push_view(CLOCK_SELECTOR_VIEW, &clock_selector_view_presenter);
+	return 0;
 }

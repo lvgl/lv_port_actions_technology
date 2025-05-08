@@ -783,7 +783,7 @@ void minicharger_handler(struct k_work *work)
 
     if (get_dc5v_current_state() != DC5V_STATE_IN) {
         while(1) {
-            soc_pmu_sys_poweroff();
+            sys_pm_poweroff();
         }
     }
 

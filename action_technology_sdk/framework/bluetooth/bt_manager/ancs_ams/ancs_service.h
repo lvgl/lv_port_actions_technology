@@ -233,7 +233,9 @@ extern bool configure_ancs_data_source_notification(struct bt_conn *conn,bool en
 extern bool does_handle_belongs_to_ancs_service(uint16_t handle);
 
 extern uint8_t ancs_get_write_pending_status(void);
-
+#if CONFIG_AEM_WATCH_SUPPORT
+extern uint8_t aem_ancs_get_recive_flag(void);
+#endif
 extern void ancs_notify_msg_finish(void);
 
 #endif /* __ANCS_SERVICE_H__ */

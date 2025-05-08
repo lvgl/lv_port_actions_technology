@@ -13,8 +13,11 @@
 #include <zephyr.h>
 #include <drivers/input/input_dev.h>
 #include <utils/acts_ringbuf.h>
-#ifdef CONFIG_DVFS
+#ifdef CONFIG_ACTS_DVFS_DYNAMIC_LEVEL
     #include <dvfs.h>
+#endif
+#ifdef CONFIG_SYS_WAKELOCK
+    #include <sys_wakelock.h>
 #endif
 #include <board.h>
 #include "lvgl_inner.h"
@@ -40,7 +43,6 @@ typedef struct lvgl_pointer_user_data {
 #ifdef CONFIG_ACTS_DVFS_DYNAMIC_LEVEL
     struct k_delayed_work boost_work;
     bool is_boosted;
-    bool boost_requested;
 #endif
 } lvgl_pointer_user_data_t;
 
@@ -122,11 +124,6 @@ static void _pointer_input_boost_work_handler(struct k_work *work)
 
 static void _pointer_input_boost(lvgl_pointer_user_data_t *pointer_data, bool boosted)
 {
-    if(boosted == pointer_data->boost_requested)
-        return;
-
-    pointer_data->boost_requested = boosted;
-
     if(boosted) {
         k_delayed_work_cancel(&pointer_data->boost_work);
 
@@ -159,9 +156,24 @@ static void _pointer_input_work_handler(struct k_work *work)
     indev_data.point.y = val.point.loc_y;
     indev_data.state = (val.point.pessure_value == 1) ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED;
 
-    /* drop redundant released point */
-    if(indev_data.state == LV_INDEV_STATE_RELEASED && prev_state == LV_INDEV_STATE_RELEASED) {
-        goto out_boost;
+    bool state_changed = (indev_data.state != prev_state);
+    if(!state_changed && indev_data.state == LV_INDEV_STATE_RELEASED) {
+        return; /* drop redundant released point */
+    }
+
+    if(state_changed) {
+#ifdef CONFIG_SYS_WAKELOCK
+        if(indev_data.state == LV_INDEV_STATE_PRESSED) {
+            sys_wake_lock(FULL_WAKE_LOCK);
+        }
+        else {
+            sys_wake_unlock(FULL_WAKE_LOCK);
+        }
+#endif /* CONFIG_SYS_WAKELOCK */
+
+#ifdef CONFIG_ACTS_DVFS_DYNAMIC_LEVEL
+        _pointer_input_boost(pointer_data, indev_data.state == LV_INDEV_STATE_PRESSED);
+#endif
     }
 
     if(acts_ringbuf_put(&s_pointer_scan_buf, &indev_data, sizeof(indev_data)) != sizeof(indev_data)) {
@@ -177,13 +189,6 @@ static void _pointer_input_work_handler(struct k_work *work)
             drop_cnt = 0;
         }
     }
-
-out_boost:
-#ifdef CONFIG_ACTS_DVFS_DYNAMIC_LEVEL
-    _pointer_input_boost(pointer_data, indev_data.state == LV_INDEV_STATE_PRESSED);
-#endif
-
-    return;
 }
 
 static void _lvgl_pointer_read_cb(lv_indev_t * indev, lv_indev_data_t *data)

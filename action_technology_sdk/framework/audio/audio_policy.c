@@ -74,9 +74,11 @@ int audio_policy_get_out_pcm_channel_num(uint8_t stream_type)
 	int channel_num = 0;
 
 	switch (stream_type) {
+/*
 	case AUDIO_STREAM_TTS:
     case AUDIO_STREAM_TIP:
 		break;
+*/
 	case AUDIO_STREAM_VOICE:
 	case AUDIO_STREAM_LE_AUDIO:
 		break;
@@ -405,7 +407,7 @@ int audio_policy_get_channel_resample(uint8_t stream_type)
 
     switch (stream_type) {
 	case AUDIO_STREAM_MUSIC:
-	    /* resample = true; */
+	    resample = true;
 	break;
     }
 

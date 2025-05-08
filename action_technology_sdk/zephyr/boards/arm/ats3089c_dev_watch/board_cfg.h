@@ -57,7 +57,7 @@
 #define CONFIG_UART_0_NAME      			"UART_0"
 #define CONFIG_UART_1           				0
 #define CONFIG_UART_1_NAME      			"UART_1"
-#define CONFIG_UART_2           				0
+#define CONFIG_UART_2           				1
 #define CONFIG_UART_2_NAME      			"UART_2"
 #define CONFIG_UART_3           				0
 #define CONFIG_UART_3_NAME      			"UART_3"
@@ -153,9 +153,20 @@
 #define CONFIG_UART_0_RX_DMA_CHAN  0xff
 #define CONFIG_UART_0_RX_DMA_ID    1
 
-#define CONFIG_UART_1_USE_TX_DMA   0
+#define CONFIG_UART_1_USE_TX_DMA   1
 #define CONFIG_UART_1_TX_DMA_CHAN  0xff
 #define CONFIG_UART_1_TX_DMA_ID    2
+#define CONFIG_UART_1_USE_RX_DMA   1
+#define CONFIG_UART_1_RX_DMA_CHAN  0xff
+#define CONFIG_UART_1_RX_DMA_ID    2
+
+#define CONFIG_UART_2_USE_TX_DMA   1
+#define CONFIG_UART_2_TX_DMA_CHAN  0xff
+#define CONFIG_UART_2_TX_DMA_ID    3
+#define CONFIG_UART_2_USE_RX_DMA   1
+#define CONFIG_UART_2_RX_DMA_CHAN  0xff
+#define CONFIG_UART_2_RX_DMA_ID    3
+
 
 #define CONFIG_MMC_0_USE_DMA        1
 #define CONFIG_MMC_0_DMA_CHAN       0xff
@@ -247,6 +258,8 @@
 #define CONFIG_UART_0_IRQ_PRI   				0
 
 #define CONFIG_UART_1_IRQ_PRI   				0
+
+#define CONFIG_UART_2_IRQ_PRI   				0
 
 #define CONFIG_MMC_0_IRQ_PRI        			0
 
@@ -363,8 +376,8 @@ sd board cfg
 uart board cfg
 */
 #define CONFIG_UART_0_SPEED     2000000
-#define CONFIG_UART_1_SPEED     115200
-
+#define CONFIG_UART_1_SPEED     2000000
+#define CONFIG_UART_2_SPEED     115200
 /*
 pwm board cfg
 */

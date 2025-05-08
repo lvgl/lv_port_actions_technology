@@ -1,4 +1,4 @@
-﻿#include <stdio.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <os_common_api.h>
@@ -168,7 +168,7 @@ extern res_string_item_t RES_STRING_ID_DIC[];
 
 extern int sd_fmap(const char *filename, void** addr, int *len);
 static int _search_res_id_in_files(resource_info_t* info, resource_bitmap_t* bitmap, uint32_t* bmp_pos, uint32_t* compress_size);
-	
+
 void _resource_buffer_deinit(uint32_t force_clear)
 {
 	buf_block_t* item;
@@ -1120,7 +1120,7 @@ static int _init_pic_search_param(resource_info_t* info, const char* picres_path
 	char* partition;
 	char* res_path = NULL;
 	int part_count = 0;
-	
+
 	info->pic_search_param = (pic_search_param_t*)res_mem_alloc(RES_MEM_POOL_BMP, (MAX_PARTITION_ID+1)*sizeof(pic_search_param_t));
 	if(info->pic_search_param == NULL)
 	{
@@ -2184,7 +2184,7 @@ static int _search_res_id_in_files(resource_info_t* info, resource_bitmap_t* bit
 {
 	int low, high, mid;
 	uint32_t id = bitmap->sty_data->id;
-	
+
 	if(info->pic_search_param == NULL)
 	{
 		return -1;
@@ -2265,12 +2265,12 @@ int32_t _load_bitmap(resource_info_t* info, resource_bitmap_t* bitmap, uint32_t 
 	}
 
 	if (bitmap->sty_data->format == RESOURCE_BITMAP_FORMAT_JPEG) {
-#ifdef CONFIG_LV_COLOR_DEPTH_32
-		bitmap->sty_data->bytes_per_pixel = 3;
-		jpeg_out_format = HAL_JPEG_OUT_RGB888;
-#else
+#if defined(CONFIG_LV_COLOR_DEPTH_16) || defined(CONFIG_LV_COLOR_DEPTH_8)
 		bitmap->sty_data->bytes_per_pixel = 2;
 		jpeg_out_format = HAL_JPEG_OUT_RGB565;
+#else
+		bitmap->sty_data->bytes_per_pixel = 3;
+		jpeg_out_format = HAL_JPEG_OUT_RGB888;
 #endif
 	}
 
@@ -3244,7 +3244,7 @@ void* res_manager_preload_next_scene_child(resource_info_t* info, resource_scene
 			return NULL;
 		}
 		memset(res, 0, sizeof(resource_bitmap_t));
-		
+
 		sty_picture_t* pic = (sty_picture_t*)resource;
 		res->sty_data = pic;
  		res->regular_info = _check_resource_is_regular(pic->magic, pic->sty_id);
@@ -3260,7 +3260,7 @@ void res_manager_preload_finish_check(uint32_t scene_id)
 {
 	compact_buffer_t* buffer;
 
-	os_strace_u32(SYS_TRACE_ID_RES_CHECK_PRELOAD, (uint32_t)scene_id);	
+	os_strace_u32(SYS_TRACE_ID_RES_CHECK_PRELOAD, (uint32_t)scene_id);
 	os_mutex_lock(&bitmap_cache_mutex, OS_FOREVER);
 
 	buffer = bitmap_buffer.compact_buffer_list;
@@ -3268,13 +3268,13 @@ void res_manager_preload_finish_check(uint32_t scene_id)
 	{
 		if(buffer->scene_id == scene_id)
 		{
-			mem_dcache_clean(buffer->addr, buffer->offset);			
+			mem_dcache_clean(buffer->addr, buffer->offset);
 		}
-		buffer = buffer->next;	
+		buffer = buffer->next;
 	}
 
 	os_mutex_unlock(&bitmap_cache_mutex);
-	os_strace_end_call_u32(SYS_TRACE_ID_RES_CHECK_PRELOAD, (uint32_t)scene_id);	
+	os_strace_end_call_u32(SYS_TRACE_ID_RES_CHECK_PRELOAD, (uint32_t)scene_id);
 }
 
 uint32_t res_manager_scene_is_loaded(uint32_t scene_id)
@@ -3306,7 +3306,7 @@ uint32_t res_manager_scene_is_loaded(uint32_t scene_id)
 
 static lv_color_format_t _get_res_img_cf(const resource_bitmap_t *sty)
 {
-	lv_color_format_t cf; 
+	lv_color_format_t cf;
 
 	switch (sty->sty_data->format) {
 	case RESOURCE_BITMAP_FORMAT_ARGB8888:
@@ -3335,11 +3335,11 @@ static lv_color_format_t _get_res_img_cf(const resource_bitmap_t *sty)
 		cf = LV_COLOR_FORMAT_RGB888;
 #else
 		cf = LV_COLOR_FORMAT_RGB565;
-#endif	
+#endif
 		break;
 	case RESOURCE_BITMAP_FORMAT_ETC2_EAC:
 		cf = LV_COLOR_FORMAT_ETC2_EAC;
-		break;		
+		break;
 	case RESOURCE_BITMAP_FORMAT_RGB888:
 	case RESOURCE_BITMAP_FORMAT_ARGB6666:
 	case RESOURCE_BITMAP_FORMAT_ARGB1555:
@@ -3359,6 +3359,8 @@ static int32_t _load_bitmap_for_decoder(resource_info_t* info, resource_bitmap_t
 	uint8_t *compress_buf = NULL;
 	struct fs_file_t* pic_fp;
 	uint32_t bmp_pos = 0;
+	uint8_t  jpeg_out_format = HAL_JPEG_OUT_RGB565;
+	uint8_t bytes_per_pixel = bitmap->sty_data->bytes_per_pixel;
 
 	if(bitmap == NULL)
 	{
@@ -3372,9 +3374,16 @@ static int32_t _load_bitmap_for_decoder(resource_info_t* info, resource_bitmap_t
 		return 0;
 	}
 
-	SYS_LOG_INF("decode bitmap id %d, w %d, height %d, bpp %d\n", bitmap->sty_data->id, bitmap->sty_data->width, bitmap->sty_data->height, bitmap->sty_data->bytes_per_pixel);
+	if (bitmap->sty_data->format == RESOURCE_BITMAP_FORMAT_JPEG) {
+#ifdef CONFIG_LV_COLOR_DEPTH_16
+		bytes_per_pixel = 2;
+		jpeg_out_format = HAL_JPEG_OUT_RGB565;
+#else
+		bytes_per_pixel = 3;
+		jpeg_out_format = HAL_JPEG_OUT_RGB888;
+#endif
+	}
 
-	//bmp_size = bitmap->sty_data->width * bitmap->sty_data->height * bitmap->sty_data->bytes_per_pixel;
 	if (bitmap->sty_data->format == RESOURCE_BITMAP_FORMAT_ETC2_EAC) {
 		bmp_size = ((bitmap->sty_data->width + 0x3) & ~0x3) *
 		           ((bitmap->sty_data->height + 0x3) & ~0x3);
@@ -3385,14 +3394,13 @@ static int32_t _load_bitmap_for_decoder(resource_info_t* info, resource_bitmap_t
 	} else if (bitmap->sty_data->format == RESOURCE_BITMAP_FORMAT_INDEX4) {
 		bmp_size = ((bitmap->sty_data->width + 0x1) >> 1) * bitmap->sty_data->height + 64;
 	} else {
-		bmp_size = bitmap->sty_data->width * bitmap->sty_data->height *
-		           bitmap->sty_data->bytes_per_pixel;
-	}	
+		bmp_size = bitmap->sty_data->width * bitmap->sty_data->height * bytes_per_pixel;
+	}
 
 	bitmap->buffer = _get_resource_bitmap_buffer(0, bitmap, bmp_size, 1);
 	if(bitmap->buffer == NULL)
 	{
-		SYS_LOG_INF("error: no buffer to load bitmap \n");
+		SYS_LOG_ERR("error: no buffer to load bitmap \n");
 		return -2;
 	}
 
@@ -3405,27 +3413,27 @@ static int32_t _load_bitmap_for_decoder(resource_info_t* info, resource_bitmap_t
 	{
 		pic_fp = &info->pic_search_param[ret].res_fp;
 	}
-	
+
 #if !defined(CONFIG_RES_MANAGER_USE_STYLE_MMAP)||defined(CONFIG_SIMULATOR)
 	fs_seek(pic_fp, bmp_pos, FS_SEEK_SET);
 #endif
 	if (compress_size > 0)
 	{
-#if !defined(CONFIG_RES_MANAGER_USE_STYLE_MMAP)||defined(CONFIG_SIMULATOR)	
+#if !defined(CONFIG_RES_MANAGER_USE_STYLE_MMAP)||defined(CONFIG_SIMULATOR)
 		compress_buf = (uint8_t*)res_mem_alloc(RES_MEM_POOL_BMP, compress_size);
 		if(compress_buf == NULL)
 		{
-			SYS_LOG_INF("error: no buffer to load compressed bitmap \n");
+			SYS_LOG_ERR("error: no buffer to load compressed bitmap \n");
 			_free_resource_bitmap_buffer(bitmap->buffer);
 			bitmap->buffer = NULL;
 			res_manager_dump_info();
 			return -2;
 		}
-		
+
 		ret = fs_read(pic_fp, compress_buf, compress_size);
 		if(ret < compress_size)
 		{
-			SYS_LOG_INF("bitmap read error %d\n", ret);
+			SYS_LOG_ERR("bitmap read error %d\n", ret);
 		}
 #else
 		compress_buf = info->pic_res_mmap_addr + bmp_pos;
@@ -3435,15 +3443,14 @@ static int32_t _load_bitmap_for_decoder(resource_info_t* info, resource_bitmap_t
 #ifndef CONFIG_LVGL_USE_IMG_DECODER_ACTS
 #ifdef CONFIG_JPEG_HAL
 			if (*(uint32_t*)compress_buf == JPEG_FLAG) {
-				SYS_LOG_INF("jpg decode\n");
-				ret = jpg_decode(compress_buf, compress_size, bitmap->buffer, 1, bitmap->sty_data->width, 0, 0, bitmap->sty_data->width, bitmap->sty_data->height);
+				ret = jpg_decode(compress_buf, compress_size, bitmap->buffer, jpeg_out_format,
+							bitmap->sty_data->width, 0, 0, bitmap->sty_data->width, bitmap->sty_data->height);
 			}
 			else
 #endif
 #endif
 			{
 #ifndef CONFIG_SIMULATOR
-				SYS_LOG_INF("brom decompress\n");
 				ret = p_brom_misc_api->p_decompress(compress_buf, bitmap->buffer, compress_size, bmp_size);
 #else
 				ret = LZ4_decompress_safe(compress_buf, bitmap->buffer, compress_size, bmp_size);
@@ -3461,7 +3468,7 @@ static int32_t _load_bitmap_for_decoder(resource_info_t* info, resource_bitmap_t
 		} else {
 			ret = bmp_size; /* for RESOURCE_BITMAP_FORMAT_INDEX8 */
 		}
-#if !defined(CONFIG_RES_MANAGER_USE_STYLE_MMAP)||defined(CONFIG_SIMULATOR)		
+#if !defined(CONFIG_RES_MANAGER_USE_STYLE_MMAP)||defined(CONFIG_SIMULATOR)
 		res_mem_free(RES_MEM_POOL_BMP, compress_buf);
 #endif
 	}
@@ -3469,17 +3476,19 @@ static int32_t _load_bitmap_for_decoder(resource_info_t* info, resource_bitmap_t
 	{
 		ret = fs_read(pic_fp, bitmap->buffer, bmp_size);
 	}
-	
-	if(ret < bmp_size)
-	{
-		SYS_LOG_INF("decoder bitmap load error %d, compress_buf %p, id %d, w %d, h %d, bmp_size %d\n", 
-					ret, compress_buf, bitmap->sty_data->id, bitmap->sty_data->width, bitmap->sty_data->height, bmp_size);
-		SYS_LOG_INF("decoder bitmap compress size %d, sty compress size %d, bmp pos %d, sty bmp pos\n", 
+
+	if (ret < bmp_size) {
+		SYS_LOG_ERR("decoder bitmap load error %d, compress_buf %p, id %d, format %d, w %d, h %d, bmp_size %d\n",
+					ret, compress_buf, bitmap->sty_data->id, bitmap->sty_data->format, bitmap->sty_data->width,
+					bitmap->sty_data->height, bmp_size);
+		SYS_LOG_ERR("decoder bitmap compress size %d, sty compress size %d, bmp pos %d, sty bmp pos\n",
 					compress_size, bitmap->sty_data->compress_size, bmp_pos, bitmap->sty_data->bmp_pos);
-	}	
-	
-	mem_dcache_clean(bitmap->buffer, bmp_size);	
-	
+	} else {
+		SYS_LOG_DBG("decode bitmap id %d, format %d, w %d, h %d, bpp %d, buf %p\n", bitmap->sty_data->id,
+					bitmap->sty_data->format, bitmap->sty_data->width, bitmap->sty_data->height, bytes_per_pixel, bitmap->buffer);
+	}
+
+	mem_dcache_clean(bitmap->buffer, bmp_size);
 	return 0;
 }
 
@@ -3503,7 +3512,7 @@ static uint32_t sys_time_ms;
 
 
 #ifdef CONFIG_SIMULATOR
-#include <Windows.h> 
+#include <Windows.h>
 #endif
 static uint32_t _tick_get()
 {
@@ -3563,9 +3572,9 @@ static int _add_to_decoder_res_cache(resource_bitmap_t* bitmap, decoder_res_cach
 	cache = decoder_res_cache;
 	for(i=0;i<cache_entry_cnt;i++)
 	{
-        if(cache[i].life > INT32_MIN + DECODER_RES_CACHE_AGING) 
+        if(cache[i].life > INT32_MIN + DECODER_RES_CACHE_AGING)
 		{
-            cache[i].life -= DECODER_RES_CACHE_AGING;		
+            cache[i].life -= DECODER_RES_CACHE_AGING;
 		}
 	}
 
@@ -3576,7 +3585,7 @@ static int _add_to_decoder_res_cache(resource_bitmap_t* bitmap, decoder_res_cach
 			//found cached pic
 			cached_src = &cache[i];
             cached_src->life += cached_src->time_to_open;
-            if(cached_src->life > DECODER_RES_CACHE_LIFE_LIMIT) 
+            if(cached_src->life > DECODER_RES_CACHE_LIFE_LIMIT)
 			{
 				cached_src->life = DECODER_RES_CACHE_LIFE_LIMIT;
 			}
@@ -3584,7 +3593,7 @@ static int _add_to_decoder_res_cache(resource_bitmap_t* bitmap, decoder_res_cach
 		}
 	}
 
-	if(cached_src) 
+	if(cached_src)
 	{
 		bitmap->buffer = cached_src->data;
 		if(force == 1)
@@ -3602,9 +3611,9 @@ static int _add_to_decoder_res_cache(resource_bitmap_t* bitmap, decoder_res_cach
         }
     }
 /*
-	SYS_LOG_INF("cache life 0-7 %d,  %d,  %d,  %d,  %d,  %d,  %d,  %d\n", 
+	SYS_LOG_INF("cache life 0-7 %d,  %d,  %d,  %d,  %d,  %d,  %d,  %d\n",
 				cache[0].life, cache[1].life, cache[2].life, cache[3].life, cache[4].life, cache[5].life, cache[6].life, cache[7].life);
-	SYS_LOG_INF("cache life 8-15 %d,  %d,  %d,  %d,  %d,  %d,  %d,  %d\n", 
+	SYS_LOG_INF("cache life 8-15 %d,  %d,  %d,  %d,  %d,  %d,  %d,  %d\n",
 				cache[8].life, cache[9].life, cache[10].life, cache[11].life, cache[12].life, cache[13].life, cache[14].life, cache[15].life);
 */
 	if(cached_src->data != NULL)
@@ -3669,9 +3678,9 @@ static int _free_one_cache_entry(resource_bitmap_t* bitmap, decoder_res_cache_en
 
     if (k < cache_entry_cnt - 1)
     {
-        for (j = k + 1; j < cache_entry_cnt; j++) 
+        for (j = k + 1; j < cache_entry_cnt; j++)
 		{
-            if (cached_src != &cache[j] && cache[j].data != NULL && cache[j].life < inv_src->life && cache[j].force == 0) 
+            if (cached_src != &cache[j] && cache[j].data != NULL && cache[j].life < inv_src->life && cache[j].force == 0)
 			{
                 inv_src = &cache[j];
             }
@@ -3714,7 +3723,7 @@ int res_manager_decode_bitmap_to_img_dsc(void* raw, void* decoded)
 
 	decoded_img->header.cf = _get_res_img_cf(&bitmap);
 	decoded_img->header.w = bitmap.sty_data->width;
-	decoded_img->header.h = bitmap.sty_data->height;	
+	decoded_img->header.h = bitmap.sty_data->height;
 	decoded_img->data = bitmap.buffer;
 	decoded_img->data_size = bitmap.sty_data->width * bitmap.sty_data->height * bitmap.sty_data->bytes_per_pixel;
 
@@ -3729,7 +3738,7 @@ int res_manager_load_bitmap_for_decoder(resource_bitmap_t* bitmap, int force)
 
 	if(info->reference == 0)
 	{
-		ret = _init_pic_search_param(info, info->sty_path);	
+		ret = _init_pic_search_param(info, info->sty_path);
 		if(ret < 0)
 		{
 			SYS_LOG_INF("init img resource failed\n");
@@ -3742,14 +3751,14 @@ int res_manager_load_bitmap_for_decoder(resource_bitmap_t* bitmap, int force)
 	if(ret < 0)
 	{
 		SYS_LOG_ERR("add to decoder res cache failed\n");
-		return -1;		
+		return -1;
 	}
 
 	if(ret > 0)
 	{
 		//found in cache, add life or sth.
 		bitmap->buffer = cache_item->data;
-		SYS_LOG_INF("bitmap->buffer cached %p\n", bitmap->buffer);
+		SYS_LOG_DBG("bitmap->buffer cached %p\n", bitmap->buffer);
 		return 0;
 	}
 
@@ -3761,7 +3770,7 @@ int res_manager_load_bitmap_for_decoder(resource_bitmap_t* bitmap, int force)
 		ret = _free_one_cache_entry(bitmap, cache_item);
 		if(ret < 0)
 		{
-			SYS_LOG_INF("no enough res cache mem\n");
+			SYS_LOG_ERR("no enough res cache mem\n");
 			break;
 		}
 
@@ -3771,7 +3780,7 @@ int res_manager_load_bitmap_for_decoder(resource_bitmap_t* bitmap, int force)
 	if(ret < 0)
 	{
 		//other load bitmap error, return error
-		SYS_LOG_INF("load img resource failed\n");
+		SYS_LOG_ERR("load img resource failed\n");
 		if(cache_item)
 		{
 			memset(cache_item, 0, sizeof(decoder_res_cache_entry_t));
@@ -3796,7 +3805,7 @@ int res_manager_load_bitmap_for_decoder(resource_bitmap_t* bitmap, int force)
 		}
 
 	    bitmap->buffer = cache_item->data;
-	    SYS_LOG_INF("bitmap->buffer %p\n", bitmap->buffer);
+	    SYS_LOG_DBG("bitmap->buffer %p\n", bitmap->buffer);
 	}
 
 	return 0;
@@ -3829,11 +3838,11 @@ void res_manager_free_bitmap_for_decoder(void* ptr)
 			break;
 		}
 	}
-	
+
 	//mem block buffer need to release immediately for following big pics, or they will alloc in normal res mem
 	if(res_mem_is_block(ptr))
 	{
-		SYS_LOG_INF("free decoded %p\n", ptr);
+		SYS_LOG_DBG("free decoded %p\n", ptr);
 		_free_resource_bitmap_buffer(ptr);
 		memset(&cache_entry[i], 0, sizeof(decoder_res_cache_entry_t));
 	}
@@ -3859,7 +3868,7 @@ static int _find_id_from_key(uint8_t* key)
 		}
 		else if(ret > 0)
 		{
-			low = mid + 1;			
+			low = mid + 1;
 		}
 		else
 		{
@@ -3892,7 +3901,7 @@ int res_manager_set_current_string_res(const uint8_t** string_res, uint32_t stri
 uint8_t* res_manager_get_string(uint8_t* key)
 {
 	int id = 1;
-	
+
 	if(!current_string_res)
 	{
 		SYS_LOG_ERR("current string resource not inited\n");
@@ -3963,7 +3972,7 @@ void res_manager_dump_info(void)
 	uint32_t mem_peak;
 
 	//mem dump
-	res_mem_dump();	
+	res_mem_dump();
 
 	//mem peak dump
 	mem_peak = res_mem_get_mem_peak();
@@ -3986,7 +3995,7 @@ void res_manager_dump_info(void)
 		SYS_LOG_INF("compact buffer sceneid 0x%x, addr %p, size %d, freesize %d \n", citem->scene_id, citem->addr, citem->offset, citem->free_size);
 		citem = citem->next;
 	}
-	
+
 	//bitmap dump();
 	bitem = bitmap_buffer.head;
 	while(bitem != NULL)
@@ -4002,7 +4011,7 @@ void res_manager_dump_info(void)
 		SYS_LOG_INF("txt buffer id %d, addr %p \n", bitem->id, bitem->addr);
 		bitem = bitem->next;
 	}
-	
+
 }
 
 #ifdef CONFIG_RES_MANAGER_ENABLE_MEM_LEAK_DEBUG
@@ -4018,7 +4027,6 @@ void res_manager_compact_buffer_check(uint32_t scene_id)
 		}
 		citem = citem->next;
 	}
-	
+
 }
 #endif
-

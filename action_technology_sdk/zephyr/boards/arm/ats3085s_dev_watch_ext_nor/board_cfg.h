@@ -55,7 +55,7 @@
 #define CONFIG_UART_0_NAME      			"UART_0"
 #define CONFIG_UART_1           				0
 #define CONFIG_UART_1_NAME      			"UART_1"
-#define CONFIG_UART_2           				0
+#define CONFIG_UART_2           				1
 #define CONFIG_UART_2_NAME      			"UART_2"
 #define CONFIG_UART_3           				0
 #define CONFIG_UART_3_NAME      			"UART_3"
@@ -144,7 +144,7 @@
 #define CONFIG_CEC				 				0
 #define CONFIG_ACTS_BATTERY_NTC 				1
 
-#define CONFIG_KNOB_ENCODER	   					0
+#define CONFIG_KNOB_ENCODER	   					1
 #define CONFIG_KNOB_ENCODER_DEV_NAME 		"knobencoder"
 
 #define CONFIG_UART_0_USE_TX_DMA   1
@@ -160,6 +160,13 @@
 #define CONFIG_UART_1_USE_RX_DMA   1
 #define CONFIG_UART_1_RX_DMA_CHAN  0xff
 #define CONFIG_UART_1_RX_DMA_ID    2
+
+#define CONFIG_UART_2_USE_TX_DMA   1
+#define CONFIG_UART_2_TX_DMA_CHAN  0xff
+#define CONFIG_UART_2_TX_DMA_ID    3
+#define CONFIG_UART_2_USE_RX_DMA   1
+#define CONFIG_UART_2_RX_DMA_CHAN  0xff
+#define CONFIG_UART_2_RX_DMA_ID    3
 
 
 #define CONFIG_MMC_0_USE_DMA        1
@@ -894,8 +901,13 @@ audio board cfg
 #define CONFIG_PANEL_BRIGHTNESS_DELAY_PERIODS (0)
 
 /* brightness range [0, 255] */
-#define CONFIG_PANEL_BRIGHTNESS		(255)
+#if CONFIG_AEM_WATCH_SUPPORT
+#define CONFIG_PANEL_BRIGHTNESS (0)
+#define CONFIG_PANEL_AOD_BRIGHTNESS (48)
+#else
+#define CONFIG_PANEL_BRIGHTNESS (255)
 #define CONFIG_PANEL_AOD_BRIGHTNESS (128)
+#endif
 #define CONFIG_PANEL_TE_SCANLINE	(300)
 
 /* fixed screen offset due to material or other issue */

@@ -875,9 +875,11 @@ __sleepfunc static void pwrgat_gpio_nor_backup_registers(void)
 {
 	/* make nor cs high */
 	pwrgat_gpio_backups[1] = sys_read32(GPION_CTL(NOR_CS_PIN));
+#if !defined(CONFIG_BOARD_EMMCBOOT) && !defined(CONFIG_BOARD_NANDBOOT)
 	sys_write32(1 << (NOR_CS_PIN % 32), GPION_BSR(NOR_CS_PIN));
 	sys_write32(0x1040, GPION_CTL(NOR_CS_PIN));
 	sys_write32(1 << (NOR_CS_PIN % 32), GPION_BSR(NOR_CS_PIN));
+#endif
 }
 
 __sleepfunc static void pwrgat_set_unused_uart_highz(void)
@@ -1494,7 +1496,6 @@ __sleepfunc static void cpu_enter_sleep(void)
 	while(1) {
 		/* RAM4 shareRAM select  RC4MHZ in s2) */
 		sys_write32((bk_clksrc0 & ~(7 << 25)) | (0 << 25), CMU_MEMCLKSRC0); /*shareRAM select  RC4M */
-
 		pwrgat_gpio_nor_backup_registers();
 		pwrgat_set_unused_uart_highz();
 

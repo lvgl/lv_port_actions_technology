@@ -347,6 +347,26 @@ int fs_sync(struct fs_file_t *zfp)
 	return rc;
 }
 
+int fs_size(struct fs_file_t *zfp)
+{
+	int rc = -EINVAL;
+
+	if (zfp->mp == NULL) {
+		return -EBADF;
+	}
+
+	CHECKIF(zfp->mp->fs->size == NULL) {
+		return -ENOTSUP;
+	}
+
+	rc = zfp->mp->fs->size(zfp);
+	if (rc < 0) {
+		LOG_ERR("get file size error (%d)", rc);
+	}
+
+	return rc;
+}
+
 /* Directory operations */
 int fs_opendir(struct fs_dir_t *zdp, const char *abs_path)
 {

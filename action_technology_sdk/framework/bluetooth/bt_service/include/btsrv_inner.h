@@ -638,6 +638,19 @@ int btsrv_pts_avrcp_pass_through_cmd(uint8_t opid);
 int btsrv_pts_avrcp_notify_volume_change(uint8_t volume);
 int btsrv_pts_avrcp_reg_notify_volume_change(void);
 int btsrv_pts_register_auth_cb(bool reg_auth);
+int btsrv_pts_a2dp_abort(void);
+int btsrv_pts_a2dp_discover(void);
+int btsrv_pts_a2dp_get_capabilities(void);
+int btsrv_pts_a2dp_get_all_capabilities(void);
+int btsrv_pts_a2dp_set_configuration(void);
+int btsrv_pts_a2dp_open(void);
+int btsrv_pts_a2dp_start(void);
+int btsrv_pts_a2dp_suspend(void);
+int btsrv_pts_a2dp_close(void);
+int btsrv_pts_a2dp_disconnect_media_session(void);
+int btsrv_pts_a2dp_connect(uint8_t type);
+int btsrv_pts_a2dp_reconfig(void *ptr);
+int btsrv_pts_a2dp_send_audio_data(uint8_t *data, uint16_t len);
 
 #ifdef CONFIG_BT_A2DP_TRS
 struct bt_conn *btsrv_rdm_trs_avrcp_get_actived(void);

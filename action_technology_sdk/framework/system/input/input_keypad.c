@@ -33,7 +33,12 @@
 
 #define LONG_PRESS_TIMER 10 * 40
 #define SUPER_LONG_PRESS_TIMER             50 * 40   /* time */
+#if CONFIG_AEM_WATCH_SUPPORT
+#define SUPER_LONG_PRESS_6S_TIMER         100 * 50  /* time */
+#else
 #define SUPER_LONG_PRESS_6S_TIMER         150 * 40  /* time */
+#endif
+
 #define QUICKLY_CLICK_DURATION 300 /* ms */
 #define KEY_EVENT_CANCEL_DURATION 50 /* ms */
 #define HOLD_DELAY_TIME 500 /* ms */

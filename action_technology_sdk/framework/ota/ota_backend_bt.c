@@ -310,7 +310,7 @@ static int tlv_unpack_data(struct svc_prot_context *ctx, uint8_t type, int *len,
 	return rlen;
 }
 
-int svc_prot_send_data(struct svc_prot_context *ctx, uint8_t *buf, int size)
+static int svc_prot_send_data(struct svc_prot_context *ctx, uint8_t *buf, int size)
 {
 	int err;
 
@@ -323,7 +323,7 @@ int svc_prot_send_data(struct svc_prot_context *ctx, uint8_t *buf, int size)
 	return 0;
 }
 
-int ota_bt_send_cmd(struct svc_prot_context *ctx, uint8_t cmd,
+static int ota_bt_send_cmd(struct svc_prot_context *ctx, uint8_t cmd,
 		    uint8_t *buf, int size)
 {
 	struct svc_prot_head *head;
@@ -347,7 +347,7 @@ int ota_bt_send_cmd(struct svc_prot_context *ctx, uint8_t cmd,
 	return 0;
 }
 
-int ota_cmd_h2d_request_upgrade(struct svc_prot_context *ctx, uint16_t param_size)
+static int ota_cmd_h2d_request_upgrade(struct svc_prot_context *ctx, uint16_t param_size)
 {
 	int err = 0, send_len, battery_threahold, head_len, ota_type;
 	uint8_t *send_buf;
@@ -446,7 +446,7 @@ int ota_cmd_h2d_request_upgrade(struct svc_prot_context *ctx, uint16_t param_siz
 	return err;
 }
 
-int ota_cmd_h2d_connect_negotiation(struct svc_prot_context *ctx, uint16_t param_len)
+static int ota_cmd_h2d_connect_negotiation(struct svc_prot_context *ctx, uint16_t param_len)
 {
 	uint16_t app_wait_timeout, device_restart_timeout, ota_unit_size, interval;
 	uint8_t ack_enable;
@@ -495,7 +495,7 @@ int ota_cmd_h2d_connect_negotiation(struct svc_prot_context *ctx, uint16_t param
 	return err;
 }
 
-int ota_cmd_h2d_negotiation_result(struct svc_prot_context *ctx, uint16_t param_len)
+static int ota_cmd_h2d_negotiation_result(struct svc_prot_context *ctx, uint16_t param_len)
 {
 	uint8_t negotiation_result;
 	int rlen;
@@ -523,7 +523,7 @@ int ota_cmd_h2d_negotiation_result(struct svc_prot_context *ctx, uint16_t param_
 	return 0;
 }
 
-int ota_cmd_require_image_data(struct svc_prot_context *ctx, uint32_t offset, int len, uint8_t *buf)
+static int ota_cmd_require_image_data(struct svc_prot_context *ctx, uint32_t offset, int len, uint8_t *buf)
 {
 	uint8_t read_mask, *send_buf;
 	int err, send_len;
@@ -568,7 +568,7 @@ int ota_cmd_require_image_data(struct svc_prot_context *ctx, uint32_t offset, in
 	return 0;
 }
 
-int ota_cmd_h2d_send_image_data(struct svc_prot_context *ctx, uint16_t param_len, int with_crc)
+static int ota_cmd_h2d_send_image_data(struct svc_prot_context *ctx, uint16_t param_len, int with_crc)
 {
 	int err, seg_len;
 	uint8_t psn;
@@ -646,17 +646,17 @@ int ota_cmd_h2d_send_image_data(struct svc_prot_context *ctx, uint16_t param_len
 	return 0;
 }
 
-int ota_cmd_h2d_send_image_data_with_crc(struct svc_prot_context *ctx, uint16_t param_len)
+static int ota_cmd_h2d_send_image_data_with_crc(struct svc_prot_context *ctx, uint16_t param_len)
 {
 	return ota_cmd_h2d_send_image_data(ctx, param_len, 1);
 }
 
-int ota_cmd_h2d_send_image_data_no_crc(struct svc_prot_context *ctx, uint16_t param_len)
+static int ota_cmd_h2d_send_image_data_no_crc(struct svc_prot_context *ctx, uint16_t param_len)
 {
 	return ota_cmd_h2d_send_image_data(ctx, param_len, 0);
 }
 
-int ota_cmd_d2h_report_image_valid(struct svc_prot_context *ctx, int is_valid)
+static int ota_cmd_d2h_report_image_valid(struct svc_prot_context *ctx, int is_valid)
 {
 	uint8_t *send_buf;
 	uint8_t valid_flag;
@@ -686,7 +686,7 @@ int ota_cmd_d2h_report_image_valid(struct svc_prot_context *ctx, int is_valid)
 	return err;
 }
 
-struct svc_prot_cmd svc_cmds[] = {
+static const struct svc_prot_cmd svc_cmds[] = {
 	{OTA_CMD_H2D_REQUEST_UPGRADE, ota_cmd_h2d_request_upgrade,},
 	{OTA_CMD_H2D_CONNECT_NEGOTIATION, ota_cmd_h2d_connect_negotiation,},
 	{OTA_CMD_H2D_NEGOTIATION_RESULT, ota_cmd_h2d_negotiation_result,},
@@ -696,7 +696,7 @@ struct svc_prot_cmd svc_cmds[] = {
 };
 
 
-int process_command(struct svc_prot_context *ctx, uint32_t *processed_cmd)
+static int process_command(struct svc_prot_context *ctx, uint32_t *processed_cmd)
 {
 	struct svc_prot_head head;
 	svc_prot_cmd_handler_t cmd_handler;
@@ -754,7 +754,7 @@ int process_command(struct svc_prot_context *ctx, uint32_t *processed_cmd)
 	return err;
 }
 
-int wait_negotiation_done(struct svc_prot_context *ctx)
+static int wait_negotiation_done(struct svc_prot_context *ctx)
 {
 	int err = 0;
 
@@ -772,7 +772,7 @@ int wait_negotiation_done(struct svc_prot_context *ctx)
 	return err;
 }
 
-int ota_backend_bt_ioctl(struct ota_backend *backend, int cmd, unsigned int param)
+static int ota_backend_bt_ioctl(struct ota_backend *backend, int cmd, unsigned int param)
 {
 	struct ota_backend_bt *backend_bt = CONTAINER_OF(backend,
 		struct ota_backend_bt, backend);
@@ -815,7 +815,7 @@ int ota_backend_bt_ioctl(struct ota_backend *backend, int cmd, unsigned int para
 	return 0;
 }
 
-int ota_backend_bt_read(struct ota_backend *backend, int offset, uint8_t *buf, int size)
+static int ota_backend_bt_read(struct ota_backend *backend, int offset, uint8_t *buf, int size)
 {
 	struct ota_backend_bt *backend_bt = CONTAINER_OF(backend,
 		struct ota_backend_bt, backend);
@@ -864,7 +864,7 @@ try_again:
 	return err;
 }
 
-int ota_backend_bt_read_prepare(struct ota_backend *backend, int offset, uint8_t *buf, int size)
+static int ota_backend_bt_read_prepare(struct ota_backend *backend, int offset, uint8_t *buf, int size)
 {
 	struct ota_backend_bt *backend_bt = CONTAINER_OF(backend,
 		struct ota_backend_bt, backend);
@@ -882,7 +882,7 @@ int ota_backend_bt_read_prepare(struct ota_backend *backend, int offset, uint8_t
 	return err;
 }
 
-int ota_backend_bt_read_complete(struct ota_backend *backend, int offset, uint8_t *buf, int size)
+static int ota_backend_bt_read_complete(struct ota_backend *backend, int offset, uint8_t *buf, int size)
 {
 	struct ota_backend_bt *backend_bt = CONTAINER_OF(backend,
 		struct ota_backend_bt, backend);
@@ -937,7 +937,7 @@ try_again:
 	return err;
 }
 
-int ota_backend_bt_open(struct ota_backend *backend)
+static int ota_backend_bt_open(struct ota_backend *backend)
 {
 	struct ota_backend_bt *backend_bt = CONTAINER_OF(backend,
 		struct ota_backend_bt, backend);
@@ -961,7 +961,7 @@ int ota_backend_bt_open(struct ota_backend *backend)
 	return 0;
 }
 
-int ota_backend_bt_close(struct ota_backend *backend)
+static int ota_backend_bt_close(struct ota_backend *backend)
 {
 	struct ota_backend_bt *backend_bt = CONTAINER_OF(backend,
 		struct ota_backend_bt, backend);
@@ -1022,7 +1022,7 @@ enum {
     BLE_OTA_LEVEL_MAX,
 };
 
-const struct bt_le_conn_param le_ota_param[BLE_PHONE_TYPE_MAX][BLE_OTA_LEVEL_MAX] = {
+static const struct bt_le_conn_param le_ota_param[BLE_PHONE_TYPE_MAX][BLE_OTA_LEVEL_MAX] = {
     {
         {6,12,0,600},
         {36,72,0,600},
@@ -1035,7 +1035,7 @@ const struct bt_le_conn_param le_ota_param[BLE_PHONE_TYPE_MAX][BLE_OTA_LEVEL_MAX
     },
 };
 
-void ble_ota_param_set_wakelock(bool set)
+static void ble_ota_param_set_wakelock(bool set)
 {
 	static uint8_t param_wake_lock = 0;
 

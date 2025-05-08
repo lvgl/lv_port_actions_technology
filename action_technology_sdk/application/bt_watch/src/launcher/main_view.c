@@ -412,7 +412,7 @@ static int _main_view_paint(view_data_t *view_data)
 	struct rtc_time time;
 	char buf[16];
 
-	if (data) {
+	if (data && lvgl_res_scene_is_loaded(SCENE_SYSTEM_VIEW)) {
 		// update battery
 		data->bat_val = presenter->get_battery_percent();
 		sprintf(buf, "%d%%", data->bat_val);

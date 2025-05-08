@@ -11,10 +11,14 @@
 #include "ota_image.h"
 #include "ota_manifest.h"
 #include <os_common_api.h>
+#include <partition/partition.h>
+#include <drivers/nvram_config.h>
 
 /* the last byte reserved for '\0' */
 #define OTA_MANIFSET_FILE_MAX_SIZE	(3072 - 1)
 #define XML_TAG_MAX_LEN			31
+
+static uint8_t cwf_offset = 0;
 
 static int xml_get_data(const char *buf, const char *tag, const char **start, const char **end)
 {
@@ -215,6 +219,13 @@ int ota_manifest_parse_partitions(struct ota_manifest *manifest, const char *xml
 			SYS_LOG_ERR("cannot get <file_id> for part %d", i);
 			goto failed;
 		}
+		/* sdfs part20: dynamic partition controlled by config */
+		if (file_id == PARTITION_FILE_ID_SDFS_PART20) {
+			SYS_LOG_INF("ota cwf offset %d",cwf_offset);
+			if(cwf_offset == 0xff)
+				goto failed;
+			file_id += cwf_offset;
+		}
 	#ifdef CONFIG_OTA_MUTIPLE_STORAGE
 		err = xml_get_int(part_seg_start, "storage_id", &storage_id);
 		if (err) {
@@ -406,3 +417,7 @@ exit:
 	return err;
 }
 
+void ota_manifest_set_cwf_offset(uint8_t offset)
+{
+	cwf_offset = offset;
+}

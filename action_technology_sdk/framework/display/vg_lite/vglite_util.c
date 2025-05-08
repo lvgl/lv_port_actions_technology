@@ -168,18 +168,13 @@ uint32_t vglite_buf_format_to_hal(vg_lite_buffer_format_t format, uint8_t *bits_
 
 bool vglite_buf_is_valid(vg_lite_buffer_t *vgbuf)
 {
-	return (vgbuf == NULL || vgbuf->handle == NULL || vgbuf->memory == NULL) ? false : true;
+	return (vgbuf == NULL || vgbuf->handle == NULL) ? false : true;
 }
 
-int vglite_buf_map(vg_lite_buffer_t *vgbuf, void *data, uint16_t width, uint16_t height,
-			uint16_t stride, vg_lite_buffer_format_t format)
+int vglite_buf_init(vg_lite_buffer_t *vgbuf, void *data, uint16_t width, uint16_t height,
+		uint16_t stride, vg_lite_buffer_format_t format)
 {
-	/* Some source buffer format does not require 64 bytes alignment */
-	if ((uintptr_t)data & (VGLITE_MEM_ALIGNMENT - 1)) {
-		SYS_LOG_DBG("vgbuf %p not %d aligned", data, VGLITE_MEM_ALIGNMENT);
-	}
-
-	if (format == VG_LITE_RGBA8888_ETC2_EAC && (stride & 0x3))
+	if ((format == VG_LITE_RGBA8888_ETC2_EAC || format == VG_LITE_YUY2) && (stride & 0x3))
 		return -EINVAL;
 
 	memset(vgbuf, 0, sizeof(*vgbuf));
@@ -193,6 +188,26 @@ int vglite_buf_map(vg_lite_buffer_t *vgbuf, void *data, uint16_t width, uint16_t
 	vgbuf->stride = stride;
 	vgbuf->tiled = (format == VG_LITE_RGBA8888_ETC2_EAC) ?
 			VG_LITE_TILED : VG_LITE_LINEAR;
+
+	return 0;
+}
+
+int vglite_buf_map_data(vg_lite_buffer_t *vgbuf, void *data)
+{
+	if (data)
+		vgbuf->memory = data;
+
+	if (vg_lite_map(vgbuf, VG_LITE_MAP_USER_MEMORY, -1) != VG_LITE_SUCCESS)
+		return -EINVAL;
+
+	return 0;
+}
+
+int vglite_buf_map(vg_lite_buffer_t *vgbuf, void *data, uint16_t width, uint16_t height,
+		uint16_t stride, vg_lite_buffer_format_t format)
+{
+	if (vglite_buf_init(vgbuf, data, width, height, stride, format))
+		return -EINVAL;
 
 	if (vg_lite_map(vgbuf, VG_LITE_MAP_USER_MEMORY, -1) != VG_LITE_SUCCESS)
 		return -EINVAL;

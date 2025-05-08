@@ -36,8 +36,10 @@ int bt_manager_event_notify(int event_id, void *event_data, int event_data_size)
 	struct app_msg  msg = {0};
 	char *fg_app = app_manager_get_current_app();
 
-	if (!fg_app)
-		return -ENODEV;
+#if !CONFIG_AEM_WATCH_SUPPORT
+    if (!fg_app)
+        return -ENODEV;
+#endif
 
 	/**ota not deal bt event when process*/
 	if (memcmp(fg_app, "ota", strlen("ota")) == 0)
@@ -55,7 +57,11 @@ int bt_manager_event_notify(int event_id, void *event_data, int event_data_size)
 	msg.type = MSG_BT_EVENT;
 	msg.cmd = event_id;
 
-	return send_async_msg(fg_app, &msg);
+#if CONFIG_AEM_WATCH_SUPPORT
+    return send_async_msg("main", &msg);
+#else
+    return send_async_msg(fg_app, &msg);
+#endif
 }
 
 int bt_manager_event_notify_ext(int event_id, void *event_data, int event_data_size , void* call_cb)
@@ -63,8 +69,10 @@ int bt_manager_event_notify_ext(int event_id, void *event_data, int event_data_s
 	struct app_msg  msg = {0};
 	char *fg_app = app_manager_get_current_app();
 
-	if (!fg_app)
-		return -ENODEV;
+#if !CONFIG_AEM_WATCH_SUPPORT
+    if (!fg_app)
+        return -ENODEV;
+#endif
 
 	/**ota not deal bt event when process*/
 	if (memcmp(fg_app, "ota", strlen("ota")) == 0)
@@ -81,8 +89,11 @@ int bt_manager_event_notify_ext(int event_id, void *event_data, int event_data_s
 
 	msg.type = MSG_BT_EVENT;
 	msg.cmd = event_id;
-
-	return send_async_msg(fg_app, &msg);
+#if CONFIG_AEM_WATCH_SUPPORT
+    return send_async_msg("main", &msg);
+#else
+    return send_async_msg(fg_app, &msg);
+#endif
 }
 
 int bt_manager_state_notify(int state)

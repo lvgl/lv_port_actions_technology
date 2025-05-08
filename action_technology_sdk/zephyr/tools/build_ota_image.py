@@ -26,6 +26,9 @@ import lzma
 LZMA_OTA_BIN = 1
 LZMA_TEMP_BIN = 1
 
+FW_VERSION_FILE_NAME="fw_version.bin"
+
+
 script_path = os.path.split(os.path.realpath(__file__))[0]
 
 def align_down(data, alignment):
@@ -221,6 +224,13 @@ class ota_fw(object):
             cur_time = time.strftime('%y%m%d%H%M',time.localtime(time.time()))
             version_name = self.fw_version['version_name'].replace('$(build_time)', cur_time)
             self.fw_version['version_name'] = version_name
+            ver_file = os.path.join(os.path.dirname(output_file), 'bin', FW_VERSION_FILE_NAME)
+            if os.path.exists(ver_file) == True:
+                with open(ver_file, 'r') as f:
+                    ver_str = f.read()
+                    f.close()
+                    self.fw_version['version_name'] = ver_str
+
 
         self.fw_version['board_name'] = board_name
         part_list = root.find('partitions').findall('partition')

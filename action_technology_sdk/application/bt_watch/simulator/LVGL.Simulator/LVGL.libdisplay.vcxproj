@@ -122,10 +122,6 @@
     <ClCompile Include="..\..\..\..\framework\display\libdisplay\libdisplay_version.c" />
     <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\gesture_manager.c" />
     <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\input_dispatcher.c" />
-    <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\input_recorder.c" />
-    <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\input_recorder_buffer.c" />
-    <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\input_recorder_slide_fixedstep.c" />
-    <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\input_recorder_stream.c" />
     <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\ui_service.c" />
     <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\view_animation.c" />
     <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\view_manager.c" />

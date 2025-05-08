@@ -24,7 +24,11 @@ static struct z_coredump_backend_api
 #elif defined(CONFIG_DEBUG_COREDUMP_BACKEND_FLASH_DEV)
 extern struct z_coredump_backend_api z_coredump_backend_flash_dev;
 static struct z_coredump_backend_api
-	*backend_api = &z_coredump_backend_flash_dev;	
+	*backend_api = &z_coredump_backend_flash_dev;
+#elif defined(CONFIG_DEBUG_COREDUMP_BACKEND_NAND_SD)
+extern struct z_coredump_backend_api z_coredump_backend_nand_sd;
+static struct z_coredump_backend_api
+	*backend_api = &z_coredump_backend_nand_sd;
 #else
 #error "Need to select a coredump backend"
 #endif

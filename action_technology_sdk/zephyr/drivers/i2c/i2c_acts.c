@@ -302,6 +302,38 @@ static void i2c_acts_reset(struct i2c_acts_controller *i2c)
 		;
 }
 
+static int i2c_acts_stop(struct i2c_acts_controller *i2c, uint32_t timeout_ms)
+{
+	uint32_t start_time, curr_time;
+
+	/* disable i2c controller */
+	i2c->ctl = 0;
+
+	/* send i2c start & addr */
+	i2c->ctl = I2C_CTL_EN | I2C_CTL_GBCC_START | I2C_CTL_RB;
+	start_time = k_cycle_get_32();
+	while (!(i2c->stat & I2C_STAT_TCB)) {
+		curr_time = k_cycle_get_32();
+		if (k_cyc_to_us_floor32(curr_time - start_time) >= (timeout_ms * 1000)) {
+			LOG_ERR("wait i2c start timeout");
+			break;
+		}
+	}
+
+	/* send i2c stop */
+	i2c->ctl = I2C_CTL_EN | I2C_CTL_GBCC_STOP | I2C_CTL_RB;
+	start_time = k_cycle_get_32();
+	while (!(i2c->stat & I2C_STAT_STPD)) {
+		curr_time = k_cycle_get_32();
+		if (k_cyc_to_us_floor32(curr_time - start_time) >= (timeout_ms * 1000)) {
+			LOG_ERR("wait i2c stop timeout");
+			return -ETIMEDOUT;
+		}
+	}
+
+	return 0;
+}
+
 static int i2c_acts_wait_complete(struct i2c_acts_controller *i2c,
 					uint32_t timeout_ms, bool is_read)
 {
@@ -563,6 +595,7 @@ stop:
 
 		if(data->state == STATE_TRANSFER_ERROR){
 			i2c_acts_dump_regs(i2c);
+			i2c_acts_stop(i2c, I2C_WAIT_COMPLETE_MS);
 		}
 		/* disable i2c controller */
 		i2c->ctl = 0;

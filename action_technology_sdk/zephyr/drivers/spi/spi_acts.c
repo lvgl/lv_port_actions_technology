@@ -20,6 +20,7 @@ LOG_MODULE_REGISTER(spi_acts);
 #include <drivers/dma.h>
 #include <soc.h>
 #include <board_cfg.h>
+#include <sys_wakelock.h>
 /* SPI registers macros*/
 #define SPI_CTL_CLK_SEL_MASK		(0x1 << 31)
 #define SPI_CTL_CLK_SEL_CPU			(0x0 << 31)
@@ -120,7 +121,7 @@ LOG_MODULE_REGISTER(spi_acts);
 
 #define SPI_DMA_STRANFER_MIN_LEN 8
 #define SPI_FIFO_LEN                   64
-//#define CONFIG_STANDARD_SPI
+#define CONFIG_STANDARD_SPI
 
 struct acts_spi_controller
 {
@@ -170,10 +171,40 @@ bool spi_acts_transfer_ongoing(struct acts_spi_data *data)
     return spi_context_tx_on(&data->ctx) || spi_context_rx_on(&data->ctx);
 }
 
+static void spi_wake_lock(void)
+{
+#ifdef CONFIG_SYS_WAKELOCK
+	 sys_wake_lock(PARTIAL_WAKE_LOCK);
+#endif
+}
+
+static void spi_wake_unlock(void)
+{
+#ifdef CONFIG_SYS_WAKELOCK
+	 sys_wake_unlock(PARTIAL_WAKE_LOCK);
+#endif
+}
+
 static void spi_acts_wait_tx_complete(struct acts_spi_controller *spi)
 {
-    while (!(spi->status & SPI_STATUS_TX_EMPTY))
-        ;
+	int i;
+	/* wait until TX FIFO empty */
+	for(i = 0; i < 40; i++){ //400 us
+		if(spi->status & SPI_STATUS_TX_EMPTY)
+			break;
+		k_busy_wait(10);
+	}
+	if(i == 40) {
+		for(i = 0; i < 10; i++){ //10 ms
+			if(spi->status & SPI_STATUS_TX_EMPTY)
+				break;
+			k_msleep(1);
+		}
+		if (i == 10) {
+			LOG_ERR("spi fifo not enmpty\n");
+		}
+	}
+
     /* wait until tx fifo is empty for master mode*/
     while (((spi->ctrl & SPI_CTL_MS_SEL_MASK) == SPI_CTL_MS_SEL_MASTER) &&
         spi->status & SPI_STATUS_BUSY)
@@ -287,12 +318,26 @@ static int spi_acts_read_data_by_dma(const struct acts_spi_config *cfg,
         LOG_ERR("faield to start dma chan 0x%x\n", data->rxdma_chan);
         goto out;
     }
-	if(data->call_back)
-		data->call_back(SPI_STAGE_PREPARE);
-    /* wait until dma transfer is done */
-    k_sem_take(&data->dma_sync, K_FOREVER);
-	if(data->call_back)
-		data->call_back(SPI_STAGE_FINSHED);
+    if(data->call_back){
+        spi_wake_lock();
+        ret = data->call_back(SPI_STAGE_PREPARE);
+        if(ret > 0){
+            if (k_sem_take(&data->dma_sync, K_MSEC(ret))) {
+                LOG_ERR("wait dma rx timeout=%d\n", ret);
+                 data->b_stop_send = true;
+            }else{
+                ret = 0;
+            }
+        }else{
+            LOG_ERR("spi callback err,stop rx,ret=%d\n", ret);
+            data->b_stop_send = true;
+        }
+        data->call_back(SPI_STAGE_FINSHED);
+        spi_wake_unlock();
+    }else{
+        /* wait until dma transfer is done */
+        k_sem_take(&data->dma_sync, K_FOREVER);
+    }
 
 out:
     spi_acts_stop_dma(cfg, data, data->rxdma_chan);
@@ -307,6 +352,7 @@ static int spi_acts_write_data_by_dma(const struct acts_spi_config *cfg,
 {
     struct acts_spi_controller *spi = cfg->spi;
     int ret;
+	int i;
 
     spi->bc = len;
     spi->ctrl = (spi->ctrl & ~(SPI_CTL_WR_MODE_MASK | SPI_CTL_DMS_MASK)) |
@@ -323,20 +369,45 @@ static int spi_acts_write_data_by_dma(const struct acts_spi_config *cfg,
         LOG_ERR("faield to start tx dma chan 0x%x\n", data->txdma_chan);
         goto out;
     }
-
-    if(data->call_back)
-        data->call_back(SPI_STAGE_PREPARE);
-    /* wait until dma transfer is done */
-
-    k_sem_take(&data->dma_sync, K_FOREVER);
-
-    /* wait until TX FIFO empty */
-    if(!data->b_stop_send){
-        while(!(spi->status & SPI_STATUS_TX_EMPTY));
-    }
-    if(data->call_back)
+    if(data->call_back){
+        spi_wake_lock();
+        ret = data->call_back(SPI_STAGE_PREPARE);
+        if(ret > 0){
+            if (k_sem_take(&data->dma_sync, K_MSEC(ret))) {
+                LOG_ERR("wait dma tx timeout=%d\n", ret);
+                 data->b_stop_send = true;
+            }else{
+                ret = 0;
+            }
+        }else{
+            LOG_ERR("spi callback err,stop tx,ret=%d\n", ret);
+            data->b_stop_send = true;
+        }
         data->call_back(SPI_STAGE_FINSHED);
+        spi_wake_unlock();
+    }else{
+        /* wait until dma transfer is done */
+        k_sem_take(&data->dma_sync, K_FOREVER);
+    }
 
+	/* wait until TX FIFO empty */
+	if(!data->b_stop_send) {
+		for(i = 0; i < 40; i++){ //400 us
+			if(spi->status & SPI_STATUS_TX_EMPTY)
+				break;
+			k_busy_wait(10);
+		}
+		if(i == 40) {
+			for(i = 0; i < 10; i++){ //10 ms
+				if(spi->status & SPI_STATUS_TX_EMPTY)
+					break;
+				k_msleep(1);
+			}
+			if (i == 10) {
+				LOG_ERR("spi fifo not enmpty\n");
+			}
+		}
+	}
 out:
     spi_acts_stop_dma(cfg, data, data->txdma_chan);
     spi->ctrl = spi->ctrl & ~(SPI_CTL_CLK_SEL_DMA | SPI_CTL_TX_DRQ_EN);
@@ -364,22 +435,36 @@ int spi_acts_write_read_data_by_dma(const struct acts_spi_config *cfg,
     ret = spi_acts_start_dma(cfg, data, data->rxdma_chan, rx_buf, len,
                  false, dma_done_callback);
     if (ret) {
-        LOG_ERR("faield to start dma rx chan 0x%x\n", data->rxdma_chan);
+        LOG_ERR("faield to start dma txrx chan 0x%x\n", data->rxdma_chan);
         goto out;
     }
 
     ret = spi_acts_start_dma(cfg, data, data->txdma_chan, (uint8_t *)tx_buf, len,
                  true, NULL);
     if (ret) {
-        LOG_ERR("faield to start dma tx chan 0x%x\n", data->txdma_chan);
+        LOG_ERR("faield to start dma txrx chan 0x%x\n", data->txdma_chan);
         goto out;
     }
-    if(data->call_back)
-        data->call_back(SPI_STAGE_PREPARE);
-    /* wait until dma transfer is done */
-    k_sem_take(&data->dma_sync, K_FOREVER);
-    if(data->call_back)
+    if(data->call_back){
+        spi_wake_lock();
+        ret = data->call_back(SPI_STAGE_PREPARE);
+        if(ret > 0){
+            if (k_sem_take(&data->dma_sync, K_MSEC(ret))) {
+                LOG_ERR("wait dma txrx timeout=%d\n", ret);
+                 data->b_stop_send = true;
+            }else{
+                ret = 0;
+            }
+        }else{
+            LOG_ERR("spi callback err,stop txrx,ret=%d\n", ret);
+            data->b_stop_send = true;
+        }
         data->call_back(SPI_STAGE_FINSHED);
+        spi_wake_unlock();
+    }else{
+        /* wait until dma transfer is done */
+        k_sem_take(&data->dma_sync, K_FOREVER);
+    }
 
 out:
     spi_acts_stop_dma(cfg, data, data->rxdma_chan);
@@ -388,7 +473,7 @@ out:
     spi->ctrl = spi->ctrl & ~(SPI_CTL_CLK_SEL_DMA |
             SPI_CTL_TX_DRQ_EN | SPI_CTL_RX_DRQ_EN);
 
-    return 0;
+    return ret;
 }
 
 
@@ -555,7 +640,7 @@ int spi_acts_transfer_data(const struct acts_spi_config *cfg, struct acts_spi_da
                 spi, spi->ctrl, spi->status);
     }
 
-    spi->ctrl = (spi->ctrl & ~SPI_CTL_WR_MODE_MASK) | SPI_CTL_WR_MODE_DISABLE;
+    spi->ctrl = ((spi->ctrl & ~SPI_CTL_WR_MODE_MASK) | SPI_CTL_WR_MODE_DISABLE) & ~(SPI_CTL_RX_FIFO_EN | SPI_CTL_TX_FIFO_EN);
     spi->status |= SPI_STATUS_ERR_MASK;
 
     return ret;
@@ -639,8 +724,8 @@ int transceive(const struct device *dev,
               bool asynchronous,
               struct k_poll_signal *signal)
 {
-    const struct acts_spi_config *cfg =DEV_CFG(dev);;
-    struct acts_spi_data *data = DEV_DATA(dev);;
+    const struct acts_spi_config *cfg =DEV_CFG(dev);
+    struct acts_spi_data *data = DEV_DATA(dev);
     struct acts_spi_controller *spi = cfg->spi;
     int ret;
 
@@ -683,8 +768,10 @@ int transceive(const struct device *dev,
         }
     }
 
-	if(data->b_stop_send)// clear fifo
+	if(data->b_stop_send){// clear fifo
 		spi->ctrl &= ~(SPI_CTL_RX_FIFO_EN | SPI_CTL_TX_FIFO_EN);
+        ret = -1;
+    }
 
 out:
     spi_context_release(&data->ctx, ret);
@@ -769,6 +856,22 @@ static int spi_test(const struct device *dev)
 
     return 0;
 }
+#endif
+
+#ifdef CONFIG_PM_DEVICE
+int spi_acts_pm_control(const struct device *device, enum pm_device_action action)
+{
+	struct acts_spi_data *data = DEV_DATA(device);
+	if(action == PM_DEVICE_ACTION_SUSPEND){
+
+	}
+	if(action == PM_DEVICE_ACTION_RESUME){
+		data->ctx.config = NULL; // spi power in s3, so init by next transfer
+	}
+	return 0;
+}
+#else
+#define spi_acts_pm_control 	NULL
 #endif
 
 int spi_acts_init(const struct device *dev)
@@ -864,7 +967,7 @@ const struct spi_driver_api spi_acts_driver_api = {
     };								\
     DEVICE_DEFINE(spi_acts_##n,				\
                 CONFIG_SPI_##n##_NAME,				\
-                &spi_acts_init, NULL, &spi_acts_dev_data_##n,	\
+                &spi_acts_init, spi_acts_pm_control, &spi_acts_dev_data_##n,	\
                 &spi_acts_config_##n, POST_KERNEL,		\
                 CONFIG_SPI_INIT_PRIORITY, &spi_acts_driver_api);
 

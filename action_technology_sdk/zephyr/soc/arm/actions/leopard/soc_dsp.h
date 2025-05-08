@@ -198,7 +198,9 @@ static inline int dsp_check_hw_idle(void)
 }
 
 #if CONFIG_SOC_DSP_EXT_RAM_SIZE == 224
-#define DSPRAM_CLK_SRC  ((1 << 22) | (1 << 20) | (1 << 18) | (1 << 16) | (1 << 14)) | (1 << 12)
+#define DSPRAM_CLK_SRC  ((1 << 22) | (1 << 20) | (1 << 18) | (1 << 16) | (1 << 14) | (1 << 12))
+#elif CONFIG_SOC_DSP_EXT_RAM_SIZE == 160
+#define DSPRAM_CLK_SRC  ((1 << 22) | (1 << 20) | (1 << 18) | (1 << 16))
 #elif CONFIG_SOC_DSP_EXT_RAM_SIZE == 80
 #define DSPRAM_CLK_SRC  ((1 << 22) | (1 << 20))
 #endif

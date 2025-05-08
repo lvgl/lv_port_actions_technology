@@ -42,6 +42,7 @@ void awk_render_init(t_awk_view_buffer_info *render_buffer_info,
 
 void awk_render_deinit(void)
 {
+	view_manager_acquire_draw_lock(OS_FOREVER);
 	if (render_buffer) {
 		awk_mem_free_adapter(render_buffer);
 		render_buffer = NULL;
@@ -50,10 +51,9 @@ void awk_render_deinit(void)
 	if (background_buffer) {
 		awk_mem_free_adapter(background_buffer);
 		background_buffer = NULL;
-		view_manager_acquire_draw_lock(OS_FOREVER);
 		begin_dgpath_free();
-		view_manager_release_draw_lock();
 	}
+	view_manager_release_draw_lock();
 }
 
 void awk_render_begin_drawing_adapter(uint32_t map_id, awk_render_context_t status)
@@ -97,11 +97,11 @@ void awk_render_point_adapter(uint32_t map_id, awk_point_t *point, uint32_t poin
 	param.point_size = point_size;
 	param.style = style;
 	//to render
+	view_manager_acquire_draw_lock(OS_FOREVER);
 	if (render_buffer) {
-		view_manager_acquire_draw_lock(OS_FOREVER);
 		awk_draw_point(&param, render_buffer);
-		view_manager_release_draw_lock();
 	}
+	view_manager_release_draw_lock();
 	return;
 }
 
@@ -117,11 +117,11 @@ void awk_render_polyline_adapter(uint32_t map_id, awk_point_t *points, uint32_t 
 	param.point_size = point_size;
 	param.style = style;
 	//to render
+	view_manager_acquire_draw_lock(OS_FOREVER);
 	if (render_buffer) {
-		view_manager_acquire_draw_lock(OS_FOREVER);
 		awk_draw_polyline(&param, render_buffer);
-		view_manager_release_draw_lock();
 	}
+	view_manager_release_draw_lock();
 	return;
 }
 
@@ -137,11 +137,11 @@ void awk_render_polygon_adapter(uint32_t map_id, awk_point_t *points, uint32_t p
 	param.point_size = point_size;
 	param.style = style;
 	//to render
+	view_manager_acquire_draw_lock(OS_FOREVER);
 	if (render_buffer) {
-		view_manager_acquire_draw_lock(OS_FOREVER);
 		awk_draw_polygon(&param, render_buffer);
-		view_manager_release_draw_lock();
 	}
+	view_manager_release_draw_lock();
 	return;
 }
 
@@ -157,11 +157,11 @@ void awk_render_bitmap_adapter(uint32_t map_id, awk_rect_area_t area, awk_bitmap
 	memcpy(&param.bitmap, &bitmap, sizeof(awk_bitmap_t));
 	param.style = style;
 	//to render
+	view_manager_acquire_draw_lock(OS_FOREVER);
 	if (render_buffer) {
-		view_manager_acquire_draw_lock(OS_FOREVER);
 		awk_draw_bitmap(&param, render_buffer);
-		view_manager_release_draw_lock();
 	}
+	view_manager_release_draw_lock();
 #ifdef AWK_RENDER_DEBUG
 	printk("awk_render_bitmap_adapter, begin stc:%u, spend %u ms\n", stc, os_uptime_get_32() - stc);
 #endif
@@ -176,11 +176,11 @@ void awk_render_draw_text_adapter(uint32_t map_id, awk_point_t center, const cha
 	param.text = text;
 	param.style = style;
 	//to render
+	view_manager_acquire_draw_lock(OS_FOREVER);
 	if (render_buffer) {
-		view_manager_acquire_draw_lock(OS_FOREVER);
 		awk_draw_text(&param, render_buffer);
-		view_manager_release_draw_lock();
 	}
+	view_manager_release_draw_lock();
 	return;
 }
 
@@ -192,11 +192,11 @@ void awk_render_color_adapter(uint32_t map_id, awk_rect_area_t area, const awk_p
 	memcpy(&param.area, &area, sizeof(awk_rect_area_t));
 	param.style = style;
 	//to render
+	view_manager_acquire_draw_lock(OS_FOREVER);
 	if (render_buffer) {
-		view_manager_acquire_draw_lock(OS_FOREVER);
 		awk_draw_color(&param, render_buffer);
-		view_manager_release_draw_lock();
 	}
+	view_manager_release_draw_lock();
 	return;
 }
 

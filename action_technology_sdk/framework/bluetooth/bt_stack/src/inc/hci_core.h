@@ -5,6 +5,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+#ifdef CONFIG_ACTS_HRTIMER
+#include <drivers/hrtimer.h>
+#endif
 
 /* LL connection parameters */
 #define LE_CONN_LATENCY		0x0000
@@ -249,6 +252,22 @@ struct bt_dev {
 #else
 	/* Pointer to reserved advertising set */
 	struct bt_le_ext_adv    *adv;
+#if defined(CONFIG_BT_CONN) && (CONFIG_BT_EXT_ADV_MAX_ADV_SET > 1)
+	/* When supporting multiple concurrent connectable advertising sets
+	 * with multiple identities, we need to know the identity of
+	 * the terminating advertising set to identify the connection object.
+	 * The identity of the advertising set is determined by its
+	 * advertising handle, which is part of the
+	 * LE Set Advertising Set Terminated event which is always sent
+	 * _after_ the LE Enhanced Connection complete event.
+	 * Therefore we need cache this event until its identity is known.
+	 */
+	struct {
+		bool valid;
+		struct bt_hci_evt_le_enh_conn_complete evt;
+	} cached_conn_complete[MIN(CONFIG_BT_MAX_CONN,
+				CONFIG_BT_EXT_ADV_MAX_ADV_SET)];
+#endif
 #endif
 	/* Current local Random Address */
 	bt_addr_le_t            random_addr;
@@ -308,8 +327,8 @@ struct bt_dev {
 
 	/* Work used for RPA rotation */
 	struct k_delayed_work rpa_update;
+	struct hrtimer hr_rpa;
 #endif
-
 	/* Local Name */
 #if defined(CONFIG_BT_DEVICE_NAME_DYNAMIC) || defined(CONFIG_BT_PROPERTY)
 	char			name[CONFIG_BT_DEVICE_NAME_MAX + 1];		/* LE name */
@@ -408,6 +427,9 @@ void hci_evt_user_confirm_req(struct net_buf *buf);
 void hci_evt_user_passkey_notify(struct net_buf *buf);
 void hci_evt_user_passkey_req(struct net_buf *buf);
 void hci_evt_auth_complete(struct net_buf *buf);
+
+/* Common HCI event handlers */
+ void bt_hci_le_enh_conn_complete(struct bt_hci_evt_le_enh_conn_complete *evt);
 
 /* Actions add start */
 

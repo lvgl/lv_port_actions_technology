@@ -571,12 +571,12 @@ void awk_service_user_work(f_awk_user_work_cbk cbk, void *user_data, uint32_t da
 
 void awk_service_render_start(void)
 {
-	awk_srv_send_msg(AWK_MAP_RENDER_EVENT, AWK_RENDER_START, 0, NULL, true, false);
+	awk_srv_send_msg(AWK_MAP_RENDER_EVENT, AWK_RENDER_START, 0, NULL, false, false);
 }
 
 void awk_service_render_stop(void)
 {
-	awk_srv_send_msg(AWK_MAP_RENDER_EVENT, AWK_RENDER_STOP, 0, NULL, true, false);
+	awk_srv_send_msg(AWK_MAP_RENDER_EVENT, AWK_RENDER_STOP, 0, NULL, false, false);
 }
 
 static void awk_srv_render_msg_handler(int msg_id)

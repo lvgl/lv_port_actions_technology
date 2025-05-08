@@ -276,6 +276,10 @@ static void _btsrv_a2dp_media_handler_cb(struct bt_conn *conn, uint8_t *data, ui
 			head_len++;
 		}
 
+		if (len <= head_len) {
+			SYS_LOG_ERR("len %d head_len %d.\n", len, head_len);
+			break;
+		}
 #ifdef CONFIG_DEBUG_DATA_RATE
 		_btsrv_a2dp_debug_date_rate(len - head_len);
 #endif

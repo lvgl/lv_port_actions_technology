@@ -1,4 +1,10 @@
 
+config SENSOR_GPS_UART_DMA
+	bool "GPS uart dma enable"
+	default n
+	help
+		Enable GPS uart dma
+
 config SENSOR_GPS_AG3352B
 	bool "GPS AG3352B enable"
 	default n

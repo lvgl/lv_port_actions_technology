@@ -11,7 +11,7 @@
 #include <acts_bluetooth/rfcomm.h>
 #include "at.h"
 
-#define BT_HFP_MAX_MTU           140
+#define BT_HFP_MAX_MTU           160
 #define BT_HF_CLIENT_MAX_PDU     BT_HFP_MAX_MTU
 
 /* HFP AG Features */

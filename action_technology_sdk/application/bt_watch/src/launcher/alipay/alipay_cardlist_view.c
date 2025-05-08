@@ -96,7 +96,7 @@ static void tip_btn_evt_handler(lv_event_t* e)
 	lv_obj_t *obj = lv_event_get_target(e);
 	
 	if(obj == data->exit_btn) {
-		view_stack_pop();
+		view_stack_back_prev_or_home();
 	} else if(obj == data->finished_btn) {
 		presenter->load_cardlist(1);
 	}

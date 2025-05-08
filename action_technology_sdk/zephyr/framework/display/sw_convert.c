@@ -8,6 +8,12 @@
 #include <display/sw_draw.h>
 #include <display/display_hal.h>
 
+#ifdef _WIN32
+#  define FORCE_O3
+#else
+#  define FORCE_O3  __attribute__((optimize("O3")))
+#endif
+
 extern const uint8_t g_alpha1t8_opa_table[2];
 extern const uint8_t g_alpha2t8_opa_table[4];
 extern const uint8_t g_alpha4t8_opa_table[16];
@@ -25,6 +31,17 @@ static inline void cvt_buf_argb8888_to_bgr888(void * dest, const void * src, uin
 	}
 }
 
+static inline void cvt_buf_l8_to_rgb565(void * dest, const void * src, uint32_t len)
+{
+	uint16_t *dest16 = dest;
+	const uint8_t *src8 = src;
+
+	for (; len > 0; len--) {
+		*dest16++ = hal_l8_to_rgb16(*src8++);
+	}
+}
+
+FORCE_O3
 int sw_convert_color_buffer(void * dest_buf, uint32_t dest_cf, const void * src_buf, uint32_t src_cf, uint32_t len)
 {
 	if (dest_cf == src_cf) {
@@ -40,9 +57,15 @@ int sw_convert_color_buffer(void * dest_buf, uint32_t dest_cf, const void * src_
 		}
 	}
 
+	if (dest_cf == HAL_PIXEL_FORMAT_RGB_565 && src_cf == HAL_PIXEL_FORMAT_L8) {
+		cvt_buf_l8_to_rgb565(dest_buf, src_buf, len);
+		return 0;
+	}
+
 	return -ENOSYS;
 }
 
+FORCE_O3
 void sw_convert_a124_to_a8(void * dst, const void *src,
             uint16_t dst_pitch, uint16_t src_pitch_bits,
             uint16_t src_bofs, uint8_t src_bpp, uint16_t w, uint16_t h)

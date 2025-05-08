@@ -194,8 +194,7 @@ static int _digital1_clock_view_paint(view_data_t *view_data)
 	int32_t value;
 	int32_t arc_num[ARRAY_SIZE(data->arc_icon)];
 	int32_t arc_max_num[ARRAY_SIZE(data->arc_icon)] = {1000,5000,50000};
-	time.tm_hour = 10;
-	time.tm_min = 28;
+
 	buf[0] = time.tm_hour/10;
 	_dynamic_load_pictures(&data->scene,GREEN_NUM1,green_num1_ids,ARRAY_SIZE(data->green_num1_img),data->green_num1_img,buf,1);
 	simple_img_set_src(data->hour_tens, &data->green_num1_img[buf[0]]);
@@ -466,8 +465,6 @@ static int _digital1_clock_view_delete(view_data_t *view_data)
 
 int _digital1_clock_view_handler(uint16_t view_id, view_data_t *view_data, uint8_t msg_id, void *msg_data)
 {
-	SYS_LOG_ERR("_digital1_clock_view_handler %d",msg_id);
-
 	switch (msg_id) {
 	case MSG_VIEW_PRELOAD:
 		return _digital1_clock_view_preload(view_data);

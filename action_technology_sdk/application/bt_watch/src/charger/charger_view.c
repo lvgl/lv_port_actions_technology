@@ -42,7 +42,7 @@ static charger_view_data_t *p_charger_view_data = NULL;
 void charger_view_init(void)
 {
 #ifdef CONFIG_UI_MANAGER
-	ui_view_create(CHARGER_VIEW, NULL, UI_CREATE_FLAG_SHOW);
+	view_stack_push_view(CHARGER_VIEW, NULL);
 #endif
 	SYS_LOG_INF("charger_view_init ok\n");
 }
@@ -50,7 +50,7 @@ void charger_view_init(void)
 void charger_view_deinit(void)
 {
 #ifdef CONFIG_UI_MANAGER
-	ui_view_delete(CHARGER_VIEW);
+	view_stack_back_prev();
 #endif
 	SYS_LOG_INF("ok\n");
 }

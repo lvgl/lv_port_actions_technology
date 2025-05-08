@@ -64,6 +64,8 @@ enum display_pixel_format {
 	PIXEL_FORMAT_XBGR_8888		= BIT(23),
 	PIXEL_FORMAT_RGBA_5658		= BIT(24),
 	PIXEL_FORMAT_BGR_565_SWAP		= BIT(25),
+
+	PIXEL_FORMAT_L8	= BIT(26),
 };
 
 enum display_screen_info {

@@ -19,6 +19,10 @@
     #endif
 #endif
 
+#if defined(CONFIG_LVGL_USE_IMG_DECODER_ACTS_RES)
+    #include <lvgl/lvgl_img_res_decoder.h>
+#endif
+
 /**********************
  *  STATIC PROTOTYPES
  **********************/
@@ -33,6 +37,10 @@ lv_result_t lvx_port_init(void)
 {
     lv_init();
     lv_tick_set_cb(_get_tick);
+
+#if defined(CONFIG_LVGL_USE_IMG_DECODER_ACTS_RES)
+    lvgl_img_decoder_acts_res_init();
+#endif
 
 #if LV_USE_THORVG
     tvg_engine_init(TVG_ENGINE_SW, 0);

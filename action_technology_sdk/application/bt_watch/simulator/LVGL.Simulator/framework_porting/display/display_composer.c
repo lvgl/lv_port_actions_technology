@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <lvgl/lvgl.h>
+#include <os_common_api.h>
 #include <display/display_composer.h>
 #include <native_window.h>
 
@@ -110,12 +111,22 @@ uint8_t display_composer_get_num_layers(void)
 	return NUM_POST_LAYERS;
 }
 
+uint8_t display_composer_get_brightness(void)
+{
+	return 255;
+}
+
 int display_composer_set_brightness(uint8_t brightness)
 {
 	return 0;
 }
 
-int display_composer_set_contrast(uint8_t contrast)
+uint8_t display_composer_get_aod_mode(void)
+{
+	return 0;
+}
+
+int display_composer_set_aod_mode(uint8_t mode)
 {
 	return 0;
 }

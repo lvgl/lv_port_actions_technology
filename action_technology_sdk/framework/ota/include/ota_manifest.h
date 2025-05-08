@@ -50,4 +50,6 @@ struct ota_image;
 int ota_manifest_parse_file(struct ota_manifest *manifest, struct ota_image *img,
 			    const char *file_name);
 
+void ota_manifest_set_cwf_offset(uint8_t offset);
+
 #endif /* __OTA_MANIFEST_H__ */

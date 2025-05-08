@@ -13,6 +13,7 @@
 #include "clock_view.h"
 #include "heart_view.h"
 #include "clock_selector/clock_selector.h"
+#include <display/display_composer.h>
 
 #ifdef CONFIG_PROPERTY
 #include <property_manager.h>
@@ -171,7 +172,7 @@ static void _set_switch_mode(uint8_t switch_mode)
 		app->switch_effect_mode = switch_mode;
 	}
 
-	ui_switch_effect_set_type(app->switch_effect_mode);
+	view_stack_set_effect_type(app->switch_effect_mode);
 #endif /* CONFIG_UI_SWITCH_EFFECT */
 }
 
@@ -234,4 +235,18 @@ static void _set_rtc(bool en, uint16_t period_ms)
 static int _open_clock_preview(void)
 {
 	return clocksel_ui_enter();
+}
+
+/**********************
+ *   GLOBAL FUNCTIONS
+ **********************/
+
+bool launcher_get_aod_mode(void)
+{
+	return display_composer_get_aod_mode();
+}
+
+void launcher_set_aod_mode(bool aod_en)
+{
+	display_composer_set_aod_mode(aod_en);
 }

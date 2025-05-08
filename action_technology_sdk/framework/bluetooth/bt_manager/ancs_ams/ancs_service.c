@@ -23,6 +23,9 @@
 #include "bt_manager.h"
 #include "bt_porting_inner.h"
 #include "ancs_ams_log.h"
+#if CONFIG_AEM_WATCH_SUPPORT
+#include "aem_ams_ancs_dev.h"
+#endif
 
 //#define ANCS_USED_CACHE_MSG			1
 
@@ -53,7 +56,11 @@
 #ifdef ANCS_USED_CACHE_MSG
 #define ANCS_CACHE_BUF_LEN                           (1024)
 #else
-#define ANCS_MAX_ATTR_DATA_BUFFER_LENGTH             (64)
+#if CONFIG_AEM_WATCH_SUPPORT
+#define ANCS_MAX_ATTR_DATA_BUFFER_LENGTH (256)
+#else
+#define ANCS_MAX_ATTR_DATA_BUFFER_LENGTH (64)
+#endif
 #endif
 
 #define ANCS_REQUEST_WRITE_PENDING_MAX                (4)
@@ -176,6 +183,9 @@ os_delayed_work ancs_gatt_write_timeout_work;
 
 static uint8_t ancs_write_pending_flag = 0;
 
+#if CONFIG_AEM_WATCH_SUPPORT
+static uint8_t ancs_recive_flag = 0;
+#endif
 /*=============================================================================
  *  Private Function Prototypes
  *============================================================================
@@ -333,6 +343,11 @@ static void ancs_cache_print()
 		ancs_log_inf("Attr Len = 0x%02x\n", cache_msg_info.msg[i].att_len);
 		if (cache_msg_info.msg[i].att_len) {
 			ancs_log_inf("Attribute Data = %s\n", cache_msg_info.msg[i].att_data);
+#if CONFIG_AEM_WATCH_SUPPORT
+            aem_ble_ancs_data_ind((ancs_notif_att_id)cache_msg_info.msg[i].att_id,
+                                  cache_msg_info.msg[i].att_data,
+                                  cache_msg_info.msg[i].att_len);
+#endif
 		}
 	}
 
@@ -509,12 +524,21 @@ static bool ancs_parse_data(uint8_t *p_data, uint16_t size_value)
 
 				/* Display to UART */
                 if(data_len > 0){
-				    ancs_log_inf("Data: %s\n",(const char *)&g_ancs_data[0]);
+                    ancs_log_inf("Data: %s\n", (const char *)&g_ancs_data[0]);
+#if CONFIG_AEM_WATCH_SUPPORT
+                    aem_ble_ancs_data_ind(attribute_data.attr_id, (uint8_t *)&g_ancs_data[0], data_len);
+#endif
                 }
-				/* Update till, what we have read */
-				count += data_len;
-				attribute_data.pending_attr_data -= data_len;
-			}
+                /* Update till, what we have read */
+                count += data_len;
+                attribute_data.pending_attr_data -= data_len;
+#if CONFIG_AEM_WATCH_SUPPORT
+                if (attribute_data.attr_id == ancs_notif_att_id_date)
+                {
+                    ble_ancs_ams_send_msg_to_app(BLE_ANCS_EVENT_APP_ATTR_REQ, BLE_ANCS_APP_NO_UUID);
+                }
+#endif
+            }
 
 			if (attribute_data.pending_attr_data == 0) {
 				/* We are done reading data.Move to next attribute */
@@ -705,7 +729,10 @@ static bool ancs_parse_data_app_attribute(uint8_t *p_data, uint16_t size_value)
 
 				/* Display to UART */
                 if(data_len > 0){
-				    ancs_log_inf("App Data: %s\n",(const char *)&g_ancs_appName_data[0]);
+                    ancs_log_inf("App Data: %s\n", (const char *)&g_ancs_appName_data[0]);
+#if CONFIG_AEM_WATCH_SUPPORT
+                    aem_ble_ancs_data_ind(ANCS_ID_APP_NAME, (uint8_t *)&g_ancs_appName_data[0], data_len);
+#endif
                 }
 				/* Update till, what we have read */
 				count += data_len;
@@ -729,6 +756,45 @@ static bool ancs_parse_data_app_attribute(uint8_t *p_data, uint16_t size_value)
 	return true;
 }
 
+#if CONFIG_AEM_WATCH_SUPPORT
+void aem_ancs_call_evt(bool notif_removed, uint8_t cat_id)
+{
+    static uint8_t s_ancs_call_status = 0;
+    ancs_log_inf("aem_ancs_call_evt %d %d \r\n", notif_removed, cat_id);
+    if (!notif_removed)
+    {
+        if (cat_id == 1)
+        {
+            s_ancs_call_status = 1; // ¨¤¡ä¦Ì?
+            aem_ble_ancs_evt_ind(ANCS_CALL_INCOMMING);
+        }
+        else if (cat_id == 2)
+        {
+            s_ancs_call_status = 2; // ?¡ä?¨®
+            aem_ble_ancs_evt_ind(ANCS_CALL_MISSED);
+        }
+        else
+        {
+            /* if(s_ancs_call_status)
+            {
+                s_ancs_call_status = 0;
+                aem_ble_ancs_evt_ind(ANCS_CALL_HANG_UP);
+            } */
+        }
+    }
+    else
+    {
+        if (cat_id == 1)
+        {
+            if (s_ancs_call_status)
+            {
+                s_ancs_call_status = 0;
+                aem_ble_ancs_evt_ind(ANCS_CALL_HANG_UP);
+            }
+        }
+    }
+}
+#endif
 /**
  *  @brief This function handles the NS notifications
  *
@@ -792,6 +858,9 @@ bool ancs_handle_notification_source_data(struct bt_conn *conn, const uint8_t *n
             ancs_log_inf("UUID = 0x%x\n", notif_uuid);
             ble_ancs_ams_send_msg_to_app(BLE_ANCS_EVENT_NOTIFICATION_ATTR_REQ,(int)notif_uuid);
         }
+#if CONFIG_AEM_WATCH_SUPPORT
+        aem_ancs_call_evt(notif_removed, cat_id);
+#endif
     }
     return true;
 }
@@ -820,11 +889,38 @@ bool ancs_handle_data_source_data(struct bt_conn *conn, const uint8_t *notify_da
 				ancs_cache_init();
 			}
 		}
+#if CONFIG_AEM_WATCH_SUPPORT
+        ancs_recive_flag = 1;
+        bool ret = ancs_parse_data((uint8_t *)notify_data, length);
+        if (ret == false)
+        {
+            ancs_recive_flag = 0;
+        }
+#else
 		ancs_parse_data((uint8_t *)notify_data, length);
+#endif
 	} else if(attribute_data.pending_cmd == ancs_cmd_get_app_att){
 		/* if cmd id = 1*/
 		/* Check for APP ID */
+#if CONFIG_AEM_WATCH_SUPPORT
+        uint16_t app_state = app_attribute_data.ds_decoder_state;
+        if (app_state == ds_decoder_hdr || app_state == ds_decoder_attrid)
+        {
+            app_attribute_data.ds_decoder_state = ds_decoder_hdr;
+        }
+        bool ret = ancs_parse_data_app_attribute((uint8_t *)notify_data, length);
+        if (ret == false)
+        {
+            aem_ble_ancs_data_ind(ANCS_ID_APP_NAME, (uint8_t *)&g_ancs_appName_data[0], 0);
+        }
+        else
+        {
+            ble_ancs_ams_send_msg_to_app(BLE_ANCS_EVENT_NOTIFICATION_ATTR_REQ_AGAIN, BLE_ANCS_APP_NO_UUID);
+        }
+        ancs_recive_flag = 0;
+#else
 		ancs_parse_data_app_attribute((uint8_t *)notify_data, length);
+#endif
 		app_id_req = 0;
 	}else{
 
@@ -862,6 +958,9 @@ extern void ancs_init_attribute_data(void)
 extern void ancs_service_data_init(void)
 {
     ancs_write_pending_flag = 0;
+#if CONFIG_AEM_WATCH_SUPPORT
+    ancs_recive_flag = 0;
+#endif
     ancs_cat_id = 0xFF;
 	app_id_req = 0;
 }
@@ -1131,6 +1230,12 @@ bool does_handle_belongs_to_ancs_service(uint16_t handle)
 					? true : false;
 }
 
+#if CONFIG_AEM_WATCH_SUPPORT
+extern uint8_t aem_ancs_get_recive_flag(void)
+{
+    return ancs_recive_flag;
+}
+#endif
 extern uint8_t ancs_get_write_pending_status(void)
 {
     return ancs_write_pending_flag;

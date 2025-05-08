@@ -35,6 +35,14 @@ static const struct acts_pin_config board_pin_config[] = {
     PIN_MFP_SET(GPIO_17,  UART1_MFP_CFG),
 #endif
 
+    /*UART2 */
+#if IS_ENABLED(CONFIG_UART_2)
+    /* uart2 tx */
+    PIN_MFP_SET(GPIO_63,  UART2_MFP_CFG),
+    /* uart2 rx */
+    PIN_MFP_SET(GPIO_62,  UART2_MFP_CFG),
+#endif
+
 #if IS_ENABLED(CONFIG_SPI_FLASH_0)
     /* SPI0 CS */
     PIN_MFP_SET(GPIO_0,   SPINOR_MFP_CFG),

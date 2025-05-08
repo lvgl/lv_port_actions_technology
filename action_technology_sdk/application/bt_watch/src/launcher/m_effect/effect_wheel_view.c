@@ -117,7 +117,7 @@ static void _effect_wheel_wheel_scroll_anim(void * var, int32_t v)
 static void _effect_wheel_wheel_deleted(lv_anim_t * a)
 {
 	effect_wheel_wheel_scene_data_t *data = (effect_wheel_wheel_scene_data_t *)a->var;
-	ui_switch_effect_set_type(UI_SWITCH_EFFECT_NONE);
+	view_stack_set_effect_type(UI_SWITCH_EFFECT_NONE);
 	view_stack_clean();
 	const view_cache_dsc_t *app_view_cache_dsc = get_app_view_cache_dsc();
 	uint32_t id = data->effect_wheel_id;
@@ -125,7 +125,7 @@ static void _effect_wheel_wheel_deleted(lv_anim_t * a)
 		id = app_view_cache_dsc->num - 1;
 	view_stack_push_cache(app_view_cache_dsc, app_view_cache_dsc->vlist[id]);
 	launcher_app_t *app = launcher_app_get();
-	ui_switch_effect_set_type(app->switch_effect_mode);
+	view_stack_set_effect_type(app->switch_effect_mode);
 }
 
 void _effect_wheel_wheel_angle(effect_wheel_wheel_scene_data_t * data,lv_coord_t angle)

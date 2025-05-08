@@ -31,6 +31,9 @@
 #include "bt_manager_ble.h"
 #include "../bt_manager_inner.h"
 #include "ancs_ams_log.h"
+#if CONFIG_AEM_WATCH_SUPPORT
+#include "aem_ams_ancs_dev.h"
+#endif
 
 #define ANCS_AMS_DELAY_DISCOVER_TIME	(2000)		/* 2s */
 
@@ -70,6 +73,9 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	/* send a message to main thread */
 	ble_ancs_ams_send_msg_to_app(BLE_ANCS_AMS_CONN_OPEN_IND, err);
 #endif
+#if CONFIG_AEM_WATCH_SUPPORT
+	aem_ble_ancs_evt_ind(ANCS_BLE_CONNECT);
+#endif
 }
 
 static void ble_ancs_ams_disconnected(void)
@@ -107,6 +113,9 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 #if (!(defined(CONFIG_ACTIVE_REQ_BLE_ENC) || defined(CONFIG_CONNECT_ANCSAMS_AFTER_ENC)))
 	bt_set_pairing_mode(false, true);
 #endif
+#if CONFIG_AEM_WATCH_SUPPORT
+	aem_ble_ancs_evt_ind(ANCS_DISCONNECTED);
+#endif
 }
 
 static void security_changed(struct bt_conn *conn, bt_security_t level,enum bt_security_err err)
@@ -131,6 +140,9 @@ static void security_changed(struct bt_conn *conn, bt_security_t level,enum bt_s
 		ble_ancs_ams_send_msg_to_app(BLE_ANCS_AMS_CONN_SEC_OPEN_IND, level);
 #endif
 	}
+#if CONFIG_AEM_WATCH_SUPPORT
+	aem_ble_ancs_evt_ind(ANCS_CONNECTED);
+#endif
 }
 
 static struct bt_conn_cb conn_callbacks = {
@@ -349,6 +361,9 @@ void ble_ancs_ams_event_handle(uint8_t event_code, void *event_data)
 	    if((int)event_data != BLE_SERVICE_GAP){
             if((int)event_data == BLE_SERVICE_ANCS_AMS){
                 ancs_ams_data.ios_phone = true;
+				#if CONFIG_AEM_WATCH_SUPPORT
+				aem_ble_ancs_evt_ind(ANCS_FOUND);
+				#endif
             }
             else{
                 ancs_ams_data.ios_phone = false;
@@ -405,7 +420,11 @@ void ble_ancs_ams_event_handle(uint8_t event_code, void *event_data)
 	
     case BLE_ANCS_EVENT_NOTIFICATION_ATTR_REQ:
         if (ancs_ams_data.pconn != NULL){
-            if(!ancs_get_write_pending_status()){
+		#if CONFIG_AEM_WATCH_SUPPORT
+            if(!ancs_get_write_pending_status() && !aem_ancs_get_recive_flag()){
+		#else
+			if(!ancs_get_write_pending_status()){
+		#endif
                 ancs_get_notification_attribute_cmd((struct bt_conn *)ancs_ams_data.pconn,(uint32_t)event_data);
             }
             else{
@@ -413,7 +432,33 @@ void ble_ancs_ams_event_handle(uint8_t event_code, void *event_data)
             }
         }
 	    break;
+#if CONFIG_AEM_WATCH_SUPPORT
+	case BLE_ANCS_EVENT_NOTIFICATION_ATTR_REQ_COMPLETE:
+		anam_log_inf("BLE_ANCS_EVENT_NOTIFICATION_ATTR_REQ_COMPLETE handle:%d\n",(uint32_t)event_data);
+		break;
+	case BLE_ANCS_EVENT_NOTIFICATION_ATTR_REQ_AGAIN: 
+		anam_log_inf("BLE_ANCS_EVENT_NOTIFICATION_ATTR_REQ_AGAIN \n");
+		if (ancs_ams_data.pconn != NULL){
+			if(!ancs_get_write_pending_status()){
+				uint32_t notify_uuid = 0;
+				if(!ble_ancs_read_notification_request_from_list(&notify_uuid)){
+					if(notify_uuid == BLE_ANCS_APP_NO_UUID){
+						ancs_get_application_attribute_cmd((struct bt_conn *)ancs_ams_data.pconn);
+					}else{
+						ancs_get_notification_attribute_cmd((struct bt_conn *)ancs_ams_data.pconn,notify_uuid);
+					}
+				}
+			}
+		}
+		break;
+	case BLE_ANCS_EVENT_APP_ATTR_REQ: 
+		anam_log_inf("BLE_ANCS_EVENT_APP_ATTR_REQ \n");
+		if (ancs_ams_data.pconn != NULL){
+			ancs_get_application_attribute_cmd((struct bt_conn *)ancs_ams_data.pconn);
+		}
 
+		break;
+#else
     case BLE_ANCS_EVENT_NOTIFICATION_ATTR_REQ_COMPLETE:
 		anam_log_inf("BLE_ANCS_EVENT_NOTIFICATION_ATTR_REQ_COMPLETE handle:%d\n",(uint32_t)event_data);
 		if (ancs_ams_data.pconn != NULL){
@@ -439,7 +484,7 @@ void ble_ancs_ams_event_handle(uint8_t event_code, void *event_data)
 			}
 		}
 		break;
-
+#endif
     case BLE_AMS_EVENT_WRITE_ENTITY_UPDATE:
         anam_log_inf("BLE_AMS_EVENT_WRITE_ENTITY_UPDATE %d\n",(uint32_t)event_data);
 	    break;

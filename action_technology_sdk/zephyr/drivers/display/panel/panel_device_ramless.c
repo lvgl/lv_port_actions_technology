@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/*********************
+ *      INCLUDES
+ *********************/
+
 #include <device.h>
 #include <spicache.h>
 #include <tracing/tracing.h>
@@ -47,11 +51,11 @@ LOG_MODULE_REGISTER(lcd_panel, CONFIG_DISPLAY_LOG_LEVEL);
 /**********************
  *  STATIC PROTOTYPES
  **********************/
+
 static int _lcd_panel_set_orientation(const struct device *dev,
 				const enum display_orientation orientation);
 
-static int _panel_blanking_on(const struct device *dev);
-static int _panel_blanking_off(const struct device *dev);
+static void _panel_apply_brightness(const struct device *dev, uint8_t brightness);
 
 static int _panel_pm_early_suspend(const struct device *dev, bool in_turnoff);
 #if ESD_CHECK_COUNT > 0
@@ -60,6 +64,9 @@ static void _panel_pm_suspend_handler(struct k_work *work);
 
 static int _panel_pm_late_resume(const struct device *dev);
 static void _panel_pm_resume_handler(struct k_work *work);
+
+static void _panel_sdma4_irq_handler(const void *arg);
+static void _panel_start_de_transfer(void *arg);
 
 /**********************
  *  STATIC VARIABLES
@@ -77,6 +84,8 @@ static const struct lcd_panel_config *const lcd_panel_configs[] = {
 #endif
 };
 
+DEVICE_DECLARE(lcd_panel);
+
 /**********************
  *      MACROS
  **********************/
@@ -84,6 +93,22 @@ static const struct lcd_panel_config *const lcd_panel_configs[] = {
 /**********************
  * STATIC FUNCTIONS
  **********************/
+
+static inline void _panel_set_pin_state(const struct device *dev, uint8_t state)
+{
+	struct lcd_panel_data *data = dev->data;
+
+	if (state == data->pin_state)
+		return;
+
+	if (state < data->pin_state) {
+		board_lcd_resume(data->pin_state != PANEL_PIN_STATE_OFF, state == PANEL_PIN_STATE_ON);
+	} else {
+		board_lcd_suspend(state != PANEL_PIN_STATE_OFF, data->pin_state == PANEL_PIN_STATE_ON);
+	}
+
+	data->pin_state = state;
+}
 
 static void _panel_reset(const struct device *dev)
 {
@@ -95,6 +120,8 @@ static void _panel_reset(const struct device *dev)
 	display_controller_set_mode(data->lcdc_dev, &config->videomode);
 
 	LOG_DBG("Resetting display");
+
+	_panel_set_pin_state(dev, PANEL_PIN_STATE_ON);
 
 #ifdef CONFIG_PANEL_RESET_GPIO
 	gpio_pin_set(data->reset_gpio, pincfg->reset_cfg.gpion, 1);
@@ -124,21 +151,49 @@ static int _panel_detect(const struct device *dev)
 
 	if (1 == ARRAY_SIZE(lcd_panel_configs)) {
 		data->config = lcd_panel_configs[0];
-		return 0;
+	} else {
+		for (int i = 0; i < ARRAY_SIZE(lcd_panel_configs); i++) {
+			data->config = lcd_panel_configs[i];
+			if (data->config->ops->detect == NULL)
+				break;
+
+			_panel_reset(dev);
+			if (!data->config->ops->detect(dev, &data->panel_id)) {
+				LOG_INF("panel ID %08x deteted", data->panel_id);
+				break;
+			}
+		}
+
+		/* fallback to the last panel */
 	}
 
-	for (int i = 0; i < ARRAY_SIZE(lcd_panel_configs); i++) {
-		data->config = lcd_panel_configs[i];
-		if (data->config->ops->detect == NULL)
-			return 0;
+	if (data->config->fb_mem) {
+		if (IS_ENABLED(CONFIG_JPEG_HW)) {
+			printk("Must disable JPEG_HW to release SDMA4\n");
+			k_panic();
+		}
 
-		_panel_reset(dev);
-		if (!data->config->ops->detect(dev))
-			return 0;
+		if (IS_ENABLED(CONFIG_DMA2D_LITE) && CONFIG_DMA2D_LITE_SDMA_CHAN == 4) {
+			printk("Must not set CONFIG_DMA2D_LITE_SDMA_CHAN to 4 to release SDMA4\n");
+			k_panic();
+		}
+
+		/* config SDMA interrupt */
+		SDMA->IE |= BIT(4);
+		IRQ_CONNECT(IRQ_ID_SDMA4, 0, _panel_sdma4_irq_handler, DEVICE_GET(lcd_panel), 0);
+		irq_enable(IRQ_ID_SDMA4);
+	} else if (data->de_dev == NULL) {
+		LOG_ERR("DE device must exist for no fbmem panel");
+		data->config = NULL;
+		return -ENODEV;
+	} else {
+		display_engine_control(data->de_dev, DISPLAY_ENGINE_CTRL_DISPLAY_PORT,
+				(void *)&data->config->videoport, NULL);
+		display_engine_control(data->de_dev, DISPLAY_ENGINE_CTRL_DISPLAY_MODE,
+				(void *)&data->config->videomode, NULL);
+		display_engine_control(data->de_dev, DISPLAY_ENGINE_CTRL_DISPLAY_START_CB,
+				_panel_start_de_transfer, (void *)dev);
 	}
-
-	/* FIXME: fallback to the frist panel */
-	data->config = lcd_panel_configs[0];
 
 	return 0;
 }
@@ -146,122 +201,25 @@ static int _panel_detect(const struct device *dev)
 static void _panel_power_on(const struct device *dev)
 {
 	struct lcd_panel_data *data = dev->data;
-	const struct lcd_panel_config *config = data->config;
+	const struct lcd_panel_config *config;
+
+	if (data->config == NULL) {
+		if (_panel_detect(dev)) {
+			LOG_ERR("No panel connected");
+			return;
+		}
+	}
+
+	config = data->config;
 
 	_panel_reset(dev);
 
-	if (config->ops->init)
-		config->ops->init(dev);
-
-	/* Display On */
-	_panel_blanking_off(dev);
-}
-
-static void _panel_power_off(const struct device *dev, bool in_turnoff)
-{
-	struct lcd_panel_data *data = dev->data;
-	const struct lcd_panel_config *config = data->config;
-	const struct lcd_panel_pincfg *pincfg = dev->config;
-
-	_panel_blanking_on(dev);
-
-	/* FIXME: place it in config->ops->blanking_on() ? */
-	if (config->td_slpin > 0) {
-		if (in_turnoff) {
-			k_busy_wait(config->td_slpin * 1000u);
-		} else {
-			k_msleep(config->td_slpin);
-		}
-	}
-
-#ifdef CONFIG_PANEL_RESET_GPIO
-	gpio_pin_set(data->reset_gpio, pincfg->reset_cfg.gpion, 1);
-#endif
-#ifdef CONFIG_PANEL_POWER_GPIO
-	gpio_pin_set(data->power_gpio, pincfg->power_cfg.gpion, 0);
-#endif
-#ifdef CONFIG_PANEL_POWER1_GPIO
-	gpio_pin_set(data->power1_gpio, pincfg->power1_cfg.gpion, 0);
-#endif
-}
-
-static void _panel_apply_brightness(const struct device *dev, uint8_t brightness)
-{
-	struct lcd_panel_data *data = dev->data;
-	const struct lcd_panel_config *config = data->config;
-	bool ready;
-
-	if (data->brightness == brightness)
-		return;
-
-	ready = (data->brightness_delay == 0);
-	if (!ready) {
-		data->brightness_delay -= data->first_frame_cplt;
-	}
-
-	if (ready || brightness == 0) {
-		if (config->ops->set_brightness) {
-			config->ops->set_brightness(dev, brightness);
-		} else {
-#ifdef CONFIG_PANEL_BACKLIGHT_CTRL
-			const struct lcd_panel_pincfg *pincfg = dev->config;
-
-#ifdef CONFIG_PANEL_BACKLIGHT_PWM
-			pwm_pin_set_cycles(data->backlight_dev, pincfg->backlight_cfg.chan, pincfg->backlight_cfg.period,
-						(uint32_t)brightness * pincfg->backlight_cfg.period / 255, pincfg->backlight_cfg.flag);
-#else
-			gpio_pin_set(data->backlight_dev, pincfg->backlight_cfg.gpion, brightness ? 1 : 0);
-#endif
-#endif /* CONFIG_PANEL_BACKLIGHT_CTRL */
-		}
-
-		data->brightness = brightness;
-	}
-}
-
-static int _panel_blanking_on(const struct device *dev)
-{
-	struct lcd_panel_data *data = dev->data;
-	const struct lcd_panel_config *config = data->config;
-
-	if (data->disp_on == 0)
-		return 0;
-
-	LOG_INF("display blanking on");
-	data->disp_on = 0;
+	data->in_sleep = 1;
+	data->transfering = 0; /* reset flag in case fail again */
 	data->brightness_delay = CONFIG_PANEL_BRIGHTNESS_DELAY_PERIODS;
 
-	k_timer_stop(&data->te_timer);
-	_panel_apply_brightness(dev, 0);
-
-	if (config->fb_mem == NULL) { /* wait 100 ms timeout */
-		display_engine_control(data->de_dev, DISPLAY_ENGINE_CTRL_DISPLAY_SYNC_STOP, (void *)(uintptr_t)100, NULL);
-	}
-
-	display_controller_disable(data->lcdc_dev);
-
-	if (config->ops->blanking_on) {
-		display_controller_enable(data->lcdc_dev, &config->videoport);
-		config->ops->blanking_on(dev);
-		display_controller_disable(data->lcdc_dev);
-	}
-
-	return 0;
-}
-
-static int _panel_blanking_off(const struct device *dev)
-{
-	struct lcd_panel_data *data = dev->data;
-	const struct lcd_panel_config *config = data->config;
-
-	if (data->disp_on == 1)
-		return 0;
-
-	LOG_INF("display blanking off");
-	display_controller_enable(data->lcdc_dev, &config->videoport);
-	display_controller_set_mode(data->lcdc_dev, &config->videomode);
-
-	data->disp_on = 1;
+	if (config->ops->init)
+		config->ops->init(dev);
 
 	if (config->ops->blanking_off)
 		config->ops->blanking_off(dev);
@@ -285,13 +243,93 @@ static int _panel_blanking_off(const struct device *dev)
 		k_timer_start(&data->te_timer, K_MSEC(0), K_MSEC(CONFIG_PANEL_VSYNC_PERIOD_MS));
 	}
 
-	return 0;
+	data->pm_state = DISPLAY_STATE_ON;
+	LOG_INF("panel power on");
 }
 
-/**********************
- *  DEVICE DECLARATION
- **********************/
-DEVICE_DECLARE(lcd_panel);
+static void _panel_power_off(const struct device *dev, bool in_turnoff)
+{
+	struct lcd_panel_data *data = dev->data;
+	const struct lcd_panel_config *config = data->config;
+	const struct lcd_panel_pincfg *pincfg = dev->config;
+
+	LOG_INF("panel power off");
+
+	k_timer_stop(&data->te_timer);
+	_panel_apply_brightness(dev, 0);
+
+	if (config->fb_mem == NULL) { /* wait 100 ms timeout */
+		display_engine_control(data->de_dev, DISPLAY_ENGINE_CTRL_DISPLAY_SYNC_STOP, (void *)(uintptr_t)100, NULL);
+	}
+
+	if (config->ops->blanking_on) {
+		display_controller_enable(data->lcdc_dev, &config->videoport);
+		config->ops->blanking_on(dev);
+		display_controller_disable(data->lcdc_dev);
+	} else {
+		display_controller_disable(data->lcdc_dev);
+	}
+
+	if (config->td_slpin > 0) {
+		if (in_turnoff) {
+			k_busy_wait(config->td_slpin * 1000u);
+		} else {
+			k_msleep(config->td_slpin);
+		}
+	}
+
+#ifdef CONFIG_PANEL_RESET_GPIO
+	gpio_pin_set(data->reset_gpio, pincfg->reset_cfg.gpion, 1);
+#endif
+#ifdef CONFIG_PANEL_POWER_GPIO
+	gpio_pin_set(data->power_gpio, pincfg->power_cfg.gpion, 0);
+#endif
+#ifdef CONFIG_PANEL_POWER1_GPIO
+	gpio_pin_set(data->power1_gpio, pincfg->power1_cfg.gpion, 0);
+#endif
+
+	_panel_set_pin_state(dev, PANEL_PIN_STATE_OFF);
+}
+
+static void _panel_apply_brightness(const struct device *dev, uint8_t brightness)
+{
+	struct lcd_panel_data *data = dev->data;
+	const struct lcd_panel_config *config = data->config;
+	bool ready;
+
+	if (data->brightness == brightness)
+		return;
+
+	ready = (data->brightness_delay == 0);
+	if (!ready) {
+		data->brightness_delay -= 1;
+	}
+
+	if (ready || brightness == 0) {
+		if (config->ops->set_brightness) {
+			config->ops->set_brightness(dev, brightness);
+		} else {
+#ifdef CONFIG_PANEL_BACKLIGHT_CTRL
+			const struct lcd_panel_pincfg *pincfg = dev->config;
+
+#ifdef CONFIG_PANEL_BACKLIGHT_PWM
+			pwm_pin_set_cycles(data->backlight_dev, pincfg->backlight_cfg.chan, pincfg->backlight_cfg.period,
+						(uint32_t)brightness * pincfg->backlight_cfg.period / 255, pincfg->backlight_cfg.flag);
+#else
+			gpio_pin_set(data->backlight_dev, pincfg->backlight_cfg.gpion, brightness ? 1 : 0);
+#endif
+#endif /* CONFIG_PANEL_BACKLIGHT_CTRL */
+		}
+
+		data->brightness = brightness;
+	}
+}
+
+static void _panel_apply_post_change(const struct device *dev)
+{
+	struct lcd_panel_data *data = dev->data;
+	_panel_apply_brightness(dev, data->pending_brightness);
+}
 
 /**********************
  *  TE CALLBACK
@@ -345,7 +383,7 @@ static void _panel_complete_transfer(void *arg)
 	struct lcd_panel_data *data = dev->data;
 	const struct lcd_panel_config *config __unused = data->config;
 
-	_panel_apply_brightness(dev, data->pending_brightness);
+	_panel_apply_post_change(dev);
 
 #if CONFIG_PANEL_TE_SCANLINE == 0
 	_panel_te_handler();
@@ -393,38 +431,73 @@ static void _panel_sdma4_irq_handler(const void *arg)
 static int _lcd_panel_blanking_on(const struct device *dev)
 {
 	struct lcd_panel_data *data = dev->data;
-	int timeout;
+	int ret = 0;
 
-	for (timeout = 2000; timeout > 0; timeout--) {
-		if (data->pm_changing == 0)
-			return _panel_pm_early_suspend(dev, false);
+	lcd_panel_partial_wake_lock();
+	k_mutex_lock(&data->pm_mutex, K_FOREVER);
 
-		k_msleep(1);
+	if (data->pm_changing) {
+		ret = -EAGAIN;
+		goto out_unlock;
 	}
 
-	return -ETIMEDOUT;
+	if (data->pm_state >= DISPLAY_STATE_OFF) {
+		goto out_unlock;
+	}
+
+	LOG_INF("display blanking on");
+	ret = _panel_pm_early_suspend(dev, false);
+
+out_unlock:
+	k_mutex_unlock(&data->pm_mutex);
+	lcd_panel_partial_wake_unlock();
+	return ret;
 }
 
 static int _lcd_panel_blanking_off(const struct device *dev)
 {
 	struct lcd_panel_data *data = dev->data;
-	int timeout;
+	int ret = 0;
 
-	for (timeout = 2000; data->pm_changing && timeout > 0; timeout--) {
-		k_msleep(1);
+	lcd_panel_wake_lock();
+	k_mutex_lock(&data->pm_mutex, K_FOREVER);
+
+	if (data->pm_changing) {
+		ret = -EAGAIN;
+		goto out_unlock;
 	}
 
-	if (data->pm_changing)
-		return -ETIMEDOUT;
-
-	if (_panel_pm_late_resume(dev))
-		return -EIO;
-
-	for (timeout = 2000; data->pm_changing && timeout > 0; timeout--) {
-		k_msleep(1);
+	if (data->pm_state == DISPLAY_STATE_ON) {
+		goto out_unlock;
 	}
 
-	return data->pm_changing ? -ETIMEDOUT : 0;
+	LOG_INF("display blanking off");
+	ret = _panel_pm_late_resume(dev);
+
+out_unlock:
+	k_mutex_unlock(&data->pm_mutex);
+	lcd_panel_wake_unlock();
+	return ret;
+}
+
+static int _lcd_panel_idle_on(const struct device *dev)
+{
+	return -ENOTSUP;
+}
+
+static int _lcd_panel_idle_off(const struct device *dev)
+{
+	return -ENOTSUP;
+}
+
+static int _lcd_panel_set_aod_mode(const struct device *dev, uint8_t enabled)
+{
+	return -ENOTSUP;
+}
+
+static uint8_t _lcd_panel_get_aod_mode(const struct device *dev)
+{
+	return 0;
 }
 
 static int _lcd_panel_read(const struct device *dev,
@@ -453,8 +526,10 @@ static int _lcd_panel_write(const struct device *dev,
 		y + desc->height > data->refr_desc.height)
 		return -EINVAL;
 
-	if (data->transfering)
+	if (data->pm_state >= DISPLAY_STATE_OFF || data->transfering != 0) {
+		LOG_ERR("disp not ready");
 		return -EBUSY;
+	}
 
 	data->transfering = 1;
 
@@ -488,18 +563,21 @@ static int _lcd_panel_set_brightness(const struct device *dev,
 {
 	struct lcd_panel_data *data = dev->data;
 
-	if (data->disp_on == 0)
-		return -EPERM;
+	if (brightness != data->pending_brightness) {
+		LOG_INF("display brightness %u", brightness);
 
-	if (brightness == data->pending_brightness)
-		return 0;
-
-	LOG_INF("display set_brightness %u", brightness);
-	data->pending_brightness = brightness;
-
-	/* delayed set in TE interrupt handler */
+		/* delayed set in TE interrupt handler */
+		data->pending_brightness = brightness;
+	}
 
 	return 0;
+}
+
+static uint8_t _lcd_panel_get_brightness(const struct device *dev)
+{
+   struct lcd_panel_data *data = dev->data;
+
+   return data->brightness;
 }
 
 static int _lcd_panel_set_contrast(const struct device *dev, const uint8_t contrast)
@@ -657,52 +735,23 @@ static int _lcd_panel_init(const struct device *dev)
 	display_controller_control(data->lcdc_dev,
 			DISPLAY_CONTROLLER_CTRL_COMPLETE_CB, _panel_complete_transfer, (void *)dev);
 
-	if (_panel_detect(dev)) {
-		LOG_ERR("No panel connected");
-		return -ENODEV;
-	}
-
 	data->de_dev = device_get_binding(CONFIG_DISPLAY_ENGINE_DEV_NAME);
 	if (data->de_dev == NULL) {
-		LOG_ERR("Could not get display engine device");
-		return -ENODEV;
+		LOG_WRN("Could not get display engine device");
 	}
 
-	if (data->config->fb_mem == NULL) {
-		display_engine_control(data->de_dev,
-				DISPLAY_ENGINE_CTRL_DISPLAY_PORT, (void *)&data->config->videoport, NULL);
-		display_engine_control(data->de_dev,
-				DISPLAY_ENGINE_CTRL_DISPLAY_MODE, (void *)&data->config->videomode, NULL);
-		display_engine_control(data->de_dev,
-				DISPLAY_ENGINE_CTRL_DISPLAY_START_CB, _panel_start_de_transfer, (void *)dev);
-	} else {
-		if (IS_ENABLED(CONFIG_JPEG_HW)) {
-			printk("Must disable JPEG_HW to release SDMA4\n");
-			k_panic();
-		}
+	data->te_active = 1;
+	data->pending_brightness = CONFIG_PANEL_BRIGHTNESS;
+	data->pm_state = DISPLAY_STATE_OFF;
+	data->pin_state = PANEL_PIN_STATE_ON;
 
-		if (IS_ENABLED(CONFIG_DMA2D_LITE) && CONFIG_DMA2D_LITE_SDMA_CHAN == 4) {
-			printk("Must not set CONFIG_DMA2D_LITE_SDMA_CHAN to 4 to release SDMA4\n");
-			k_panic();
-		}
-
-		/* config SDMA interrupt */
-		SDMA->IE |= BIT(4);
-		IRQ_CONNECT(IRQ_ID_SDMA4, 0, _panel_sdma4_irq_handler, DEVICE_GET(lcd_panel), 0);
-		irq_enable(IRQ_ID_SDMA4);
-	}
-
-	data->refr_desc.pixel_format = data->config->videomode.pixel_format;
+	data->refr_desc.pixel_format = CONFIG_PANEL_PIXEL_FORMAT;
 	data->refr_desc.width = CONFIG_PANEL_HOR_RES;
 	data->refr_desc.height = CONFIG_PANEL_VER_RES;
-	data->refr_desc.pitch = CONFIG_PANEL_HOR_RES *
-				display_format_get_bits_per_pixel(data->refr_desc.pixel_format) / 8;
+	data->refr_desc.pitch = CONFIG_PANEL_HOR_RES * CONFIG_PANEL_COLOR_DEPTH / 8;
 	data->refr_desc.buf_size = data->refr_desc.height * data->refr_desc.pitch;
 
-	data->disp_on = 0;
-	data->pending_brightness = CONFIG_PANEL_BRIGHTNESS;
-	data->brightness_delay = CONFIG_PANEL_BRIGHTNESS_DELAY_PERIODS;
-	data->pm_state = PM_DEVICE_STATE_SUSPENDED;
+	k_mutex_init(&data->pm_mutex);
 
 #if ESD_CHECK_COUNT > 0
 	k_work_init(&data->suspend_work, _panel_pm_suspend_handler);
@@ -713,7 +762,7 @@ static int _lcd_panel_init(const struct device *dev)
 	k_work_queue_start(&data->pm_workq, pm_workq_stack, K_THREAD_STACK_SIZEOF(pm_workq_stack), 6, NULL);
 #endif
 
-	_panel_pm_late_resume(dev);
+	_lcd_panel_blanking_off(dev);
 	return 0;
 }
 
@@ -731,10 +780,8 @@ static int _panel_pm_early_suspend(const struct device *dev, bool in_turnoff)
 {
 	struct lcd_panel_data *data = dev->data;
 
-	if (data->pm_state != PM_DEVICE_STATE_ACTIVE &&
-		data->pm_state != PM_DEVICE_STATE_LOW_POWER) {
-		return -EPERM;
-	}
+	if (data->pm_state >= DISPLAY_STATE_OFF)
+		return 0;
 
 	LOG_INF("panel early-suspend");
 
@@ -744,7 +791,7 @@ static int _panel_pm_early_suspend(const struct device *dev, bool in_turnoff)
 #if ESD_CHECK_COUNT > 0
 	data->esd_check_cnt = 0;
 #endif
-	data->pm_state = PM_DEVICE_STATE_SUSPENDED;
+	data->pm_state = in_turnoff ? DISPLAY_STATE_ALWAYS_OFF : DISPLAY_STATE_OFF;
 	return 0;
 }
 
@@ -763,9 +810,8 @@ static int _panel_pm_late_resume(const struct device *dev)
 {
 	struct lcd_panel_data *data = dev->data;
 
-	if (data->pm_state != PM_DEVICE_STATE_SUSPENDED) {
-		return -EPERM;
-	}
+	if (data->pm_state != DISPLAY_STATE_OFF)
+		return 0;
 
 	LOG_INF("panel late-resume");
 	data->pm_changing = 1;
@@ -788,40 +834,37 @@ static void _panel_pm_resume_handler(struct k_work *work)
 
 	lcd_panel_wake_lock();
 
-	data->pm_state = PM_DEVICE_STATE_ACTIVE;
-
 	_panel_power_on(dev);
 	_panel_pm_notify(data, PM_DEVICE_ACTION_LATE_RESUME);
 
+	data->pm_state = DISPLAY_STATE_ON;
 	data->pm_changing = 0;
-
 	lcd_panel_wake_unlock();
 
 	LOG_INF("panel active");
 }
 
 #ifdef CONFIG_PM_DEVICE
+
 static int _lcd_panel_pm_control(const struct device *dev, enum pm_device_action action)
 {
 	struct lcd_panel_data *data = dev->data;
 	int ret = 0;
 
-	if (data->pm_state == PM_DEVICE_STATE_OFF)
+	if (data->pm_state == DISPLAY_STATE_ALWAYS_OFF)
 		return -EPERM;
 
 	switch (action) {
 	case PM_DEVICE_ACTION_EARLY_SUSPEND:
-		ret = _panel_pm_early_suspend(dev, false);
-		board_lcd_suspend(false, true);
+		ret = _lcd_panel_blanking_on(dev);
 		break;
 
 	case PM_DEVICE_ACTION_LATE_RESUME:
-		board_lcd_resume(false, true);
-		ret = _panel_pm_late_resume(dev);
+		ret = _lcd_panel_blanking_off(dev);
 		break;
 
 	case PM_DEVICE_ACTION_SUSPEND:
-		if (data->pm_changing || data->pm_state == PM_DEVICE_STATE_ACTIVE) {
+		if (data->pm_changing || data->pm_state == DISPLAY_STATE_ON) {
 			ret = -EPERM;
 		}
 		break;
@@ -834,7 +877,6 @@ static int _lcd_panel_pm_control(const struct device *dev, enum pm_device_action
 
 	case PM_DEVICE_ACTION_TURN_OFF:
 		_panel_pm_early_suspend(dev, true);
-		data->pm_state = PM_DEVICE_STATE_OFF;
 		LOG_INF("panel turn-off");
 		break;
 
@@ -852,10 +894,15 @@ static int _lcd_panel_pm_control(const struct device *dev, enum pm_device_action
 static const struct display_driver_api lcd_panel_driver_api = {
 	.blanking_on = _lcd_panel_blanking_on,
 	.blanking_off = _lcd_panel_blanking_off,
+	.idle_on = _lcd_panel_idle_on,
+	.idle_off = _lcd_panel_idle_off,
+	.set_aod_mode = _lcd_panel_set_aod_mode,
+	.get_aod_mode = _lcd_panel_get_aod_mode,
 	.write = _lcd_panel_write,
 	.read = _lcd_panel_read,
 	.get_framebuffer = _lcd_panel_get_framebuffer,
 	.set_brightness = _lcd_panel_set_brightness,
+	.get_brightness = _lcd_panel_get_brightness,
 	.set_contrast = _lcd_panel_set_contrast,
 	.get_capabilities = _lcd_panel_get_capabilities,
 	.set_pixel_format = _lcd_panel_set_pixel_format,

@@ -19,6 +19,10 @@
     #endif
 #endif
 
+#if defined(CONFIG_LVGL_USE_IMG_DECODER_ACTS_RES)
+    #include <lvgl/lvgl_img_res_decoder.h>
+#endif
+
 #include <logging/log.h>
 LOG_MODULE_REGISTER(lvgl, LOG_LEVEL_INF);
 
@@ -49,6 +53,10 @@ lv_result_t lvx_port_init(void)
 
 #if defined(CONFIG_LV_Z_USE_FILESYSTEM)
     lv_port_z_fs_init();
+#endif
+
+#if defined(CONFIG_LVGL_USE_IMG_DECODER_ACTS_RES)
+    lvgl_img_decoder_acts_res_init();
 #endif
 
 #if LV_USE_THORVG
@@ -84,12 +92,18 @@ static void lvgl_log(lv_log_level_t level, const char * buf)
             LOG_INF("%s", buf + (sizeof("[Info] ") - 1));
             break;
         case LV_LOG_LEVEL_USER:
-            LOG_INF("%s", buf + (sizeof("[User] ") - 1));
+            if(buf[0] == '[' && buf[1] == 'U') {
+                LOG_INF("%s", buf + (sizeof("[User] ") - 1));
+            }
+            else {
+                printk("%s", buf);
+            }
             break;
         case LV_LOG_LEVEL_TRACE:
             LOG_DBG("%s", buf + (sizeof("[Trace] ") - 1));
             break;
         default:
+            printk("%s", buf);
             break;
     }
 }

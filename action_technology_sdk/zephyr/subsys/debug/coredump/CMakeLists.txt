@@ -26,4 +26,10 @@ zephyr_library_sources_ifdef(
 zephyr_library_sources_ifdef(
   CONFIG_DEBUG_COREDUMP_BACKEND_FLASH_DEV
   coredump_backend_flash_dev.c
+  )
+
+zephyr_library_sources_ifdef(
+  CONFIG_DEBUG_COREDUMP_BACKEND_NAND_SD
+  coredump_backend_flash_nand_sd.c
   )  
+

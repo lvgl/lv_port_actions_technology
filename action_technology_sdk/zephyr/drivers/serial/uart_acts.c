@@ -34,6 +34,7 @@ struct acts_uart_config {
 	uint8_t rxdma_chan;
 	uint8_t clock_id;
 	uint8_t reset_id;
+	uint8_t irq_id;
 	uint8_t flag_use_txdma:1;
 	uint8_t flag_use_rxdma:1;
 	uint32_t baud_rate;
@@ -653,6 +654,7 @@ int uart_acts_dma_receive_init(struct device *dev, dma_callback_t callback, void
 	head_block.dest_address = (unsigned int)NULL;
 	head_block.block_size = 0;
 	head_block.source_reload_en = 0;
+	head_block.dest_reload_en = 1;
 
 	dma_cfg.block_count = 200;
 	dma_cfg.head_block = &head_block;
@@ -753,6 +755,59 @@ int uart_acts_dma_receive_drq_switch(struct device *dev, bool drq_enable)
 
     return 0;
 }
+
+int uart_acts_dma_is_rx_pending(struct device *dev)
+{
+	struct acts_uart_data *uart_data = DEV_DATA(dev);
+	struct dma_status stat;
+
+	dma_get_status(uart_data->dma_dev, uart_data->rxdma_chan, &stat);
+	return stat.pending;
+}
+
+int uart_acts_dma_is_tx_pending(struct device *dev)
+{
+	struct acts_uart_data *uart_data = DEV_DATA(dev);
+	struct dma_status stat;
+
+	dma_get_status(uart_data->dma_dev, uart_data->txdma_chan, &stat);
+	return stat.pending;
+}
+
+int uart_acts_clear_rx_pending(struct device *dev)
+{
+	struct acts_uart_controller *uart = UART_STRUCT(dev);
+
+	/* Clear the interrupt */
+	uart->stat = UART_STA_RIP;
+
+	return 0;
+}
+
+int uart_acts_clear_tx_pending(struct device *dev)
+{
+	struct acts_uart_controller *uart = UART_STRUCT(dev);
+
+	/* Clear the interrupt */
+	uart->stat = UART_STA_TIP;
+
+	return 0;
+}
+
+void uart_acts_irq_enable(const struct device *dev)
+{
+	struct acts_uart_config *uart_config = (struct acts_uart_config *)DEV_CFG(dev);
+
+	irq_enable(uart_config->irq_id);
+}
+
+void uart_acts_irq_disable(const struct device *dev)
+{
+	struct acts_uart_config *uart_config = (struct acts_uart_config *)DEV_CFG(dev);
+
+	irq_disable(uart_config->irq_id);
+}
+
 #endif
 
 
@@ -938,6 +993,7 @@ int uart_acts_pm_control(const struct device *dev, enum pm_device_action action)
 		   .base = UART##n##_REG_BASE,\
 		   .clock_id = CLOCK_ID_UART##n,\
 		   .reset_id = RESET_ID_UART##n,\
+		   .irq_id = IRQ_ID_UART##n,\
 		   .baud_rate = CONFIG_UART_##n##_SPEED, \
 		    COND_CODE_1(CONFIG_UART_##n##_USE_TX_DMA,dma_use(n), dma_not(n))\
 		   .irq_config_func = uart##n##_acts_irq_config,	\

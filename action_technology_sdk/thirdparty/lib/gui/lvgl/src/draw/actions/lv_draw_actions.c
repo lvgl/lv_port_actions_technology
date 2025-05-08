@@ -149,6 +149,9 @@ uint32_t lv_acts_draw_buf_width_to_stride(uint32_t w, lv_color_format_t color_fo
     if(color_format == LV_COLOR_FORMAT_ETC2_EAC) {
         width_byte = (w + 3) & ~3;
     }
+    else if(color_format == LV_COLOR_FORMAT_YUY2) {
+        width_byte = ((w + 1) & ~1) * 2;
+    }
     else {
         width_byte = (w * lv_color_format_get_bpp(color_format) + 7) >> 3; /*Round up*/
     }

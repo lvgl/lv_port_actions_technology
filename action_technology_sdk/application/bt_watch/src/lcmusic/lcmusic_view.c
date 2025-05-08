@@ -24,7 +24,7 @@ void lcmusic_view_init(struct lcmusic_app_t *lcmusic)
 	u8_t init_play_state = lcmusic_get_play_state(lcmusic->cur_dir);
 
 #ifdef CONFIG_UI_MANAGER
-	ui_view_create(LCMUSIC_VIEW, NULL, 0);
+	view_stack_push_view(LCMUSIC_VIEW, NULL);
 #endif
 #ifdef CONFIG_SEG_LED_MANAGER
 	seg_led_manager_clear_screen(LED_CLEAR_ALL);
@@ -48,7 +48,7 @@ void lcmusic_view_init(struct lcmusic_app_t *lcmusic)
 void lcmusic_view_deinit(void)
 {
 #ifdef CONFIG_UI_MANAGER
-	ui_view_delete(LCMUSIC_VIEW);
+	view_stack_back_prev();
 #endif
 	SYS_LOG_INF("ok\n");
 }
