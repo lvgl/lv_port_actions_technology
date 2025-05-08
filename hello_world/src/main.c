@@ -60,9 +60,6 @@ static void _disp_vsync_cb(const lvx_display_observer_t *observer, uint32_t time
 static void _disp_state_cb(const lvx_display_observer_t *observer, uint32_t state)
 {
 	switch (state) {
-	case LVX_DISPLAY_STATE_OFF:
-		app_msg_send(APP_NAME, MSG_UI, CMD_SCREEN_OFF);
-		break;
 	case LVX_DISPLAY_STATE_ON:
 		app_msg_send(APP_NAME, MSG_UI, CMD_SCREEN_ON);
 		break;
@@ -106,11 +103,44 @@ static void _lvgl_init(void)
 	/* LVGL initialize */
 	lvx_port_init();
 	lvx_display_add_observer(&g_disp_observer);
+#if LV_USE_DEMO_BENCHMARK
+	lvx_refr_set_period(17);
+#else
 	lvx_refr_set_manual(NULL);
+#endif
 
 	/* Set background color */
 	lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), 0);
 	lv_obj_set_style_bg_opa(lv_screen_active(), LV_OPA_COVER, 0);
+
+	// init font
+	lvgl_bitmap_font_init(NULL);
+	lvgl_freetype_font_init();
+}
+
+static void _lvgl_set_y_anim_cb(void *label, int32_t val)
+{
+	static const lv_color_t test_colors[] = {
+		LV_COLOR_MAKE(100, 0, 50), LV_COLOR_MAKE(21, 10, 37),
+		LV_COLOR_MAKE(0, 100, 100), LV_COLOR_MAKE(123, 87, 199),
+		LV_COLOR_MAKE(100, 0, 50), LV_COLOR_MAKE(21, 10, 37),
+		LV_COLOR_MAKE(0, 100, 100), LV_COLOR_MAKE(123, 87, 199),
+	};
+	static uint8_t color_idx = 0;
+
+	if (val == 0) {
+		lv_obj_set_style_text_color(label, test_colors[color_idx], LV_PART_MAIN);
+		if (++color_idx >= ARRAY_SIZE(test_colors))
+			color_idx = 0;
+	}
+
+    lv_obj_set_y(label, val);
+}
+
+__unused
+static void _lvgl_anim_demo(const char* text)
+{
+	lv_demo_benchmark();
 }
 
 static void _process_ui_msg(struct app_msg *msg)
@@ -144,17 +174,27 @@ int main(void)
 	// init lvgl
 	_lvgl_init();
 
+#ifdef CONFIG_ACTS_DVFS_DYNAMIC_LEVEL
+	dvfs_unset_level(DVFS_LEVEL_HIGH_PERFORMANCE, "init");
+
+#if LV_USE_DEMO_BENCHMARK
+	dvfs_set_level(DVFS_LEVEL_HIGH_PERFORMANCE, "launcher");
+#else
+	dvfs_set_level(DVFS_LEVEL_NORMAL, "launcher");
+#endif
+#endif
+
+#if LV_USE_DEMO_BENCHMARK
+	sys_wake_lock(FULL_WAKE_LOCK);
+	lv_demo_benchmark();
+#else
+	_lvgl_anim_demo("Hello world!");
+#endif
+
 	// init key device
 	_keypad_init();
 
 	system_ready();
-
-	lv_demo_benchmark();
-
-#ifdef CONFIG_ACTS_DVFS_DYNAMIC_LEVEL
-	dvfs_unset_level(DVFS_LEVEL_HIGH_PERFORMANCE, "init");
-	dvfs_set_level(DVFS_LEVEL_NORMAL, "launcher");
-#endif
 
 	while (1) {
 		struct app_msg msg;
