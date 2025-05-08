@@ -6,6 +6,7 @@
 
 
 #define HRV_GLITCH_THRES     20000 
+#define HRV_GSEN_POW_THRE    150
 
 #ifdef HRV_ALG_LIB
 
@@ -23,6 +24,9 @@ typedef struct {
     uint32_t           hrv_peak; 
 		uint8_t            spirit_pressure;
 		uint8_t            p_m;
+    uint8_t     screen_up;
+    uint8_t     motion;
+    uint8_t     signal_quality;
 } hrv_results_t;
 
 
@@ -33,6 +37,6 @@ void tyhx_hrv_alg_close(void);
 void kfft(double *pr,double *pi,int n,int k,double *fr,double *fi);
 
 hrv_results_t tyhx_hrv_alg_send_data(int32_t new_raw_data, int32_t green_data_als, int32_t infrared_data);
-hrv_results_t tyhx_hrv_alg_send_bufdata(int32_t *new_raw_data, int32_t green_data_als, int32_t infrared_data);
+hrv_results_t tyhx_hrv_alg_send_bufdata(int32_t *new_raw_data, uint8_t count, int16_t *gsen_data_x, int16_t *gsen_data_y, int16_t *gsen_data_z);
 #endif //HRV_ALG_LIB
 		

@@ -38,9 +38,9 @@ static const struct acts_pin_config board_pin_config[] = {
     /*UART2 */
 #if IS_ENABLED(CONFIG_UART_2)
     /* uart2 tx */
-    PIN_MFP_SET(GPIO_63,  UART2_MFP_SEL),
+    PIN_MFP_SET(GPIO_63,  UART2_MFP_CFG),
     /* uart2 rx */
-    PIN_MFP_SET(GPIO_62,  UART2_MFP_SEL),
+    PIN_MFP_SET(GPIO_62,  UART2_MFP_CFG),
 #endif
 
 #if IS_ENABLED(CONFIG_SPI_FLASH_0)
@@ -507,20 +507,20 @@ int gps_power_pin_ctl( bool is_on)
     return 0;
 }
 
-// int gps_reset_pin_ctl()
-// {
-//     const struct device *gps_gpio_dev;
-//     gps_gpio_dev = device_get_binding(CONFIG_GPIO_PIN2NAME(GPS_RESET_CTL_PIN));
-//     if (!gps_gpio_dev)
-//         return -EINVAL;
+int gps_reset_pin_ctl()
+{
+    const struct device *gps_gpio_dev;
+    gps_gpio_dev = device_get_binding(CONFIG_GPIO_PIN2NAME(GPS_RESET_CTL_PIN));
+    if (!gps_gpio_dev)
+        return -EINVAL;
 
-//     gpio_pin_configure(gps_gpio_dev, GPS_RESET_CTL_PIN % 32, GPIO_OUTPUT);
-//     gpio_pin_set(gps_gpio_dev, GPS_RESET_CTL_PIN % 32, 0);
-//     k_sleep(K_MSEC(GPS_POWE_CTL_SLEEP_OFF_TIME_MS));
-//     gpio_pin_set(gps_gpio_dev, GPS_RESET_CTL_PIN % 32, 1);
+    gpio_pin_configure(gps_gpio_dev, GPS_RESET_CTL_PIN % 32, GPIO_OUTPUT);
+    gpio_pin_set(gps_gpio_dev, GPS_RESET_CTL_PIN % 32, 0);
+    k_sleep(K_MSEC(GPS_POWE_CTL_SLEEP_OFF_TIME_MS));
+    gpio_pin_set(gps_gpio_dev, GPS_RESET_CTL_PIN % 32, 1);
 
-//     return 0;
-// }
+    return 0;
+}
 
 int gps_wake_up_pin_ctl( bool is_on)
 {

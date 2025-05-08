@@ -99,6 +99,9 @@ static inline bool launcher_is_resumed(void)
 	return (g_launcher_app.suspended == 0) ? true : false;
 }
 
+bool launcher_get_aod_mode(void);
+void launcher_set_aod_mode(bool aod_en);
+
 void launcher_restore_last_player(void);
 
 void launcher_set_rtc_period(bool en, uint16_t period_ms);

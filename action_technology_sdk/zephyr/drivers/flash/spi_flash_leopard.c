@@ -1538,8 +1538,10 @@ static int spi_flash_2_pwoer(struct spinor_info *sni, bool on)
 #else
     if (on) {
         p_spinor_api->write_cmd(sni, 0xAB); //exit deep power down
+		soc_udelay(40);
     } else {
 		p_spinor_api->write_cmd(sni, 0xB9); // enter deep power down
+		soc_udelay(5);
     }
 #endif
 

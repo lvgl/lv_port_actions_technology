@@ -274,6 +274,7 @@ int bt_manager_reset_btdev(void)
 
 }
 
+#ifndef CONFIG_AEM_WATCH_SUPPORT
 /* Better call by app after receive MSG_BT_ENGINE_READY message */
 static void bt_mgr_start_open_bt(void)
 {
@@ -306,6 +307,7 @@ static void bt_mgr_start_open_bt(void)
 	}
 #endif
 }
+#endif
 
 static void bt_mgr_btsrv_ready(int err)
 {
@@ -398,7 +400,9 @@ static void bt_mgr_btsrv_ready(int err)
 		bt_mgr_info.btdev_err = 0;
     }
 
+#ifndef CONFIG_AEM_WATCH_SUPPORT
 	bt_mgr_start_open_bt();
+#endif
 	bt_mgr_info.bt_ready = 1;
 }
 

@@ -317,21 +317,24 @@ void heap_print_info(struct z_heap *h, bool dump_chunks)
     int i, nb_buckets = bucket_idx(h, h->end_chunk) + 1;
     size_t free_bytes, allocated_bytes, total, overhead;
     struct z_heap_stats *stats = heap_get_stats(h);
-
+#if !CONFIG_AEM_WATCH_SUPPORT
     printk("Heap at %p contains %d units in %d buckets\n\n",
            chunk_buf(h), h->end_chunk, nb_buckets);
-
+#endif
     total = h->end_chunk * CHUNK_UNIT + chunk_header_bytes(h);
     if (stats) {
+#if !CONFIG_AEM_WATCH_SUPPORT
         printk("total: %8d bytes,    peak: %8d bytes\n",
                total, stats->peak_chunks * CHUNK_UNIT);
         printk(" used: %8d bytes,    free: %8d bytes\n\n",
                stats->used_chunks * CHUNK_UNIT, total - stats->used_chunks * CHUNK_UNIT);
+#endif
     }
-
+#if !CONFIG_AEM_WATCH_SUPPORT
     printk("  bucket#    min units        total      largest      largest\n"
            "             threshold       chunks      (units)      (bytes)\n"
            "  -----------------------------------------------------------\n");
+#endif
     for (i = 0; i < nb_buckets; i++) {
         chunkid_t first = h->buckets[i].next;
         chunksz_t largest = 0;
@@ -345,16 +348,19 @@ void heap_print_info(struct z_heap *h, bool dump_chunks)
                 curr = next_free_chunk(h, curr);
             } while (curr != first);
         }
+#if !CONFIG_AEM_WATCH_SUPPORT
         if (count) {
             printk("%9d %12d %12d %12d %12zd\n",
                    i, (1 << i) - 1 + min_chunk_size(h), count,
                    largest, chunksz_to_bytes(h, largest));
         }
+#endif
     }
-
+#if !CONFIG_AEM_WATCH_SUPPORT
     if (dump_chunks) {
         printk("\nChunk dump:\n");
     }
+#endif
     free_bytes = allocated_bytes = 0;
     for (chunkid_t c = 0; ; c = right_chunk(h, c)) {
         if (chunk_used(h, c)) {
@@ -367,6 +373,7 @@ void heap_print_info(struct z_heap *h, bool dump_chunks)
                 free_bytes += chunksz_to_bytes(h, chunk_size(h, c));
             }
         }
+#if !CONFIG_AEM_WATCH_SUPPORT
         if (dump_chunks) {
             printk("chunk %4d: [%c] size=%-4d left=%-4d right=%d\n",
                    c,
@@ -377,6 +384,7 @@ void heap_print_info(struct z_heap *h, bool dump_chunks)
                    left_chunk(h, c),
                    right_chunk(h, c));
         }
+#endif
         if (c == h->end_chunk) {
             break;
         }
@@ -392,6 +400,10 @@ void heap_print_info(struct z_heap *h, bool dump_chunks)
            free_bytes, allocated_bytes, overhead,
            (1000 * overhead + total/2) / total / 10,
            (1000 * overhead + total/2) / total % 10);
+#if CONFIG_AEM_WATCH_SUPPORT
+	extern void aem_mem_refresh_ui(size_t free, size_t allocated);
+	aem_mem_refresh_ui(free_bytes, allocated_bytes);
+#endif
 }
 
 void sys_heap_print_info(struct sys_heap *heap, bool dump_chunks)

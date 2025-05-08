@@ -217,18 +217,6 @@
     <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\input_dispatcher.c">
       <Filter>framework\display\libdisplay\ui_service</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\input_recorder.c">
-      <Filter>framework\display\libdisplay\ui_service</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\input_recorder_buffer.c">
-      <Filter>framework\display\libdisplay\ui_service</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\input_recorder_slide_fixedstep.c">
-      <Filter>framework\display\libdisplay\ui_service</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\input_recorder_stream.c">
-      <Filter>framework\display\libdisplay\ui_service</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\..\framework\display\libdisplay\ui_service\ui_service.c">
       <Filter>framework\display\libdisplay\ui_service</Filter>
     </ClCompile>

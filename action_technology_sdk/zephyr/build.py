@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import re
 import xml.etree.ElementTree as ET
+import json
 
 sdk_arch = "arm"
 sdk_root = os.getcwd()
@@ -39,6 +40,9 @@ application = ""
 sub_app = ""
 board_conf = ""
 app_conf = ""
+
+FW_VERSION_FILE_NAME="fw_version.bin"
+
 
 def is_windows():
     sysstr = platform.system()
@@ -190,7 +194,7 @@ def build_sdfs_bin_name(out_dir, board_dir, app_dir, app_cfg_dir, sdfs_name):
         dir_cp(sdfs_dir, app_cfg_sdfs_dir)
 
     print("\n build_sdfs : sdfs_dir %s, sdfs_name %s\n\n" %(sdfs_dir, sdfs_name))
-    if (sdfs_name == 'fonts') or (sdfs_name == 'res') or (sdfs_name == 'res_b'):
+    if (sdfs_name == 'fonts') or (sdfs_name == 'res')  or (sdfs_name == 'watch') or (sdfs_name == 'res_b'):
         txtdir = os.path.join(sdfs_dir, "txt")
         if os.path.exists(txtdir) == True:
             shutil.rmtree(txtdir)
@@ -243,6 +247,7 @@ def build_sdfs_bin(out_dir, board_dir, app_dir, app_cfg_dir):
     build_sdfs_bin_name(out_dir, board_dir, app_dir, app_cfg_dir,"fatfs")
     build_sdfs_bin_name(out_dir, board_dir, app_dir, app_cfg_dir,"res")
     build_sdfs_bin_name(out_dir, board_dir, app_dir, app_cfg_dir,"fonts")
+    build_sdfs_bin_name(out_dir, board_dir, app_dir, app_cfg_dir,"watch")
     build_sdfs_bin_name(out_dir, board_dir, app_dir, app_cfg_dir,"res_b")
     build_sdfs_bin_bydir(out_dir, board_dir, app_dir, app_cfg_dir)
 
@@ -420,10 +425,30 @@ def image_add_checksum(fw_dir_bin, img_bin):
         sys.exit(1)
 
 
+def gen_fw_version(out_dir, fw_cfgfile):
+    #print('FW: Parse config file: %s' %self.fw_xml_file)
+    tree = ET.ElementTree(file=fw_cfgfile)
+    root = tree.getroot()
+    if (root.tag != 'firmware'):
+        sys.stderr.write('error: invalid firmware config file')
+        sys.exit(1) 
+    fw_version = {}
+    firmware_version = root.find('firmware_version')   
+    for prop in firmware_version:
+        fw_version[prop.tag] = prop.text.strip()
+    if 'version_name' in fw_version.keys():
+        cur_time = time.strftime('%y%m%d%H%M',time.localtime(time.time()))
+        version_name = fw_version['version_name'].replace('$(build_time)', cur_time)
+        fw_ver_file = os.path.join(out_dir, FW_VERSION_FILE_NAME)
+        with open(fw_ver_file, 'w') as f:
+            f.write(version_name)
+            f.close()
+
+
 def build_firmware(board, out_dir, board_dir, app_dir, app_cfg_dir):
     print("\n build_firmware : out %s, board %s, app_dir %s cfg_dir %s\n\n" %(out_dir, board_dir, app_dir, app_cfg_dir))
-    res_files = ["fonts", "res", "res_b"]
-    full_files = ["full","firmware"]
+    res_files = ["fonts", "res", "watch", "res_b"]
+    full_files = ["full","firmware","boot"]
     FW_DIR = os.path.join(out_dir, "_firmware")
     OS_OUTDIR = os.path.join(out_dir, "zephyr")
     if os.path.exists(FW_DIR) == False:
@@ -486,6 +511,7 @@ def build_firmware(board, out_dir, board_dir, app_dir, app_cfg_dir):
     check_cp(FW_DIR_BIN, app_cfg_dir, "prebuild")
     check_cp(FW_DIR_BIN, app_cfg_dir, "E_CHECK.FW")
     check_cp(FW_DIR_BIN, app_cfg_dir, "fwimage.cfg")
+    check_cp(FW_DIR_BIN, app_cfg_dir, "bin")
 
     ota_app_path = os.path.join(FW_DIR_BIN, "ota_app.bin")
     if os.path.exists(ota_app_path) == True:
@@ -535,6 +561,7 @@ def build_firmware(board, out_dir, board_dir, app_dir, app_cfg_dir):
             print(outmsg.decode('utf-8'))
             sys.exit(1)
 
+    gen_fw_version(FW_DIR_BIN, fw_cfgfile)
     image_add_checksum(FW_DIR_BIN, "recovery.bin");
     image_add_checksum(FW_DIR_BIN, "app.bin");
     image_add_checksum(FW_DIR_BIN, "ota_app.bin");
@@ -642,6 +669,72 @@ def build_zephyr_menuconfig(out_dir):
         print("\n bulid error\n")
         sys.exit(1)
 
+def build_cloud_watch(board, out_dir, app_dir):
+    watch_root = os.path.join(os.path.join(app_dir, "cloud_watch"))
+    watch_out = os.path.join(out_dir, "cloud_watch")
+    if os.path.exists(watch_root) == False:
+        return
+    if os.path.exists(watch_out) == True:
+        shutil.rmtree(watch_out)
+    sdfs_dir = os.path.join(watch_out, "sdfs")
+    for watch in os.listdir(watch_root):
+        watch_dir = os.path.join(watch_root,watch)
+        if os.path.isdir(watch_dir):
+            print("build watch: %s\n" %(watch))
+            with open(os.path.join(watch_dir, "cwf.json"), 'r', encoding='utf-8') as json_file:
+                if not json_file:
+                    continue
+                watch_id = (json.load(json_file)).get("id")
+            # copy res
+            if os.path.exists(sdfs_dir) == True:
+                shutil.rmtree(sdfs_dir)
+            dir_tree_cp(sdfs_dir, os.path.join(watch_dir,"res"))
+            check_cp(sdfs_dir, watch_dir, "cwf.json")
+            sdfs_txt = os.path.join(sdfs_dir, "txt")
+            if os.path.exists(sdfs_txt) == True:
+                shutil.rmtree(sdfs_txt)
+
+            # build sdfs
+            sdfs_bin_path = os.path.join(watch_out, "watch.bin")
+            script_sdfs_path = os.path.join(sdk_script_dir, 'build_sdfs.py')
+            cmd = ['python', '-B', script_sdfs_path,  '-o', sdfs_bin_path, '-d', sdfs_dir]
+            (outmsg, exit_code) = run_cmd(cmd)
+            if exit_code !=0:
+                print('build sdfs error')
+                print(outmsg.decode('utf-8'))
+                sys.exit(1)
+
+            # build ota
+            watch = str(watch_id) + "-" + watch
+            cloud_xml_path = os.path.join(watch_root, "cloud_watch.xml")
+            cloud_bin_path = os.path.join(watch_out, watch+".bin")
+            script_ota_path = os.path.join(sdk_script_dir, 'build_ota_image.py')
+            cmd = ['python', '-B', script_ota_path, '-i', watch_out, '-c', cloud_xml_path,
+                '-o', cloud_bin_path, '-b', board]
+            (outmsg, exit_code) = run_cmd(cmd)
+            if exit_code !=0:
+                print('build ota error')
+                print(outmsg.decode('utf-8'))
+                sys.exit(1)
+
+            # copy watch
+            check_cp(watch_dir, watch_out, "watch.bin")
+            check_cp(watch_dir, watch_out, watch+".bin")
+            os.remove(sdfs_bin_path)
+            shutil.rmtree(sdfs_dir)
+
+            shutil.copy2(os.path.join(watch_dir,"cwf.json"), os.path.join(watch_dir,"cloud_watch.conf"))
+
+			# build 7z
+            watch_bin = os.path.join(watch_dir, watch+".bin")
+            watch_prev = os.path.join(watch_dir, "preview.jpg")
+            watch_conf = os.path.join(watch_dir, "cloud_watch.conf")
+            watch_7z = os.path.join(watch_dir, watch + ".7z")
+            script_7z_path = os.path.join(sdk_script_dir, '7za.exe')
+            cmd = [script_7z_path, 'a', watch_7z, watch_bin, watch_prev, watch_conf]
+            run_cmd(cmd)
+
+
 def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', dest="cfgdel", help="remove cur build_config", action="store_true", required=False)
@@ -653,6 +746,11 @@ def main(argv):
     parser.add_argument('-t', dest="sample", help="build sample, default build applicaction", action="store_true", required=False)
     parser.add_argument('-u', dest="test", help="build test, default build applicaction", action="store_true", required=False)
     parser.add_argument('-k', dest="bkeil", help="build by keil, default by gcc ", action="store_true", required=False)
+    # aem add begin
+    parser.add_argument('-a', dest="application", help="Select application", required=False)
+    parser.add_argument('-b', dest="boards", help="Select boards configuration", required=False)
+    # aem add end
+    parser.add_argument('-w', dest="bwatch", help="build cloud watch", action="store_true", required=False)
 
     print("build")
     args = parser.parse_args()
@@ -763,6 +861,10 @@ def main(argv):
     if os.path.exists(board_conf_path) == False:
         print("\nNo board at %s \n\n" %(board_conf_dir))
         sys.exit(1)
+
+    if args.bwatch == True:
+        build_cloud_watch(board_conf, sdk_build, application_path)
+        sys.exit(0)
 
     #build_zephyr_app(board_conf, sdk_build_boot, sdk_mcuboot_app_path)
     if args.pack == False:

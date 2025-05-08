@@ -173,6 +173,13 @@ uint16_t display_composer_get_orientation(void);
 uint8_t display_composer_get_num_layers(void);
 
 /**
+ * @brief Get the brightness of the display
+ *
+ * @retval Brightness in steps of 1/256.
+ */
+uint8_t display_composer_get_brightness(void);
+
+/**
  * @brief Set the brightness of the display
  *
  * Set the brightness of the display in steps of 1/256, where 255 is full
@@ -183,6 +190,22 @@ uint8_t display_composer_get_num_layers(void);
  * @retval 0 on success else negative errno code.
  */
 int display_composer_set_brightness(uint8_t brightness);
+
+/**
+ * @brief Get the AOD mode of the display
+ *
+ * @retval AOD mode.
+ */
+uint8_t display_composer_get_aod_mode(void);
+
+/**
+ * @brief Set the AOD mode of the display
+ *
+ * @param mode AOD mode. accepted possible values are: 0 to disable AOD, 1 to enable AOD
+ *
+ * @retval 0 on success else negative errno code.
+ */
+int display_composer_set_aod_mode(uint8_t mode);
 
 /**
  * @brief Extend the invalidated region to match with the display requirements

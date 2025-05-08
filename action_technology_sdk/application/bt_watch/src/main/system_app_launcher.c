@@ -105,7 +105,7 @@ int system_app_launch_init(void)
 
 #ifndef CONFIG_SIMULATOR
 #ifdef CONFIG_UI_MANAGER
-	ui_view_create(WELCOME_VIEW, NULL, UI_CREATE_FLAG_SHOW | UI_CREATE_FLAG_NO_PRELOAD);
+	view_stack_push_view(WELCOME_VIEW, NULL);
 #endif
 
 	/**lower priority */
@@ -123,7 +123,7 @@ int system_app_launch_init(void)
 	os_sleep(1000);
 
 #ifdef CONFIG_UI_MANAGER
-	ui_view_delete(WELCOME_VIEW);
+	view_stack_back_prev();
 #endif
 #endif /* CONFIG_SIMULATOR */
 

@@ -714,7 +714,13 @@ uint8_t hx3605_hrs_read(hrs_sensor_data_t * s_dat)
 		
 		data_count = hx3605_read_fifo_data(s_buf,1,1); 
 		//DEBUG_PRINTF("ppg data size: %d %d\r\n", data_count,hrs_phase_num);
+		if(data_count > 32)
+		{
+			return 0;
+		}
+		
 		s_dat->count =  data_count; 
+		
 		for (uint8_t i=0; i<data_count; i++) 
 		{
 				PPG_src_data = s_buf[i];           

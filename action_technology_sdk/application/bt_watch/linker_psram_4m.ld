@@ -177,6 +177,7 @@ SECTIONS
 	{
 		*(.rodata)
 		*(".rodata.*")
+		*(.lv_large_const)
 		*(.gnu.linkonce.r.*)
 
 /* Located in generated directory. This file is populated by the

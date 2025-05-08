@@ -417,6 +417,7 @@ int tpkey_get_last_point(struct input_value *value, uint32_t timestamp)
 		value->point.pessure_value = current_value->point.pessure_value;
 	} else {
 		memcpy(value, current_value, sizeof(struct input_value));
+#if 0
 		if (!current_value->point.pessure_value) {
 
 			int32_t next_duration = (int32_t)(key_context.tp_point_duration - current_duration);
@@ -437,6 +438,7 @@ int tpkey_get_last_point(struct input_value *value, uint32_t timestamp)
 				value->point.loc_y = current_value->point.loc_y;
 			}
 		}
+#endif
 	}
 
 exit:

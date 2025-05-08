@@ -176,16 +176,27 @@ inline const char* ft_getenv(char* param)
 
 #define ft_jmp_buf     int
 
-  static inline int ft_setjmp(ft_jmp_buf env)
-  {
+typedef enum {
+  FT_ERROR_REPORT=1,
+  FT_GRAY_CELL_OVERFLOW,
+}ft_longjum_value_e;
+
+static inline int ft_setjmp(ft_jmp_buf env)
+{
 //  		printf("$$$$$$$$$$ ft_setjmp\n");
 	  return 0;
-  }
+}
 
-  static inline void ft_longjmp(ft_jmp_buf env, int val)
-  {
-  		printf("$$$$$$$$$ ft_longjmp\n");
-		return;
+static inline void ft_longjmp(ft_jmp_buf env, int val)
+{
+    switch(val) {
+    case FT_GRAY_CELL_OVERFLOW:
+      printf("FT Error: FT_RENDER_POOL_SIZE %ld not enough \n", FT_RENDER_POOL_SIZE);
+    case FT_ERROR_REPORT:
+      printf(" Freetype error report\n");
+    default:
+      printf(" Unknown longjump \n");
+    }
 //	  k_panic();
   }
 

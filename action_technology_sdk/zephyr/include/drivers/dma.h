@@ -197,6 +197,7 @@ struct dma_status {
 	bool busy;
 	enum dma_channel_direction dir;
 	uint32_t pending_length;
+	bool pending;
 };
 
 /**

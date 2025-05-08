@@ -11,7 +11,7 @@
 #include <acts_bluetooth/addr.h>
 
 #define BT_IPS_NAME_MAX (16)
-#define BT_IPS_SUBS_MAX (5)
+#define BT_IPS_SUBS_MAX (4)
 
 enum {
 	BT_IPS_TX_CODEC_LC3, //LC3编码
@@ -97,7 +97,7 @@ struct bt_ips_send_info {
 	uint16_t length; //发送编码数据长度
 	uint8_t frame_number; //发送帧数
 	uint8_t status; // BT_IPS_STATUS_X
-	uint8_t num_synced; //正式进入对讲时，已synced数量，用于决定关闭scan，对应状态BT_IPS_STATUS_WORKING
+	//uint8_t num_synced; //正式进入对讲时，已synced数量，用于决定关闭scan，对应状态BT_IPS_STATUS_WORKING
 	//uint8_t role; // BT_IPS_ROLE_INITIATOR or BT_IPS_ROLE_SUBSCRIBER
 };
 
@@ -135,6 +135,14 @@ struct bt_ips_cb {
 	 * @param num_synced
 	 */
 	void (*ips_status)(void *sync_handle, uint8_t status, uint8_t num_synced);
+
+	/**
+	 * @brief 告知当前令牌状态.
+	 *
+	 * @param out sync_handle.
+	 * @param out enable
+	 */
+	void (*ips_token_get)(void *sync_handle, bool enable);
 };
 
 struct bt_ips_search_rt {

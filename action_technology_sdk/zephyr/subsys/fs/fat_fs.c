@@ -314,6 +314,11 @@ static int fatfs_sync(struct fs_file_t *zfp)
 	return res;
 }
 
+static int fatfs_size(struct fs_file_t *zfp)
+{
+	return f_size((FIL *)zfp->filep);
+}
+
 static int fatfs_mkdir(struct fs_mount_t *mountp, const char *path)
 {
 	int res = -ENOTSUP;
@@ -523,6 +528,7 @@ static const struct fs_file_system_t fatfs_fs = {
 	.disk_detect = fatfs_disk_detect,
 	.open_cluster = fatfs_open_cluster,
 	.opendir_cluster = fatfs_opendir_cluster,
+	.size = fatfs_size,
 };
 
 static int fatfs_init(const struct device *dev)

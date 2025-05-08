@@ -42,6 +42,10 @@ USB_NOCACHE_RAM_SECTION struct usbd_core_priv {
     const struct usb_descriptor *descriptors;
 #else
     const uint8_t *descriptors;
+#ifdef CONFIG_USB_ACTIONS_VENDOR_CTRL
+    usbd_actions_parase_handler actions_cmd_cb;
+    struct usb_actions_get_identity_descriptor *actions_get_identity_desc;
+#endif
     struct usb_msosv1_descriptor *msosv1_desc;
     struct usb_msosv2_descriptor *msosv2_desc;
     struct usb_bos_descriptor *bos_desc;
@@ -71,6 +75,14 @@ USB_NOCACHE_RAM_SECTION struct usbd_core_priv {
 
     void (*event_handler)(uint8_t busid, uint8_t event);
 } g_usbd_core[CONFIG_USBDEV_MAX_BUS];
+
+#ifdef CONFIG_USB_ACTIONS_VENDOR_CTRL
+struct usb_actions_get_identity_descriptor actions_get_identity_desc = {
+    .bLength = GET_IDENTITY_LENGTH,
+    .idVendor = ACTIONS_ID,
+    .bcdDevice = ACTIONS_CMD_VERSION
+};
+#endif
 
 struct usbd_bus g_usbdev_bus[CONFIG_USBDEV_MAX_BUS];
 
@@ -444,6 +456,7 @@ static bool usbd_set_configuration(uint8_t busid, uint8_t config_index, uint8_t 
  *
  * @return true if successfully configured false if error or unconfigured
  */
+#ifndef CONFIG_USBDEV_PREPARSE_DESC
 static bool usbd_set_interface(uint8_t busid, uint8_t iface, uint8_t alt_setting)
 {
     const uint8_t *if_desc = NULL;
@@ -523,6 +536,67 @@ static bool usbd_set_interface(uint8_t busid, uint8_t iface, uint8_t alt_setting
 
     return ret;
 }
+#else
+static bool usbd_set_interface(uint8_t busid, uint8_t iface, uint8_t alt_setting)
+{
+    const uint8_t *p;
+    const uint8_t *if_desc = NULL;
+    uint32_t found_ep_bits = 0;
+    uint8_t ep_bit_num;
+    struct usb_endpoint_descriptor *ep_desc;
+    struct usb_interface_descriptor *curr_if_desc;
+    bool ret = false;
+
+#ifdef CONFIG_USBDEV_ADVANCE_DESC
+    p = g_usbd_core[busid].descriptors->config_descriptor_callback(g_usbd_core[busid].speed);
+#else
+    p = (uint8_t *)g_usbd_core[busid].descriptors;
+#endif
+
+    USB_LOG_DBG("iface %u alt_setting %u\r\n", iface, alt_setting);
+
+    struct usbd_interface *intf = NULL;
+    for (int i = 0; i < g_usbd_core[busid].intf_offset; i++) {
+        if (g_usbd_core[busid].intf[i]->intf_num == iface) {
+            intf = g_usbd_core[busid].intf[i];
+            break;
+        }
+    }
+    if (intf == NULL) {
+        USB_LOG_ERR("No intf found, please add interface%d\r\n", iface);
+        return false;
+    }
+    for (int i = 0; i < ARRAY_SIZE(intf->altsetting_desc); i++) {
+        if (intf->altsetting_desc[i].intf_desc_offset == 0) {
+            break;
+        }
+        curr_if_desc = (struct usb_interface_descriptor *)(p + intf->altsetting_desc[i].intf_desc_offset);
+        if (curr_if_desc->bAlternateSetting == alt_setting) {
+            if_desc = (void *)curr_if_desc;
+            for (int j =0; j < curr_if_desc->bNumEndpoints; j++) {
+                ep_desc = (struct usb_endpoint_descriptor *)(p + intf->altsetting_desc[i].ep_desc_offset[j]);
+                ep_bit_num = USB_EP_GET_IDX(ep_desc->bEndpointAddress) + \
+                                    (USB_EP_DIR_IS_OUT(ep_desc->bEndpointAddress) ? 0 : 16);
+                found_ep_bits |= BIT(ep_bit_num);
+                ret = usbd_set_endpoint(busid, ep_desc);
+            }
+        } else if (alt_setting == 0) {
+            for (int j =0; j < curr_if_desc->bNumEndpoints; j++) {
+                ep_desc = (struct usb_endpoint_descriptor *)(p + intf->altsetting_desc[i].ep_desc_offset[j]);
+                ep_bit_num = USB_EP_GET_IDX(ep_desc->bEndpointAddress) + \
+                                    (USB_EP_DIR_IS_OUT(ep_desc->bEndpointAddress) ? 0 : 16);
+                if (found_ep_bits != BIT(ep_bit_num)) {
+                     ret = usbd_reset_endpoint(busid, ep_desc);
+                }
+            }
+        }
+    }
+
+    usbd_class_event_notify_handler(busid, USBD_EVENT_SET_INTERFACE, (void *)if_desc);
+
+    return ret;
+}
+#endif
 
 /**
  * @brief handle a standard device request
@@ -940,6 +1014,70 @@ static int usbd_vendor_request_handler(uint8_t busid, struct usb_setup_packet *s
         }
     }
 #else
+#ifdef CONFIG_USB_ACTIONS_VENDOR_CTRL
+    if (g_usbd_core[busid].actions_get_identity_desc) {
+        if (setup->wIndex == ACTIONS_ID) {
+            switch (setup->bRequest) {
+                case GET_INFO:
+                    if (setup->bmRequestType != VENDOR_TYPE_IN) {
+                        USB_LOG_ERR("Wrong direction\r\n");
+                        *len = 0;
+                        return -1;
+                    }
+
+                    if (setup->wLength != GET_IDENTITY_LENGTH) {
+                        USB_LOG_ERR("Error length\r\n");
+                        *len = 0;
+                        return -1;
+                    }
+
+                    switch (setup->wValue) {
+                        case OBTAIN_IDENTITY:
+                            *data = (uint8_t *)g_usbd_core[busid].actions_get_identity_desc;
+                            *len = g_usbd_core[busid].actions_get_identity_desc->bLength;
+                            USB_LOG_INFO("OBTAIN_IDENTITY\n");
+                            return 0;
+
+                        default:
+                            USB_LOG_ERR("Invalid actions command parameters\r\n");
+                            *len = 0;
+                            return -1;
+                    }
+                case SWITCH_USB_DEVICE_CLASS:
+                    if (setup->bmRequestType != VENDOR_TYPE_IN) {
+                        USB_LOG_ERR("Wrong direction\r\n");
+                        *len = 0;
+                        return -1;
+                    }
+
+                    if (setup->wLength != SWITCH_MODE_LENGTH) {
+                        USB_LOG_ERR("Error length\r\n");
+                        *len = 0;
+                        return -1;
+                    }
+
+                    if (g_usbd_core[busid].actions_cmd_cb && setup->wValue <= SWITCH_TO_STUB_MODE) {
+                        if (g_usbd_core[busid].actions_cmd_cb(busid, SWITCH_USB_DEVICE_CLASS, setup->wValue) == -1) {
+                            (*data)[1] = ACTIONS_CMD_STALL;
+                        } else {
+                            (*data)[1] = ACTIONS_CMD_ACK;
+                        }
+                        (*data)[0] = SWITCH_MODE_LENGTH;
+                        *len = SWITCH_MODE_LENGTH;
+                        return 0;
+                    }
+
+                    USB_LOG_ERR("Unable to handle\r\n");
+                    *len = 0;
+                    return -1;
+                default:
+                    USB_LOG_ERR("Invalid actions command\r\n");
+                    *len = 0;
+                    return -1;
+            }
+        }
+    } else
+#endif
     if (g_usbd_core[busid].msosv1_desc) {
         if (setup->bRequest == g_usbd_core[busid].msosv1_desc->vendor_code) {
             switch (setup->wIndex) {
@@ -1253,7 +1391,8 @@ void usbd_event_ep0_out_complete_handler(uint8_t busid, uint8_t ep, uint32_t nby
             }
 
             /*Send status to host*/
-            usbd_ep_start_write(busid, USB_CONTROL_IN_EP0, NULL, 0);
+            usbd_send_status_to_host(busid);
+
         } else {
             /* Start reading the remain data */
             usbd_ep_start_read(busid, USB_CONTROL_OUT_EP0, g_usbd_core[busid].ep0_data_buf, g_usbd_core[busid].ep0_data_buf_residue);
@@ -1305,6 +1444,18 @@ void usbd_desc_register(uint8_t busid, const uint8_t *desc)
     g_usbd_core[busid].rx_msg[0].cb = usbd_event_ep0_out_complete_handler;
 }
 
+#ifdef CONFIG_USB_ACTIONS_VENDOR_CTRL
+void usbd_actions_cmd_cb_register(uint8_t busid, usbd_actions_parase_handler cb)
+{
+	g_usbd_core[busid].actions_cmd_cb = cb;
+}
+
+void usbd_actions_get_identity_desc_register(uint8_t busid, struct usb_actions_get_identity_descriptor *desc)
+{
+    g_usbd_core[busid].actions_get_identity_desc = desc;
+}
+#endif
+
 /* Register MS OS Descriptors version 1 */
 void usbd_msosv1_desc_register(uint8_t busid, struct usb_msosv1_descriptor *desc)
 {
@@ -1328,11 +1479,86 @@ void usbd_webusb_desc_register(uint8_t busid, struct usb_webusb_descriptor *desc
 }
 #endif
 
+#ifdef CONFIG_USBDEV_PREPARSE_DESC
+static void preparse_interface_desc(uint8_t busid, struct usbd_interface *intf)
+{
+    uint8_t iface = intf->intf_num;
+    uint8_t cur_iface = 0xFF;
+    uint8_t cur_alt_setting = 0;
+    uint8_t cur_ep_idx = 0;
+    uint32_t desc_len = 0;
+    uint32_t current_desc_len = 0;
+    const uint8_t *p;
+    const uint8_t *start_desc;
+
+    memset(intf->altsetting_desc, 0, sizeof(intf->altsetting_desc));
+
+#ifdef CONFIG_USBDEV_ADVANCE_DESC
+    p = g_usbd_core[busid].descriptors->config_descriptor_callback(g_usbd_core[busid].speed);
+#else
+    p = (uint8_t *)g_usbd_core[busid].descriptors;
+#endif
+    start_desc = p;
+
+    while (p[DESC_bLength] != 0U) {
+        switch (p[DESC_bDescriptorType]) {
+            case USB_DESCRIPTOR_TYPE_CONFIGURATION:
+                current_desc_len = 0;
+                desc_len = (p[CONF_DESC_wTotalLength]) |
+                           (p[CONF_DESC_wTotalLength + 1] << 8);
+
+                break;
+
+            case USB_DESCRIPTOR_TYPE_INTERFACE:
+                cur_iface = p[INTF_DESC_bInterfaceNumber];
+                if(iface == cur_iface) {
+                    /* remember current alternate setting */
+                    cur_alt_setting = p[INTF_DESC_bAlternateSetting];
+                    intf->altsetting_desc[cur_alt_setting].intf_desc_offset = p - start_desc;
+                    cur_ep_idx = 0;
+                }
+                break;
+
+            case USB_DESCRIPTOR_TYPE_ENDPOINT:
+                if (cur_iface == iface) {
+                    struct usb_interface_descriptor *cur_iface_desc = \
+                        (struct usb_interface_descriptor *)(start_desc + intf->altsetting_desc[cur_iface].intf_desc_offset);
+
+                    if ((cur_ep_idx) < cur_iface_desc->bNumEndpoints) {
+                        intf->altsetting_desc[cur_alt_setting].ep_desc_offset[cur_ep_idx] = p - start_desc;
+                        USB_LOG_DBG("Found iface %u alt setting %u ep 0x%02x\r\n", \
+                                    cur_iface, cur_alt_setting, ((struct usb_endpoint_descriptor *)p)->bEndpointAddress);
+                        cur_ep_idx ++;
+                    } else {
+                        USB_LOG_ERR("Found Endpoint out of range\r\n");
+                    }
+                }
+
+                break;
+
+            default:
+                break;
+        }
+
+        /* skip to next descriptor */
+        p += p[DESC_bLength];
+        current_desc_len += p[DESC_bLength];
+        if (current_desc_len >= desc_len && desc_len) {
+            break;
+        }
+    }
+    return;
+}
+#endif
+
 void usbd_add_interface(uint8_t busid, struct usbd_interface *intf)
 {
     intf->intf_num = g_usbd_core[busid].intf_offset;
     g_usbd_core[busid].intf[g_usbd_core[busid].intf_offset] = intf;
     g_usbd_core[busid].intf_offset++;
+#ifdef CONFIG_USBDEV_PREPARSE_DESC
+    preparse_interface_desc(busid, intf);
+#endif
 }
 
 void usbd_add_endpoint(uint8_t busid, struct usbd_endpoint *ep)
@@ -1405,6 +1631,10 @@ int usbd_initialize(uint8_t busid, uintptr_t reg_base, void (*event_handler)(uin
 
     bus = &g_usbdev_bus[busid];
     bus->reg_base = reg_base;
+
+#ifdef CONFIG_USB_ACTIONS_VENDOR_CTRL
+    usbd_actions_get_identity_desc_register(busid, &actions_get_identity_desc);
+#endif
 
     g_usbd_core[busid].event_handler = event_handler;
     ret = usb_dc_init(busid);

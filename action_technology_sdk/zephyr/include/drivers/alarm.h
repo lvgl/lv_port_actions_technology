@@ -11,7 +11,7 @@
 
 #ifndef _ALARM_H_
 #define _ALARM_H_
-
+#include <device.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

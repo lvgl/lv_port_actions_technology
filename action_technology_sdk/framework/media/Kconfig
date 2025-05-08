@@ -135,5 +135,12 @@ config VIDEO_PLAYER
 	default n
 	help
 	This option enables actions video player
+
+config VOICE_RECORDER
+	bool
+	prompt "voice recorder Support"
+	default n
+	help
+	This option enables voice recorder
 	
 rsource "libal/Kconfig"

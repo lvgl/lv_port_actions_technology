@@ -1738,7 +1738,7 @@ void bat_mini_charge_handler(struct k_work *work)
 			if (dc5v_out_cnt >= 2) {
 				LOG_INF("dc5v out in mini charge, power off!");
 				while(1) {
-					soc_pmu_sys_poweroff();
+					sys_pm_poweroff();
 				}						
 			}
 		} else {

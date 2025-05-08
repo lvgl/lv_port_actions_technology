@@ -380,6 +380,18 @@ static int littlefs_sync(struct fs_file_t *fp)
 	return lfs_to_errno(ret);
 }
 
+static int littlefs_size(struct fs_file_t *fp)
+{
+	struct fs_littlefs *fs = fp->mp->fs_data;
+
+	fs_lock(fs);
+
+	int ret = lfs_file_size(&fs->lfs, LFS_FILEP(fp));
+
+	fs_unlock(fs);
+	return lfs_to_errno(ret);
+}
+
 static int littlefs_mkdir(struct fs_mount_t *mountp, const char *path)
 {
 	struct fs_littlefs *fs = mountp->fs_data;
@@ -734,6 +746,7 @@ static const struct fs_file_system_t littlefs_fs = {
 	.mkdir = littlefs_mkdir,
 	.stat = littlefs_stat,
 	.statvfs = littlefs_statvfs,
+	.size = littlefs_size,
 };
 
 static int littlefs_init(const struct device *dev)

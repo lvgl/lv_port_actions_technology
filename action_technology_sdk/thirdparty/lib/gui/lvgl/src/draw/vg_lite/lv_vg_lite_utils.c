@@ -186,6 +186,8 @@ const char * lv_vg_lite_feature_string(vg_lite_feature_t feature)
 
         case gcFEATURE_BIT_TILED_MODE:
             return "TILED_MODE";
+        case gcFEATURE_BIT_24BIT_PLANAR_SW:
+            return "24BIT_PLANAR_SW";
         default:
             break;
     }
@@ -467,6 +469,9 @@ bool lv_vg_lite_is_src_cf_supported(lv_color_format_t cf)
         case LV_COLOR_FORMAT_NV12:
             return vg_lite_query_feature(gcFEATURE_BIT_VG_YUV_INPUT) ? true : false;
 
+        case LV_COLOR_FORMAT_YUY2:
+            return vg_lite_query_feature(gcFEATURE_BIT_VG_YUY2_INPUT) ? true : false;
+
         default:
             break;
     }
@@ -515,6 +520,9 @@ vg_lite_buffer_format_t lv_vg_lite_vg_fmt(lv_color_format_t cf)
 
         case LV_COLOR_FORMAT_NV12:
             return VG_LITE_NV12;
+
+        case LV_COLOR_FORMAT_YUY2:
+            return VG_LITE_YUY2;
 
         case LV_COLOR_FORMAT_ETC2_EAC:
             return VG_LITE_RGBA8888_ETC2_EAC;

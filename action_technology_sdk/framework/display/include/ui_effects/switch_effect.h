@@ -27,9 +27,9 @@ typedef enum {
 	UI_SWITCH_EFFECT_SCALE,
 	UI_SWITCH_EFFECT_ZOOM_ALPHA,
 	UI_SWITCH_EFFECT_TRANSLATION,
-	UI_SWITCH_EFFECT_BOOK,
 	UI_SWITCH_EFFECT_CUBE,
 
+	UI_SWITCH_EFFECT_BOOK,
 	NUM_UI_SWITCH_EFFECTS,
 } ui_switch_effect_e;
 
@@ -72,12 +72,22 @@ void ui_switch_effect_set_total_frames(uint16_t frame);
  */
 void ui_switch_effect_set_anim_dir(bool out_right);
 
+/**
+ * @brief Set UI switch effect tracking touch
+ *
+ * @param enabled enable touch tracking or not
+ *
+ * @retval N/A.
+ */
+void ui_switch_effect_set_touch_tracking(bool enabled);
+
 #else
 
 static inline int ui_switch_effect_set_type(uint8_t type) { return 0; }
 static inline uint8_t ui_switch_effect_get_type(void) { return UI_SWITCH_EFFECT_NONE; }
 static inline void ui_switch_effect_set_total_frames(uint16_t frame) { }
 static inline void ui_switch_effect_set_anim_dir(bool out_right) { }
+static inline void ui_switch_effect_set_touch_tracking(bool enabled) { }
 
 #endif /* CONFIG_UI_SWITCH_EFFECT */
 

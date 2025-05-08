@@ -33,7 +33,7 @@ LOG_MODULE_REGISTER(surface, LOG_LEVEL_INF);
  *      DEFINES
  **********************/
 #ifdef CONFIG_DMA2D_HAL
-#  if defined(CONFIG_LV_COLOR_DEPTH_32) || defined(CONFIG_SURFACE_TRANSFORM_UPDATE)
+#  ifdef CONFIG_SURFACE_TRANSFORM_UPDATE
 #    define DMA2D_OPEN_MODE  HAL_DMA2D_FULL_MODES /* may require color conversion */
 #  else
 #    define DMA2D_OPEN_MODE  HAL_DMA2D_M2M

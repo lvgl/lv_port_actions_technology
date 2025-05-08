@@ -34,6 +34,9 @@
 #define CFG_BT_Call_Quality_MIC_Gain                                            (0x09000002)    // id:  9, off:   0, size:   2
 #define CFG_BT_Call_Quality_Test_Volume                                         (0x09002001)    // id:  9, off:   2, size:   1
 
+#define CFG_BT_Music_DAE_Enable_DAE                                             (0x0b000001)    // id: 11, off:   0, size:   1
+#define CFG_BT_Music_DAE_Test_Volume                                            (0x0b001001)    // id: 11, off:   1, size:   1
+
 
 #endif  // __DRV_CFG_HEAD_H__
 

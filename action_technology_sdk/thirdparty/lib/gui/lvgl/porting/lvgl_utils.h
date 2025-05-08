@@ -21,6 +21,7 @@ extern "C" {
  *********************/
 
 #include "../lvgl.h"
+#include <display/graphic_buffer.h>
 #ifdef CONFIG_VG_LITE
   #include <vg_lite/vg_lite.h>
 #endif
@@ -72,6 +73,16 @@ static inline uint32_t lvx_color_to_abgr32(lv_color_t color, lv_opa_t opa)
     return (color.blue << 16) | (color.green << 8) | color.red | (opa << 24);
 }
 
+/**
+ * @brief Convert to lvgl draw buffer from graphic buffer
+ *
+ * @param draw_buf Pointer to draw buffer
+ * @param gbuf Pointer to graphic buffer
+ *
+ * @retval LV_RESULT_OK on success else LV_RESULT_INVALID.
+ */
+lv_result_t lvx_draw_buffer_from_graphic(lv_draw_buf_t * draw_buf, const graphic_buffer_t * gbuf);
+
 #ifdef CONFIG_VG_LITE
 
 /**
@@ -119,11 +130,12 @@ int lvx_vglite_unmap(vg_lite_buffer_t * vgbuf);
 /**
  * @brief Set clut for lvgl indexed image
  *
- * @param img_dsc pointer to structure lv_image_dsc_t.
+ * @param cf image color format
+ * @param palette image color palette
  *
  * @retval 0 on success else negative code.
  */
-int lvx_vglite_set_image_palette(const lv_image_dsc_t * img_dsc);
+int lvx_vglite_set_image_palette(lv_color_format_t cf, const uint32_t * palette);
 
 #endif /* CONFIG_VG_LITE */
 

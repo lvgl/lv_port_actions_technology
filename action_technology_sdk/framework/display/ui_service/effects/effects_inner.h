@@ -135,7 +135,10 @@ typedef struct {
 	uint8_t trans_end; /* 1: end */
 	uint8_t tp_pressed; /* previous frame has touch pressed or not */
 	uint8_t anim_right : 1;
-	uint8_t new_anim_right : 1; 
+	uint8_t new_anim_right : 1;
+	uint8_t touch_tracking : 1; /* track touch moving */
+	uint8_t new_touch_tracking : 1;
+	uint8_t direction_lock : 1;	/* Overlook anim_right direction */
 #ifdef CONFIG_DMA2D_HAL
 	hal_dma2d_handle_t dma2d;
 	bool dma2d_inited;
@@ -145,7 +148,7 @@ typedef struct {
 	/* set true on setting effect type if one buffer's foreground content
 	 * overlapped with another buffer's corner background garbage.
 	 */
-	uint8_t opt_round_screen_overlapped : 1; 
+	uint8_t opt_round_screen_overlapped : 1;
 
 	float camera_distance;
 	union {

@@ -94,6 +94,8 @@ enum media_srv_operation_e {
 	MSG_MEDIA_SRV_SET_GLOBAL_PARAMETER,
 	/** media service set mix stream*/
 	MSG_MEDIA_SRV_SET_MIX_STREAM,
+	/** media service enable/disable voice recording */
+	MSG_MEDIA_SRV_ENABLE_VOICE_RECORD,
 };
 
 /** dumpable data tag */
@@ -248,6 +250,7 @@ typedef enum {
 	CAPTURE_INPUT_FROM_STREAM = 0,
 	CAPTURE_INPUT_FROM_DSP_ADC_FIFO = 1,
 	CAPTURE_INPUT_FROM_DSP_DEC_OUTPUT = 2,
+	CAPTURE_INPUT_FROM_DSP_AEC_OUTPUT = 3,
 
 	NUM_CAPTURE_INPUT_MODES,
 } media_capture_input_mode_e;
@@ -728,6 +731,8 @@ bool codec_support_hw_acceleration(enum media_type format, enum codec_type type)
 const char *codec_get_hw_acceleration_dec_lib(enum media_type format, enum codec_type type);
 
 const char *codec_get_hw_acceleration_effect_lib(enum media_type format, enum codec_type type);
+
+int media_service_enable_voice_record(struct app_msg *msg);
 
 int media_service_init(void);
 /**

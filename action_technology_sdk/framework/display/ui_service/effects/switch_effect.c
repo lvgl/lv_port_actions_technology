@@ -50,6 +50,12 @@
  *      TYPEDEFS
  **********************/
 
+enum {
+	MSG_SWITCH_EFFECT_TYPE = MSG_VIEW_USER_OFFSET,
+	MSG_SWITCH_EFFECT_ANIM_OUT_RIGHT,
+	MSG_SWITCH_EFFECT_TOUCH_TRACKING,
+};
+
 /**********************
  *  STATIC PROTOTYPES
  **********************/
@@ -77,6 +83,7 @@ static switch_effect_ctx_t switch_ctx = {
 	.max_frames = FRAME_FIXP(DEF_MAX_FRAMES),
 	.anim_right = 1,
 	.trans_end = 1,
+	.touch_tracking = 0,
 
 #ifdef CONFIG_VG_LITE
 	.opt_round_screen_overlapped = false,
@@ -93,7 +100,7 @@ int ui_switch_effect_set_type(uint8_t type)
 	if (type >= NUM_UI_SWITCH_EFFECTS)
 		return -EINVAL;
 
-	return ui_message_send_async2(VIEW_INVALID_ID, MSG_VIEW_USER_OFFSET, type, _switch_effect_msg_cb);
+	return ui_message_send_async2(VIEW_INVALID_ID, MSG_SWITCH_EFFECT_TYPE, type, _switch_effect_msg_cb);
 }
 
 uint8_t ui_switch_effect_get_type(void)
@@ -109,7 +116,12 @@ void ui_switch_effect_set_total_frames(uint16_t frame)
 
 void ui_switch_effect_set_anim_dir(bool out_right)
 {
-	ui_message_send_async2(VIEW_INVALID_ID, MSG_VIEW_USER_OFFSET + 1, out_right, _switch_effect_msg_cb);
+	ui_message_send_async2(VIEW_INVALID_ID, MSG_SWITCH_EFFECT_ANIM_OUT_RIGHT, out_right, _switch_effect_msg_cb);
+}
+
+void ui_switch_effect_set_touch_tracking(bool enabled)
+{
+	ui_message_send_async2(VIEW_INVALID_ID, MSG_SWITCH_EFFECT_TOUCH_TRACKING, enabled, _switch_effect_msg_cb);
 }
 
 int32_t switch_effects_path_cos(int32_t start, int32_t end)
@@ -135,6 +147,7 @@ static void _switch_effect_change_type(void)
 
 	switch (switch_ctx.type) {
 	case UI_SWITCH_EFFECT_FAN:
+		switch_ctx.direction_lock = true;
 		switch_ctx.fan.angle = FAN_ANGLE;
 		break;
 	case UI_SWITCH_EFFECT_CUBE:
@@ -168,6 +181,8 @@ static void _switch_effect_change_type(void)
 		break;
 	case UI_SWITCH_EFFECT_ALPHA:
 	case UI_SWITCH_EFFECT_PAGE:
+		switch_ctx.direction_lock = true;
+		break;
 	case UI_SWITCH_EFFECT_SCALE:
 		break;
 	default:
@@ -179,18 +194,30 @@ static void _switch_effect_change_type(void)
 
 static void _switch_effect_msg_cb(struct app_msg *msg, int result, void *unused)
 {
-	if (msg->cmd == MSG_VIEW_USER_OFFSET) {
+	switch (msg->cmd) {
+	case MSG_SWITCH_EFFECT_TYPE:
 		switch_ctx.new_type = msg->value;
 		if (switch_ctx.trans_end)
 			_switch_effect_change_type();
-	} else {
+		break;
+
+	case MSG_SWITCH_EFFECT_ANIM_OUT_RIGHT:
 		switch_ctx.new_anim_right = msg->value ? 1 : 0;
 		if (switch_ctx.trans_end)
 			switch_ctx.anim_right = switch_ctx.new_anim_right;
+		break;
+
+	case MSG_SWITCH_EFFECT_TOUCH_TRACKING:
+		switch_ctx.new_touch_tracking = msg->value ? 1 : 0;
+		if (switch_ctx.trans_end)
+			switch_ctx.touch_tracking = switch_ctx.new_touch_tracking;
+		break;
+
+	default:
+		break;
 	}
 }
 
-#ifdef CONFIG_UI_SWITCH_EFFECT_TRACKING_TOUCH
 static void _compute_frame_by_touch(const ui_transform_param_t *param)
 {
 	int16_t dist = 0;
@@ -213,7 +240,6 @@ static void _compute_frame_by_touch(const ui_transform_param_t *param)
 
 	switch_ctx.frame = UI_MAX(dist, 0) * switch_ctx.max_frames / param->dst->width;
 }
-#endif /* CONFIG_UI_SWITCH_EFFECT_TRACKING_TOUCH */
 
 static void _switch_effect_transform_handle(const ui_transform_param_t *param, int *trans_end)
 {
@@ -230,17 +256,17 @@ static void _switch_effect_transform_handle(const ui_transform_param_t *param, i
 
 	os_strace_u32x2(SYS_TRACE_ID_VIEW_SWITCH_EFFECT, switch_ctx.type, switch_ctx.frame);
 
-#ifdef CONFIG_UI_SWITCH_EFFECT_TRACKING_TOUCH
-	if (param->tp_pressing) {
-		_compute_frame_by_touch(param);
-		switch_ctx.tp_pressed = 1;
-	} else if (switch_ctx.tp_pressed) {
-		switch_ctx.tp_pressed = 0;
-		switch_ctx.frame = (switch_ctx.frame & ~(FRAME_STEP - 1)) + FRAME_STEP;
-		if (switch_ctx.frame > switch_ctx.max_frames)
-			switch_ctx.frame = switch_ctx.max_frames;
+	if (switch_ctx.touch_tracking) {
+		if (param->tp_pressing) {
+			_compute_frame_by_touch(param);
+			switch_ctx.tp_pressed = 1;
+		} else if (switch_ctx.tp_pressed) {
+			switch_ctx.tp_pressed = 0;
+			switch_ctx.frame = (switch_ctx.frame & ~(FRAME_STEP - 1)) + FRAME_STEP;
+			if (switch_ctx.frame > switch_ctx.max_frames)
+				switch_ctx.frame = switch_ctx.max_frames;
+		}
 	}
-#endif
 
 #ifdef CONFIG_VG_LITE
 	ret = _vglite_switch_effect_handle(param);
@@ -267,6 +293,7 @@ end_exit:
 	*trans_end = 1;
 	switch_ctx.trans_end = 1;
 	switch_ctx.anim_right = switch_ctx.new_anim_right;
+	switch_ctx.touch_tracking = switch_ctx.new_touch_tracking;
 	_switch_effect_change_type();
 }
 

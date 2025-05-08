@@ -619,6 +619,39 @@ static ALWAYS_INLINE uint32_t blend_argb8888_over_argb8888(uint32_t dest_color, 
 	}
 }
 
+/*
+ * @brief blend L8 over L8
+ *
+ * @param dest_color dest L8 value
+ * @param src_color src L8 value
+ * @param src_a src alpha value
+ *
+ * @retval L8 color value
+ */
+static ALWAYS_INLINE uint8_t blend_l8_over_l8(uint8_t dest_color, uint8_t src_color, uint8_t src_a)
+{
+	if (src_a <= 0) {
+		return dest_color;
+	} else if (src_a >= 255) {
+		return src_color;
+	} else {
+		return (dest_color * (255 - src_a) + src_color * src_a) >> 8;
+	}
+}
+
+/*
+ * @brief blend L8A8 over L8
+ *
+ * @param dest_color dest L8 value
+ * @param src_color src L8A8 value
+ *
+ * @retval L8 color value
+ */
+static ALWAYS_INLINE uint8_t blend_l8a8_over_l8(uint8_t dest_color, uint16_t src_color)
+{
+	return blend_l8_over_l8(dest_color, src_color & 0xff, src_color >> 8);
+}
+
 /*******************************************************************************
  *      pixel filtering
  ******************************************************************************/
@@ -952,6 +985,22 @@ void sw_blend_color_over_argb8888(void *dst, uint32_t src_color,
 		uint16_t dst_pitch, uint16_t w, uint16_t h);
 
 /*
+ * @brief blend a const color over L8 image
+ *
+ * @param dst address of dst image
+ * @param src_color constant color (ARGB8888) of src
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param w width in pixels of blend area
+ * @param h height in pixels of blend area
+ * @param opa global opa of src
+ *
+ * @retval N/A
+ */
+void sw_blend_color_over_l8(void *dst, uint32_t src_color,
+		uint16_t dst_pitch, uint16_t w, uint16_t h);
+
+/*
  * @brief blend a A8 image over rgb565 image
  *
  * @param dst address of dst image
@@ -1017,6 +1066,23 @@ void sw_blend_a8_over_rgb888(void *dst, const void *src, uint32_t src_color,
  * @retval N/A
  */
 void sw_blend_a8_over_argb8888(void *dst, const void *src, uint32_t src_color,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h);
+
+/*
+ * @brief blend a A8 image over L8 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_color constant color (ARGB8888) of src
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param w width in pixels of blend area
+ * @param h height in pixels of blend area
+ * @param opa global opa of src
+ *
+ * @retval N/A
+ */
+void sw_blend_a8_over_l8(void *dst, const void *src, uint32_t src_color,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h);
 
 /*
@@ -1092,6 +1158,24 @@ void sw_blend_a4_over_rgb888(void *dst, const void *src, uint32_t src_color,
  * @retval N/A
  */
 void sw_blend_a4_over_argb8888(void *dst, const void *src, uint32_t src_color,
+		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
+		uint16_t w, uint16_t h);
+
+/*
+ * @brief blend a A4 (big endian) image over L8 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_color constant color (ARGB8888) of src
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param w width in pixels of blend area
+ * @param h height in pixels of blend area
+ * @param opa global opa of src
+ *
+ * @retval N/A
+ */
+void sw_blend_a4_over_l8(void *dst, const void *src, uint32_t src_color,
 		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
 		uint16_t w, uint16_t h);
 
@@ -1172,6 +1256,25 @@ void sw_blend_a2_over_argb8888(void *dst, const void *src, uint32_t src_color,
 		uint16_t w, uint16_t h);
 
 /*
+ * @brief blend a A2 (big endian) image over L8 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_color constant color (ARGB8888) of src
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_bofs src address bit offset
+ * @param w width in pixels of blend area
+ * @param h height in pixels of blend area
+ * @param opa global opa of src
+ *
+ * @retval N/A
+ */
+void sw_blend_a2_over_l8(void *dst, const void *src, uint32_t src_color,
+		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
+		uint16_t w, uint16_t h);
+
+/*
  * @brief blend a A1 (big endian) image over rgb565 image
  *
  * @param dst address of dst image
@@ -1248,6 +1351,25 @@ void sw_blend_a1_over_argb8888(void *dst, const void *src, uint32_t src_color,
 		uint16_t w, uint16_t h);
 
 /*
+ * @brief blend a A1 (big endian) image over L8 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_color constant color (ARGB8888) of src
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_bofs src address bit offset
+ * @param w width in pixels of blend area
+ * @param h height in pixels of blend area
+ * @param opa global opa of src
+ *
+ * @retval N/A
+ */
+void sw_blend_a1_over_l8(void *dst, const void *src, uint32_t src_color,
+		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
+		uint16_t w, uint16_t h);
+
+/*
  * @brief blend an index8 image over rgb565 image
  *
  * @param dst address of dst image
@@ -1309,6 +1431,22 @@ void sw_blend_index8_over_rgb888(void *dst, const void *src, const uint32_t *src
  * @retval N/A
  */
 void sw_blend_index8_over_argb8888(void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h);
+
+/*
+ * @brief blend an index8 image over L8 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_clut address of src clut (ARGB8888 color lookup table)
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param w width in pixels of blend area
+ * @param h height in pixels of blend area
+ *
+ * @retval N/A
+ */
+void sw_blend_index8_over_l8(void *dst, const void *src, const uint32_t *src_clut,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h);
 
 /*
@@ -1380,6 +1518,23 @@ void sw_blend_index4_over_argb8888(void *dst, const void *src, const uint32_t *s
 		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs, uint16_t w, uint16_t h);
 
 /*
+ * @brief blend an index4 (big endian) image over L8 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_clut address of src clut (ARGB8888 color lookup table)
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_bofs src address bit offset
+ * @param w width in pixels of blend area
+ * @param h height in pixels of blend area
+ *
+ * @retval N/A
+ */
+void sw_blend_index4_over_l8(void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs, uint16_t w, uint16_t h);
+
+/*
  * @brief blend an index2 (big endian) image over rgb565 image
  *
  * @param dst address of dst image
@@ -1448,6 +1603,23 @@ void sw_blend_index2_over_argb8888(void *dst, const void *src, const uint32_t *s
 		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs, uint16_t w, uint16_t h);
 
 /*
+ * @brief blend an index2 (big endian) image over L8 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_clut address of src clut (ARGB8888 color lookup table)
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_bofs src address bit offset
+ * @param w width in pixels of blend area
+ * @param h height in pixels of blend area
+ *
+ * @retval N/A
+ */
+void sw_blend_index2_over_l8(void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs, uint16_t w, uint16_t h);
+
+/*
  * @brief blend an index1 (big endian) image over rgb565 image
  *
  * @param dst address of dst image
@@ -1513,6 +1685,23 @@ void sw_blend_index1_over_rgb888(void *dst, const void *src, const uint32_t *src
  * @retval N/A
  */
 void sw_blend_index1_over_argb8888(void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs, uint16_t w, uint16_t h);
+
+/*
+ * @brief blend an index1 (big endian) image over L8 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param src_clut address of src clut (ARGB8888 color lookup table)
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param src_bofs src address bit offset
+ * @param w width in pixels of blend area
+ * @param h height in pixels of blend area
+ *
+ * @retval N/A
+ */
+void sw_blend_index1_over_l8(void *dst, const void *src, const uint32_t *src_clut,
 		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs, uint16_t w, uint16_t h);
 
 /*
@@ -1641,6 +1830,21 @@ void sw_blend_argb8565_over_rgb888(void *dst, const void *src,
  * @retval N/A
  */
 void sw_blend_argb8565_over_argb8888(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h);
+
+/*
+ * @brief blend an argb8565 image over L8 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param w width in pixels of blend area
+ * @param h height in pixels of blend area
+ *
+ * @retval N/A
+ */
+void sw_blend_argb8565_over_l8(void *dst, const void *src,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h);
 
 /*
@@ -1821,6 +2025,21 @@ void sw_blend_argb8888_over_rgb888(void *dst, const void *src,
  * @retval N/A
  */
 void sw_blend_argb8888_over_argb8888(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h);
+
+/*
+ * @brief blend an argb8888 image over L8 image
+ *
+ * @param dst address of dst image
+ * @param src address of src image
+ * @param dst_pitch stride in bytes of dst image
+ * @param src_pitch stride in bytes of src image
+ * @param w width in pixels of blend area
+ * @param h height in pixels of blend area
+ *
+ * @retval N/A
+ */
+void sw_blend_argb8888_over_l8(void *dst, const void *src,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h);
 
 #ifdef __cplusplus

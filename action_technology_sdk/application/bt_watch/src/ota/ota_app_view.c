@@ -43,12 +43,9 @@ extern const main_view_presenter_t main_view_presenter;
 
 void ota_view_init(void)
 {
-#ifdef CONFIG_UI_SWITCH_EFFECT
-	ui_switch_effect_set_type(UI_SWITCH_EFFECT_NONE);
-#endif
-
 #ifdef CONFIG_UI_MANAGER
-	ui_view_create(OTA_VIEW, NULL, UI_CREATE_FLAG_SHOW | UI_CREATE_FLAG_NO_PRELOAD);
+	view_stack_set_effect_type(UI_SWITCH_EFFECT_NONE);
+	view_stack_push_view(OTA_VIEW, NULL);
 #endif
 
 	SYS_LOG_INF("ok\n");
@@ -57,16 +54,14 @@ void ota_view_init(void)
 void ota_view_deinit(void)
 {
 #ifdef CONFIG_UI_MANAGER
-	ui_view_delete(OTA_VIEW);
+	view_stack_back_prev();
+	view_stack_set_effect_type(main_view_presenter.get_switch_mode());
 #endif
 
 #ifdef CONFIG_PROPERTY
 	property_flush(NULL); 
 #endif
 
-#ifdef CONFIG_UI_SWITCH_EFFECT
-	ui_switch_effect_set_type(main_view_presenter.get_switch_mode());
-#endif
 	SYS_LOG_INF("ok\n");
 }
 
@@ -242,8 +237,9 @@ static int _ota_view_delete(view_data_t *view_data)
 
 static int _ota_view_handler(uint16_t view_id, view_data_t *view_data, uint8_t msg_id, void * msg_data)
 {
-	SYS_LOG_INF("msg_id %d\n", msg_id);
 	switch (msg_id) {
+	case MSG_VIEW_PRELOAD:
+		return ui_view_layout(view_id);
 	case MSG_VIEW_LAYOUT:
 		return _ota_view_layout(view_data);
 	case MSG_VIEW_DELETE:

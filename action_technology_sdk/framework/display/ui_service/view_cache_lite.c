@@ -164,11 +164,11 @@ static int8_t _view_cache_rotate_main_idx(int8_t idx)
 
 static bool _view_cache_main_idx_is_in_range(int8_t idx)
 {
-	int8_t min_idx = view_cache_ctx.main_idx - 1;
-	int8_t max_idx = view_cache_ctx.main_idx + 1;
+	int8_t min_idx = view_cache_ctx.main_idx - CONFIG_VIEW_CACHE_LEVEL;
+	int8_t max_idx = view_cache_ctx.main_idx + CONFIG_VIEW_CACHE_LEVEL;
 
 	if (view_cache_ctx.rotate) {
-		if (view_cache_ctx.dsc->num <= (1 * 2 + 1))
+		if (view_cache_ctx.dsc->num <= (CONFIG_VIEW_CACHE_LEVEL * 2 + 1))
 			return true;
 
 		idx = _view_cache_rotate_main_idx(idx);
@@ -331,7 +331,6 @@ static uint16_t _view_cache_decide_attr_cross(int8_t idx)
 static void _view_cache_serial_load(void)
 {
 	int8_t main_idx = view_cache_ctx.main_idx;
-	int8_t load_idx;
 
 	/* load the "cross_attached_view" main view as soon as possible */
 	if (!_view_cache_load(main_idx, UI_CREATE_FLAG_SHOW)) {
@@ -344,6 +343,9 @@ static void _view_cache_serial_load(void)
 			return;
 		}
 	}
+
+#if 0
+	int8_t load_idx;
 
 	/* load right main view */
 	if (view_cache_ctx.rotate) {
@@ -373,6 +375,27 @@ static void _view_cache_serial_load(void)
 
 	/* load end */
 	view_cache_ctx.load_idx = -1;
+#else
+	/* load main views */
+	int8_t left_most_idx = -1;
+	if (view_cache_ctx.init_focus_idx != main_idx) {
+		left_most_idx = main_idx - CONFIG_VIEW_CACHE_LEVEL;
+		if (view_cache_ctx.rotate) {
+			left_most_idx = _view_cache_rotate_main_idx(left_most_idx);
+		}
+	}
+
+	for (; view_cache_ctx.load_idx >= 0; view_cache_ctx.load_idx--) {
+		if (view_cache_ctx.load_idx == left_most_idx) {
+			continue;
+		}
+
+		if (_view_cache_main_idx_is_in_range(view_cache_ctx.load_idx) &&
+			!_view_cache_load(view_cache_ctx.load_idx, 0)) {
+			return;
+		}
+	}
+#endif
 
 #ifdef CONFIG_VIEW_SCROLL_MEM_LOWEST
 	ui_manager_set_max_buffer_count(CONFIG_SURFACE_MAX_BUFFER_COUNT);
@@ -419,13 +442,11 @@ static void _view_cache_scroll_cb(uint16_t view_id, uint8_t msg_id)
 		goto out_unlock;
 	}
 
-	if (view_cache_ctx.load_idx >= 0) {
-		goto out_unlock;
-	}
-
 	if (msg_id == MSG_VIEW_SCROLL_BEGIN) {
 		if (view_id == dsc->cross_vlist[0] || view_id == dsc->cross_vlist[1]) {
-			_view_cache_unload_main(view_cache_ctx.main_idx - 1, true);
+			if (dsc->num >= (CONFIG_VIEW_CACHE_LEVEL * 2 + 1)) {
+				_view_cache_unload_main(view_cache_ctx.main_idx - CONFIG_VIEW_CACHE_LEVEL, true);
+			}
 		}
 
 #ifdef CONFIG_VIEW_SCROLL_MEM_LOWEST
@@ -798,8 +819,9 @@ static int _view_cache_set_focus(uint16_t view_id)
 #ifdef CONFIG_VIEW_SCROLL_MEM_LOWEST
 		main_create_flag = UI_CREATE_FLAG_NO_PRELOAD;
 #endif
-		if (!_view_cache_load_main(view_cache_ctx.main_idx - 1, main_create_flag)) {
-			_view_cache_set_attr_main(main_idx - 1, _view_cache_decide_attr_main(main_idx - 1), false);
+		if (!_view_cache_load_main(view_cache_ctx.main_idx - CONFIG_VIEW_CACHE_LEVEL, main_create_flag)) {
+			_view_cache_set_attr_main(main_idx - CONFIG_VIEW_CACHE_LEVEL,
+					_view_cache_decide_attr_main(main_idx - CONFIG_VIEW_CACHE_LEVEL), false);
 		}
 
 		return 0;
@@ -839,8 +861,8 @@ static int _view_cache_set_focus_idx(int8_t main_idx)
 		_view_cache_set_attr_main(main_idx, UI_DRAG_SNAPEDGE, false);
 
 	// unload unused view
-	_view_cache_unload_main(main_idx - 2, false);
-	_view_cache_unload_main(main_idx + 2, false);
+	_view_cache_unload_main(main_idx - (CONFIG_VIEW_CACHE_LEVEL + 1), false);
+	_view_cache_unload_main(main_idx + (CONFIG_VIEW_CACHE_LEVEL + 1), false);
 
 	// preload and show new cur view
 	_view_cache_load_main(main_idx, UI_CREATE_FLAG_SHOW);
@@ -857,6 +879,11 @@ static int _view_cache_set_focus_idx(int8_t main_idx)
 		_view_cache_load_main(main_idx + 1, main_create_flag);
 		_view_cache_set_attr_main(main_idx + 1, _view_cache_decide_attr_main(main_idx + 1), false);
 	}
+
+#if CONFIG_VIEW_CACHE_LEVEL > 1
+	_view_cache_load_main(main_idx - CONFIG_VIEW_CACHE_LEVEL, main_create_flag);
+	_view_cache_load_main(main_idx + CONFIG_VIEW_CACHE_LEVEL, main_create_flag);
+#endif
 
 	return 0;
 }

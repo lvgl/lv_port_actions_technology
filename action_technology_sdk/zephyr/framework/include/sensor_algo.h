@@ -68,13 +68,40 @@ typedef enum {
 
 /* Activity mode */
 typedef enum {
-	NORMAL = 1001,				// acc + baro
-	TREADMILL = 1002,			// acc + hr
-	OUTDOOR_RUNNING = 1003,	// acc + hr + gnss
-	OUTDOOR_BIKING = 3001,		// acc + baro + hr +gnss
-	MAIN_EXTRA = 100,				// main extra info
-	BIKING_EXTRA = 120,				// biking extra info
+	ACTIVITY_NORMAL = 1001, // acc + baro
+	ACTIVITY_TREADMILL = 1002, // acc + hr
+	ACTIVITY_OUTDOOR_RUNNING = 1003, // acc + hr + gnss
+	ACTIVITY_CLIMBING_STAIRS = 1004,
+	ACTIVITY_HIKING = 1005,
+	ACTIVITY_INDOOR_RUNNING = 1006,
+	ACTIVITY_OUTDOOR_RUNNING_TRACKING = 1009,
+	ACTIVITY_INDOOR_SWIMMING = 2001,
+	ACTIVITY_OPEN_WATER_SWIMMING = 2002,
+	ACTIVITY_OUTDOOR_BIKING = 3001, // acc + baro + hr +gnss
+	ACTIVITY_FREE_TRAINING = 5001,
+	ACTIVITY_WORKOUT_MACHINE = 6001,
+	MAIN_EXTRA = 100, // main extra info
+	AR_ALERT = 102,
+	SWIM_POOL_LAP_INFO = 110,
+	SWIM_POOL_TOTAL_INFO = 111,
+	SWIM_OPEN_WATER_SEGMENT_INFO = 114,
+	SWIM_OPEN_WATER_TOTAL_INFO = 115,
+	BIKING_EXTRA = 120, // biking extra info
 } activity_mode_e;
+typedef enum {
+	ACTIVITY_OUT_SEDENTARY = 20,
+	ACTIVITY_OUT_SLEEPING = 21,
+	ACTIVITY_OUT_NAP = 22,
+	ACTIVITY_OUT_SLEEPING_EXT = 31,
+	ACTIVITY_OUT_NAP_EXT = 32,
+} inactivity_output_mode_e;
+/* Workout Machine*/
+typedef enum {
+	WM_Rope_Skipping,
+	WM_DoubleUnder_Skipping,
+	WM_Elliptical,
+	WM_Rowing_Machine,
+} workout_machine_e;
 
 /* Control id */
 typedef enum {
@@ -210,7 +237,7 @@ typedef struct {
 	uint32_t onbody; 		//1:on-body 0:off-body
 	
 	/* sedentary status */
-	uint32_t sedentary; 	//1:enter 2:exit 3:remider
+	//uint32_t sedentary; //1:enter 2:exit 3:remider
 	
 	/* handup status */
 	uint32_t handup; 		//1:hand-up 2:hand-down
@@ -281,6 +308,29 @@ typedef struct {
 		float hr_intensity;	// 
 		float hr_zone;		//
 	} biking;
+
+	/*workout machine*/
+	struct workout_machine_s {
+		float counts; // event counts
+		float calories; // Kcal
+		float freq; // steps/minute
+		float avg_freq; // steps/minute
+	} machine;
+
+	struct swimming_s {
+		float total_distance; // meters
+		float total_calories; // Kcal
+		float strokes;
+		float laps;
+		float swim_time;
+		float stroke_freq;
+		float is_pause;
+	} swimming;
+
+	struct sedentary_s {
+		uint8_t type; // 1:sedentary; 2:exit sedentary; 3: reminder; 9:stand
+		uint8_t stand_count;
+	} sedentary;
 } sensor_res_t;
 
 /* Sensor event handler */

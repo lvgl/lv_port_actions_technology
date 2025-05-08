@@ -292,7 +292,7 @@ static void ipmsg_btc_update_bt_table(void *table_addr)
 #ifdef CONFIG_IPMSG_BTC_SEL_32K /*ext 32 losc*/
 	bttbl_set_bit(start, BT_CFG_SEL_32768_POS, BT_CFG_SEL_32768_BIT);
 #else
-	#if 1 	/* Use RC32K */
+	#if 0 	/* Use RC32K */
 	bttbl_set_bit(start, BT_CFG_SEL_32768_POS, BT_CFG_SEL_32768_BIT);
 	bttbl_set_bit(start, BT_CFG_SEL_RC32K_POS, BT_CFG_SEL_RC32K_BIT);	
 	#else  /*hcl */

@@ -135,29 +135,40 @@ lv_result_t lv_draw_buf_acts2d_clear(lv_draw_buf_t * draw_buf, const lv_area_t *
 }
 
 lv_result_t lv_draw_buf_acts2d_copy(lv_draw_buf_t * dest, const lv_area_t * dest_area,
-                                       const lv_draw_buf_t * src, const lv_area_t * src_area)
+                                    const lv_draw_buf_t * src, const lv_area_t * src_area)
 {
     hal_dma2d_handle_t * hdma2d = &g_hdma2d;
     uint8_t * dest_bufc;
+    uint32_t dest_width;
+    uint32_t dest_height;
     uint8_t * src_bufc;
-    uint32_t width;
-    uint32_t height;
+    uint32_t src_width;
+    uint32_t src_height;
 
     hdma2d->output_cfg.color_format = _lv_cf_to_acts2d_for_copy(dest->header.cf);
     if(hdma2d->output_cfg.color_format == 0)
         return LV_RESULT_INVALID;
 
     if(dest_area) {
-        width = lv_area_get_width(dest_area);
-        height = lv_area_get_height(dest_area);
-    }
-    else if(src_area) {
-        width = lv_area_get_width(src_area);
-        height = lv_area_get_height(src_area);
+        dest_width = lv_area_get_width(dest_area);
+        dest_height = lv_area_get_height(dest_area);
+        dest_bufc = lv_draw_buf_goto_xy(dest, dest_area->x1, dest_area->y1);
     }
     else {
-        width = dest->header.w;
-        height = dest->header.h;
+        dest_width = dest->header.w;
+        dest_height = dest->header.h;
+        dest_bufc = lv_draw_buf_goto_xy(dest, 0, 0);
+    }
+
+    if(src_area) {
+        src_width = lv_area_get_width(src_area);
+        src_height = lv_area_get_height(src_area);
+        src_bufc =lv_draw_buf_goto_xy(src, src_area->x1, src_area->y1);
+    }
+    else {
+        src_width = src->header.w;
+        src_height = src->header.h;
+        src_bufc = lv_draw_buf_goto_xy(src, 0, 0);
     }
 
     /* For indexed image, copy the palette if we are copying full image area*/
@@ -167,25 +178,19 @@ lv_result_t lv_draw_buf_acts2d_copy(lv_draw_buf_t * dest, const lv_area_t * dest
         }
     }
 
-    if(src_area) src_bufc = lv_draw_buf_goto_xy(src, src_area->x1, src_area->y1);
-    else src_bufc = lv_draw_buf_goto_xy(src, 0, 0);
-
-    if(dest_area) dest_bufc = lv_draw_buf_goto_xy(dest, dest_area->x1, dest_area->y1);
-    else dest_bufc = lv_draw_buf_goto_xy(dest, 0, 0);
-
     hdma2d->output_cfg.mode = HAL_DMA2D_M2M;
     hdma2d->output_cfg.output_pitch = dest->header.stride;
     hal_dma2d_config_output(hdma2d);
 
     hdma2d->layer_cfg[1].color_format = hdma2d->output_cfg.color_format;
     hdma2d->layer_cfg[1].input_pitch = src->header.stride;
-    hdma2d->layer_cfg[1].input_width = width;
-    hdma2d->layer_cfg[1].input_height = height;
+    hdma2d->layer_cfg[1].input_width = src_width;
+    hdma2d->layer_cfg[1].input_height = src_height;
     hdma2d->layer_cfg[1].alpha_mode = HAL_DMA2D_NO_MODIF_ALPHA;
     hdma2d->layer_cfg[1].input_alpha = 0xffffffff;
     hal_dma2d_config_layer(hdma2d, HAL_DMA2D_FOREGROUND_LAYER);
 
-    int res = hal_dma2d_start(hdma2d, (uint32_t)src_bufc, (uint32_t)dest_bufc, width, height);
+    int res = hal_dma2d_start(hdma2d, (uint32_t)src_bufc, (uint32_t)dest_bufc, dest_width, dest_height);
     if(res >= 0) {
         hal_dma2d_poll_transfer(hdma2d, -1);
         return LV_RESULT_OK;

@@ -278,7 +278,7 @@ static int _launcher_app_init(void)
 #ifdef CONFIG_PROPERTY
 #ifdef CONFIG_UI_MANAGER
 	if (clocksel_get_aod_clock_dsc() != NULL) {
-		soc_set_aod_mode((uint8_t)property_get_int(CFG_AOD_MODE, 0));
+		launcher_set_aod_mode((uint8_t)property_get_int(CFG_AOD_MODE, 0));
 	}
 #endif
 
@@ -298,12 +298,13 @@ static int _launcher_app_init(void)
 #endif
 
 #ifdef CONFIG_UI_MANAGER
-	ui_manager_set_keyevent_callback(_launcher_key_event_handle);
-	ui_switch_effect_set_type(app->switch_effect_mode);
 	ui_scroll_effect_set_type(app->scroll_effects_mode);
 	ui_vscroll_effect_set_type(DEF_UI_VSCROLL_EFFECT);
 
+	view_stack_set_effect_type(app->switch_effect_mode);
+	view_stack_set_effect_touch_tracking(false);
 	view_stack_push_cache(&app_view_cache_dsc, CLOCK_VIEW);
+	ui_manager_set_keyevent_callback(_launcher_key_event_handle);
 
 	gps_ui_init();
 #endif /* CONFIG_UI_MANAGER */
@@ -462,7 +463,8 @@ static void _launcher_app_exit(void)
 	_music_player_exit();
 
 #ifdef CONFIG_UI_MANAGER
-	ui_switch_effect_set_type(UI_SWITCH_EFFECT_NONE);
+	ui_manager_set_keyevent_callback(NULL);
+	view_stack_set_effect_type(UI_SWITCH_EFFECT_NONE);
 	view_stack_clean();
 #endif
 
@@ -489,7 +491,7 @@ static void _launcher_app_early_suspend(void)
 	app->suspended = 1;
 
 #ifndef CONFIG_SIMULATOR
-	if (soc_get_aod_mode()) {
+	if (launcher_get_aod_mode()) {
 		SYS_LOG_INF("AOD enter\n");
 
 		if (!aod_clock_view_enter())
@@ -665,6 +667,9 @@ static void _launcher_bt_mgr_event_handle(struct app_msg *msg)
 	switch (msg->cmd) {
 #ifdef CONFIG_ALARM_MANAGER
 	case BT_MAP_SET_TIME_EVENT:
+#ifdef CONFIG_SYS_WAKELOCK
+		sys_wake_lock_ext(PARTIAL_WAKE_LOCK, APP_WAKE_LOCK_USER);
+#endif
 		ret = alarm_manager_set_time((struct rtc_time *)msg->ptr);
 		if (ret) {
 			SYS_LOG_ERR("set time error ret=%d\n", ret);
@@ -680,6 +685,9 @@ static void _launcher_bt_mgr_event_handle(struct app_msg *msg)
 			// sync time for alipay
 			alipay_ui_sync_time();
 		}
+#endif
+#ifdef CONFIG_SYS_WAKELOCK
+		sys_wake_unlock_ext(PARTIAL_WAKE_LOCK, APP_WAKE_LOCK_USER);
 #endif
 		break;
 #endif /* CONFIG_ALARM_MANAGER */
@@ -788,7 +796,7 @@ static void _launcher_key_event_handle(uint16_t view_id, uint32_t event)
 		}
 
 		ui_vscroll_effect_set_type(DEF_UI_VSCROLL_EFFECT);
-		view_stack_pop_home(); /* go back to the CLOCK_VIEW */
+		view_stack_back_home(); /* go back to the CLOCK_VIEW */
 		return;
 	}
 
@@ -805,7 +813,9 @@ static void _launcher_key_event_handle(uint16_t view_id, uint32_t event)
 	if (KEY_VALUE(event) == KEY_GESTURE_RIGHT) {
 		switch (view_id) {
 		default:
-			view_stack_pop();
+			view_stack_set_effect_touch_tracking(true);
+			view_stack_back_prev_or_home();
+			view_stack_set_effect_touch_tracking(false);
 			break;
 		}
 	}

@@ -51,7 +51,13 @@ int uart_acts_dma_receive_complete(struct device *dev);
 int uart_acts_dma_receive_remain(struct device *dev);
 int uart_acts_dma_receive_stop(struct device *dev);
 int uart_acts_dma_receive_drq_switch(struct device *dev, bool drq_enable);
+int uart_acts_dma_is_rx_pending(struct device *dev);
+int uart_acts_dma_is_tx_pending(struct device *dev);
 
+int uart_acts_clear_rx_pending(struct device *dev);
+int uart_acts_clear_tx_pending(struct device *dev);
+void uart_acts_irq_enable(const struct device *dev);
+void uart_acts_irq_disable(const struct device *dev);
 
 
 static inline int uart_dma_send_init(struct device *dev,  dma_callback_t stream_handler, void *stream_data)
@@ -144,6 +150,36 @@ static inline int uart_tx_dma_switch(struct device *dev, bool use_dma, dma_callb
 	}
 	
 	return 0;
+}
+
+static inline int uart_dma_is_rx_pending(struct device *dev)
+{
+	return uart_acts_dma_is_rx_pending(dev);
+}
+
+static inline int uart_dma_is_tx_pending(struct device *dev)
+{
+	return uart_acts_dma_is_tx_pending(dev);
+}
+
+static inline int uart_clear_rx_pending(struct device *dev)
+{
+	return uart_acts_clear_rx_pending(dev);
+}
+
+static inline int uart_clear_tx_pending(struct device *dev)
+{
+	return uart_acts_clear_tx_pending(dev);
+}
+
+static inline void uart_irq_enable(struct device *dev)
+{
+	uart_acts_irq_enable(dev);
+}
+
+static inline void uart_irq_disable(struct device *dev)
+{
+	uart_acts_irq_disable(dev);
 }
 
 #endif

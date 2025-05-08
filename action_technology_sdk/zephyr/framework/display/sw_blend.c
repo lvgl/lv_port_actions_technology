@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <display/display_hal.h>
 #include <display/sw_draw.h>
 #ifdef CONFIG_GUI_API_BROM
 #  include <brom_interface.h>
@@ -99,6 +100,25 @@ void sw_blend_color_over_argb8888(void *dst, uint32_t src_color,
 
 		for (int i = w; i > 0; i--) {
 			*tmp_dst = blend_argb8888_over_argb8888(*tmp_dst, src_color);
+			tmp_dst++;
+		}
+
+		dst8 += dst_pitch;
+	}
+}
+
+void sw_blend_color_over_l8(void *dst, uint32_t src_color,
+		uint16_t dst_pitch, uint16_t w, uint16_t h)
+{
+	uint8_t src_opa = src_color >> 8;
+	uint8_t src_l8 = hal_rgb32_to_l8(src_color);
+	uint8_t *dst8 = dst;
+
+	for (int j = h; j > 0; j--) {
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		for (int i = w; i > 0; i--) {
+			*tmp_dst = blend_l8_over_l8(*tmp_dst, src_l8, src_opa);
 			tmp_dst++;
 		}
 
@@ -322,6 +342,47 @@ void sw_blend_a8_over_argb8888(void *dst, const void *src, uint32_t src_color,
 	}
 }
 
+void sw_blend_a8_over_l8(void *dst, const void *src, uint32_t src_color,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h)
+{
+	uint8_t src_opa = (src_color >> 24);
+	uint8_t src_l8 = hal_rgb32_to_l8(src_color);
+	const uint8_t *src8 = src;
+	uint8_t *dst8 = dst;
+
+	if (src_opa == 255) {
+		for (int j = h; j > 0; j--) {
+			const uint8_t *tmp_src = src8;
+			uint8_t *tmp_dst = dst8;
+
+			for (int i = w; i > 0; i--) {
+				*tmp_dst = blend_l8_over_l8(*tmp_dst, src_l8, *tmp_src);
+				tmp_dst++;
+				tmp_src++;
+			}
+
+			dst8 += dst_pitch;
+			src8 += src_pitch;
+		}
+	} else {
+		for (int j = h; j > 0; j--) {
+			const uint8_t *tmp_src = src8;
+			uint8_t *tmp_dst = dst8;
+
+			for (int i = w; i > 0; i--) {
+				uint8_t opa = (*tmp_src * src_opa) >> 8;
+
+				*tmp_dst = blend_l8_over_l8(*tmp_dst, src_l8, opa);
+				tmp_dst++;
+				tmp_src++;
+			}
+
+			dst8 += dst_pitch;
+			src8 += src_pitch;
+		}
+	}
+}
+
 void sw_blend_a4_over_rgb565(void *dst, const void *src, uint32_t src_color,
 		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
 		uint16_t w, uint16_t h)
@@ -507,6 +568,52 @@ void sw_blend_a4_over_argb8888(void *dst, const void *src, uint32_t src_color,
 			uint32_t color32 = src_color | ((uint32_t)opa << 24);
 
 			*tmp_dst = blend_argb8888_over_argb8888(*tmp_dst, color32);
+			tmp_dst++;
+
+			if (bpos == 0) {
+				bpos = src_bofs_max;
+				tmp_src++;
+			} else {
+				bpos -= src_bpp;
+			}
+		}
+
+		dst8 += dst_pitch;
+		src8 += src_pitch;
+	}
+}
+
+void sw_blend_a4_over_l8(void *dst, const void *src, uint32_t src_color,
+		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
+		uint16_t w, uint16_t h)
+{
+	uint8_t src_opa = (src_color >> 24);
+	uint8_t src_l8 = hal_rgb32_to_l8(src_color);
+	const uint8_t *opa_table = g_alpha4t8_opa_table;
+	uint8_t tmp_opa_table[ARRAY_SIZE(g_alpha4t8_opa_table)];
+
+	if (src_opa < 255) {
+		for (int i = 0; i < ARRAY_SIZE(g_alpha4t8_opa_table); i++)
+			tmp_opa_table[i] = (g_alpha4t8_opa_table[i] * src_opa) >> 8;
+
+		opa_table = tmp_opa_table;
+	}
+
+	const uint8_t *src8 = src;
+	const uint8_t src_bpp = 4;
+	const uint8_t src_bmask = (1 << src_bpp) - 1;
+	const uint8_t src_bofs_max = 8 - src_bpp;
+	uint8_t *dst8 = dst;
+
+	for (int j = h; j > 0; j--) {
+		const uint8_t *tmp_src = src8;
+		uint8_t *tmp_dst = dst8;
+		uint8_t bpos = src_bofs_max - src_bofs;
+
+		for (int i = w; i > 0; i--) {
+			uint8_t opa = opa_table[(*tmp_src >> bpos) & src_bmask];
+
+			*tmp_dst = blend_l8_over_l8(*tmp_dst, src_l8, opa);
 			tmp_dst++;
 
 			if (bpos == 0) {
@@ -722,6 +829,52 @@ void sw_blend_a2_over_argb8888(void *dst, const void *src, uint32_t src_color,
 	}
 }
 
+void sw_blend_a2_over_l8(void *dst, const void *src, uint32_t src_color,
+		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
+		uint16_t w, uint16_t h)
+{
+	uint8_t src_opa = (src_color >> 24);
+	uint8_t src_l8 = hal_rgb32_to_l8(src_color);
+	const uint8_t *opa_table = g_alpha2t8_opa_table;
+	uint8_t tmp_opa_table[ARRAY_SIZE(g_alpha2t8_opa_table)];
+
+	if (src_opa < 255) {
+		for (int i = 0; i < ARRAY_SIZE(g_alpha2t8_opa_table); i++)
+			tmp_opa_table[i] = (g_alpha2t8_opa_table[i] * src_opa) >> 8;
+
+		opa_table = tmp_opa_table;
+	}
+
+	const uint8_t *src8 = src;
+	const uint8_t src_bpp = 2;
+	const uint8_t src_bmask = (1 << src_bpp) - 1;
+	const uint8_t src_bofs_max = 8 - src_bpp;
+	uint8_t *dst8 = dst;
+
+	for (int j = h; j > 0; j--) {
+		const uint8_t *tmp_src = src8;
+		uint8_t *tmp_dst = dst8;
+		uint8_t bpos = src_bofs_max - src_bofs;
+
+		for (int i = w; i > 0; i--) {
+			uint8_t opa = opa_table[(*tmp_src >> bpos) & src_bmask];
+
+			*tmp_dst = blend_l8_over_l8(*tmp_dst, src_l8, opa);
+			tmp_dst++;
+
+			if (bpos == 0) {
+				bpos = src_bofs_max;
+				tmp_src++;
+			} else {
+				bpos -= src_bpp;
+			}
+		}
+
+		dst8 += dst_pitch;
+		src8 += src_pitch;
+	}
+}
+
 void sw_blend_a1_over_rgb565(void *dst, const void *src, uint32_t src_color,
 		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
 		uint16_t w, uint16_t h)
@@ -863,6 +1016,40 @@ void sw_blend_a1_over_argb8888(void *dst, const void *src, uint32_t src_color,
 	}
 }
 
+void sw_blend_a1_over_l8(void *dst, const void *src, uint32_t src_color,
+	uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
+	uint16_t w, uint16_t h)
+{
+	uint8_t src_opa = (src_color >> 24);
+	uint8_t src_l8 = hal_rgb32_to_l8(src_color);
+	const uint8_t *src8 = src;
+	uint8_t *dst8 = dst;
+
+	for (int j = h; j > 0; j--) {
+		const uint8_t *tmp_src = src8;
+		uint8_t *tmp_dst = dst8;
+		uint8_t bmask = 0x80 >> src_bofs;
+
+		for (int i = w; i > 0; i--) {
+			uint8_t opa = *tmp_src & bmask;
+			if (opa > 0) {
+				*tmp_dst = blend_l8_over_l8(*tmp_dst, src_l8, src_opa);
+			}
+
+			tmp_dst++;
+
+			bmask >>= 1;
+			if (bmask == 0) {
+				bmask = 0x80;
+				tmp_src++;
+			}
+		}
+
+		dst8 += dst_pitch;
+		src8 += src_pitch;
+	}
+}
+
 void sw_blend_index8_over_rgb565(void *dst, const void *src, const uint32_t *src_clut,
 		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h)
 {
@@ -947,6 +1134,30 @@ void sw_blend_index8_over_argb8888(void *dst, const void *src, const uint32_t *s
 
 		for (int i = w; i > 0; i--) {
 			*tmp_dst = blend_argb8888_over_argb8888(*tmp_dst, src_clut[*tmp_src]);
+			tmp_dst++;
+			tmp_src++;
+		}
+
+		src8 += src_pitch;
+		dst8 += dst_pitch;
+	}
+}
+
+void sw_blend_index8_over_l8(void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h)
+{
+	const uint8_t *src8 = (uint8_t *)src;
+	uint8_t *dst8 = dst;
+
+	for (int j = h; j > 0; j--) {
+		const uint8_t *tmp_src = src8;
+		uint8_t *tmp_dst = dst8;
+
+		for (int i = w; i > 0; i--) {
+			uint8_t src_opa = (src_clut[*tmp_src] >> 24);
+			uint8_t src_l8 = hal_rgb32_to_l8(src_clut[*tmp_src]);
+
+			*tmp_dst = blend_l8_over_l8(*tmp_dst, src_l8, src_opa);
 			tmp_dst++;
 			tmp_src++;
 		}
@@ -1096,6 +1307,42 @@ static void sw_blend_index124_over_argb8888(
 	}
 }
 
+static void sw_blend_index124_over_l8(
+	void *dst, const void *src, const uint32_t *src_clut,
+	uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
+	uint8_t src_bpp, uint16_t w, uint16_t h)
+{
+	const uint8_t *src8 = (uint8_t *)src;
+	const uint8_t src_bmask = (1 << src_bpp) - 1;
+	const uint8_t src_bofs_max = 8 - src_bpp;
+	uint8_t *dst8 = dst;
+
+	for (int j = h; j > 0; j--) {
+		const uint8_t *tmp_src = (uint8_t *)src8;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+		uint8_t src_bpos = src_bofs_max - src_bofs;
+
+		for (int i = w; i > 0; i--) {
+			uint8_t idx = (*tmp_src >> src_bpos) & src_bmask;
+			uint8_t opa = (src_clut[idx] >> 24);
+			uint8_t src_l8 = hal_rgb32_to_l8(src_clut[idx]);
+
+			*tmp_dst = blend_l8_over_l8(*tmp_dst, src_l8, opa);
+			tmp_dst++;
+
+			if (src_bpos == 0) {
+				src_bpos = src_bofs_max;
+				tmp_src++;
+			} else {
+				src_bpos -= src_bpp;
+			}
+		}
+
+		src8 += src_pitch;
+		dst8 += dst_pitch;
+	}
+}
+
 void sw_blend_index4_over_rgb565(
 		void *dst, const void *src, const uint32_t *src_clut,
 		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
@@ -1129,6 +1376,15 @@ void sw_blend_index4_over_argb8888(
 		uint16_t w, uint16_t h)
 {
 	sw_blend_index124_over_argb8888(dst, src, src_clut, dst_pitch, src_pitch,
+			src_bofs, 4, w, h);
+}
+
+void sw_blend_index4_over_l8(
+	void *dst, const void *src, const uint32_t *src_clut,
+	uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
+	uint16_t w, uint16_t h)
+{
+	sw_blend_index124_over_l8(dst, src, src_clut, dst_pitch, src_pitch,
 			src_bofs, 4, w, h);
 }
 
@@ -1168,6 +1424,15 @@ void sw_blend_index2_over_argb8888(
 			src_bofs, 2, w, h);
 }
 
+void sw_blend_index2_over_l8(
+		void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
+		uint16_t w, uint16_t h)
+{
+	sw_blend_index124_over_l8(dst, src, src_clut, dst_pitch, src_pitch,
+			src_bofs, 2, w, h);
+}
+
 void sw_blend_index1_over_rgb565(
 		void *dst, const void *src, const uint32_t *src_clut,
 		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
@@ -1201,6 +1466,15 @@ void sw_blend_index1_over_argb8888(
 		uint16_t w, uint16_t h)
 {
 	sw_blend_index124_over_argb8888(dst, src, src_clut, dst_pitch, src_pitch,
+			src_bofs, 1, w, h);
+}
+
+void sw_blend_index1_over_l8(
+		void *dst, const void *src, const uint32_t *src_clut,
+		uint16_t dst_pitch, uint16_t src_pitch, uint8_t src_bofs,
+		uint16_t w, uint16_t h)
+{
+	sw_blend_index124_over_l8(dst, src, src_clut, dst_pitch, src_pitch,
 			src_bofs, 1, w, h);
 }
 
@@ -1444,6 +1718,29 @@ void sw_blend_argb8565_over_argb8888(void *dst, const void *src,
 		src8 += src_pitch;
 	}
 #endif /* CONFIG_GUI_API_BROM_LEOPARD */
+}
+
+void sw_blend_argb8565_over_l8(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h)
+{
+	const uint8_t *src8 = src;
+	uint8_t *dst8 = dst;
+	uint8_t src_x_step = 3;
+
+	for (int j = h; j > 0; j--) {
+		const uint8_t *tmp_src = src8;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		for (int i = w; i > 0; i--) {
+			*tmp_dst = blend_l8_over_l8(*tmp_dst,
+					hal_rgb16_to_l8((tmp_src[1] << 8) | tmp_src[0]), tmp_src[2]);
+			tmp_dst++;
+			tmp_src += src_x_step;
+		}
+
+		dst8 += dst_pitch;
+		src8 += src_pitch;
+	}
 }
 
 void sw_blend_argb6666_over_rgb565(void *dst, const void *src,
@@ -1753,4 +2050,26 @@ void sw_blend_argb8888_over_argb8888(void *dst, const void *src,
 		dst8 += dst_pitch;
 	}
 #endif /* CONFIG_GUI_API_BROM_LEOPARD */
+}
+
+void sw_blend_argb8888_over_l8(void *dst, const void *src,
+		uint16_t dst_pitch, uint16_t src_pitch, uint16_t w, uint16_t h)
+{
+	const uint8_t *src8 = src;
+	uint8_t *dst8 = dst;
+
+	for (int j = h; j > 0; j--) {
+		const uint32_t *tmp_src = (uint32_t *)src8;
+		uint8_t *tmp_dst = (uint8_t *)dst8;
+
+		for (int i = w; i > 0; i--) {
+			uint8_t opa = *tmp_src >> 24;
+			*tmp_dst = blend_l8_over_l8(*tmp_dst, hal_rgb32_to_l8(*tmp_src), opa);
+			tmp_dst++;
+			tmp_src++;
+		}
+
+		src8 += src_pitch;
+		dst8 += dst_pitch;
+	}
 }

@@ -37,6 +37,7 @@
 #define BT_NAME_LEN		(32+1)	/* 32(len) + 1(NULL) */
 #define BT_PRE_NAME_LEN	(20+1)	/* 10(len) + 1(NULL) */
 
+static uint8_t mac_array[6] = {0};
 
 #if defined(CONFIG_PROPERTY) && defined(CONFIG_AUDIO) && defined(CONFIG_AUDIO_RANDOM)
 #define MIC_READ_BUF_LEN	128
@@ -146,7 +147,7 @@ try_ble_name:
 static void bt_manager_bt_mac(uint8_t *mac_str)
 {
 #ifdef CONFIG_PROPERTY
-	uint8_t mac[6], i;
+	uint8_t i;
 	int ret;
 	uint32_t rand_val;
 
@@ -160,20 +161,20 @@ static void bt_manager_bt_mac(uint8_t *mac_str)
 #else
 		rand_val = os_cycle_get_32();
 #endif
-		bt_manager_config_set_pre_bt_mac(mac);
-		memcpy(&mac[3], &rand_val, 3);
+		bt_manager_config_set_pre_bt_mac(mac_array);
+		memcpy(&mac_array[3], &rand_val, 3);
 
 		for (i = 3; i < 6; i++) {
-			if (mac[i] == 0)
-				mac[i] = 0x01;
+			if (mac_array[i] == 0)
+				mac_array[i] = 0x01;
 		}
 
-		bin2hex(mac, 6, mac_str, 12);
+		bin2hex(mac_array, 6, mac_str, 12);
 
 		property_set_factory(CFG_BT_MAC, mac_str, (MAC_STR_LEN-1));
 	} else {
-		hex2bin(mac_str, 12, mac, 6);
-		bt_manager_updata_pre_bt_mac(mac);
+		hex2bin(mac_str, 12, mac_array, 6);
+		bt_manager_updata_pre_bt_mac(mac_array);
 	}
 #endif
 	SYS_LOG_INF("BT MAC: %s", mac_str);
@@ -192,4 +193,9 @@ void bt_manager_check_mac_name(void)
 		seed = seed*131 + mac_str[i];
 	}
 	bt_rand32_set_seed(seed);
+}
+
+uint8_t *bt_manager_get_mac_array(void)
+{
+	return mac_array;
 }

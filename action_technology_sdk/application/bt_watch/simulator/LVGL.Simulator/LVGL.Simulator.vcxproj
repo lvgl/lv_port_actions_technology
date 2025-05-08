@@ -1036,6 +1036,7 @@
     <ClCompile Include="..\..\..\..\framework\display\ui_service\lvgl\lvgl_input_dev.c" />
     <ClCompile Include="..\..\..\..\framework\display\ui_service\lvgl\lvgl_msgbox_cache.c" />
     <ClCompile Include="..\..\..\..\framework\display\ui_service\lvgl\lvgl_view.c" />
+    <ClCompile Include="..\..\..\..\framework\display\ui_service\recorder\input_recorder.c" />
     <ClCompile Include="..\..\..\..\framework\display\ui_service\view_cache.c" />
     <ClCompile Include="..\..\..\..\framework\display\ui_service\view_cache_lite.c" />
     <ClCompile Include="..\..\..\..\framework\display\ui_service\view_stack.c" />

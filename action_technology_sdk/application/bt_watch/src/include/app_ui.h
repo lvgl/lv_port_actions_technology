@@ -24,6 +24,7 @@
 #  include <ui_manager.h>
 #  include <ui_effects/scroll_effect.h>
 #  include <ui_effects/switch_effect.h>
+#  include <view_stack.h>
 #endif
 
 #ifdef CONFIG_LVGL

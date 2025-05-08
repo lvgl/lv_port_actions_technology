@@ -101,6 +101,11 @@ static ssize_t read_name(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 {
 	const char *name = bt_get_name();
 
+#if defined(CONFIG_BT_EXT_ADV)
+	if (conn->id > 0) {
+		name = bt_get_name_by_id(conn->id);
+	}
+#endif
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, name,
 				 strlen(name));
 }

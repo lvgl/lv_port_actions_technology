@@ -38,7 +38,7 @@
 #define CONFIG_SPI_FLASH_2_NAME      		"spi_flash_2"
 #define CONFIG_SIM_FLASH                        0
 #define CONFIG_SIM_FLASH_NAME               "sim_flash"
-#define CONFIG_ACTLOG_STORAGE_NAME           CONFIG_SPI_FLASH_NAME
+#define CONFIG_ACTLOG_STORAGE_NAME          "spinand_flash"
 #define CONFIG_BLOCK_DEV_FLASH                  1
 #define CONFIG_BLOCK_DEV_FLASH_NAME         "spinand_flash"
 #define CONFIG_SPINAND_0                    	1

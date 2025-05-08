@@ -185,6 +185,13 @@ void usbd_event_ep_in_complete_handler(uint8_t busid, uint8_t ep, uint32_t nbyte
  */
 void usbd_event_ep_out_complete_handler(uint8_t busid, uint8_t ep, uint32_t nbytes);
 
+/**
+ * @brief process status phase of controller out transfer with data
+ * @param[busid]
+ *
+ */
+int usbd_send_status_to_host(uint8_t busid);
+
 #ifdef CONFIG_USBDEV_TEST_MODE
 /**
  * @brief Usb execute test mode

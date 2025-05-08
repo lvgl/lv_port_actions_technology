@@ -59,7 +59,7 @@ static void _anim_set_img_opa(void *var, int32_t value)
 #if CONFIG_WELCOME_ANIM_ONESHOT
 static void _anim_ready_cb(lv_anim_t *anim)
 {
-	ui_view_delete(WELCOME_VIEW);
+	view_stack_back_prev();
 }
 #endif /* CONFIG_WELCOME_ANIM_ONESHOT */
 

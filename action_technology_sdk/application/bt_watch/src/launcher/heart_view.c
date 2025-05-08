@@ -19,15 +19,6 @@
 #endif
 #include <view_cache.h>
 
-#ifdef CONFIG_UI_MANAGER
-	#include <ui_mem.h>
-	#  define BUF_MALLOC(size)        ui_mem_aligned_alloc(MEM_RES, LV_DRAW_BUF_ALIGN, size, __func__)
-	#  define BUF_FREE(ptr)           ui_mem_free(MEM_RES, ptr)
-	#else
-	#  define BUF_MALLOC(size)        lv_malloc(size)
-	#  define BUF_FREE(ptr)           lv_free(ptr)
-#endif
-
 #define MAP_DATA_NUM 81
 #define MAP_LINE_WIDTH 2
 #define MAP_ALL_WIDTH 330
@@ -65,7 +56,7 @@ typedef struct heart_view_data {
 	lv_obj_t *hr_map;
 	lv_chart_series_t * ser;
 	lv_obj_t *hr_map_snapshot;
-	lv_draw_buf_t hr_map_imgs;
+	lv_draw_buf_t *hr_map_imgs;
 	lv_timer_t *map_width_timer;
 	lv_coord_t width_value;
 
@@ -227,10 +218,9 @@ static int _heart_view_paint(view_data_t *view_data)
 
 static void hr_map_snapshot_free(heart_view_data_t *data)
 {
-	if (data->hr_map_imgs.data)
-	{
-		BUF_FREE(data->hr_map_imgs.data);
-		data->hr_map_imgs.data = NULL;
+	if (data->hr_map_imgs) {
+		lv_draw_buf_destroy(data->hr_map_imgs);
+		data->hr_map_imgs = NULL;
 	}
 }
 
@@ -317,17 +307,8 @@ static void hr_map_snapshot_up(heart_view_data_t *data)
 
 	hr_map_snapshot_free(data);
 
-	lv_draw_buf_init(&data->hr_map_imgs, 1, 1, LV_COLOR_FORMAT_RGB565, LV_STRIDE_AUTO, NULL, UINT32_MAX);
-	lv_snapshot_reshape_draw_buf(data->hr_map, &data->hr_map_imgs);
-
-	/* Set real size */
-	data->hr_map_imgs.data_size = data->hr_map_imgs.header.stride * data->hr_map_imgs.header.h;
-	data->hr_map_imgs.data = BUF_MALLOC(data->hr_map_imgs.data_size);
-	if (data->hr_map_imgs.data) {
-		lv_snapshot_take_to_draw_buf(data->hr_map, data->hr_map_imgs.header.cf, &data->hr_map_imgs);
-		lv_draw_buf_flush_cache(&data->hr_map_imgs, NULL);
-		simple_img_set_src(data->hr_map_snapshot, &data->hr_map_imgs);
-	}
+	data->hr_map_imgs = lv_snapshot_take(data->hr_map, LV_COLOR_FORMAT_RGB565);
+	simple_img_set_src(data->hr_map_snapshot, data->hr_map_imgs);
 
 	lv_obj_delete(data->hr_map);
 }

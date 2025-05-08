@@ -27,6 +27,7 @@ typedef enum {
 	HB = 0,
 	SPO2,
 	HRV,
+	HR_WEAR,
 } hr_mode_e;
 
 /* wear status */
@@ -43,10 +44,11 @@ typedef enum {
 #endif
 
 /* hr result handler */
-typedef void (*wear_handler_t)(uint8_t wearing_state);
+typedef void (*wear_handler_t)(uint8_t wearing_state, bool check);
 typedef void (*hb_handler_t)(uint8_t hb_val, uint8_t hb_lvl_val, uint16_t rr_val);
 typedef void (*spo2_handler_t)(uint8_t spo2_val, uint8_t spo2_lvl_val, uint8_t hb_val,
-				uint8_t hb_lvl_val, uint16_t rr_val[4], uint8_t rr_lvl_val, uint8_t rr_cnt, uint16_t spo2_r_val);
+			       uint8_t hb_lvl_val, uint16_t rr_val[4], uint8_t rr_lvl_val,
+			       uint8_t rr_cnt, uint16_t spo2_r_val);
 typedef void (*hrv_handler_t)(uint16_t *rr_val_arr, uint8_t rr_val_cnt, uint8_t rr_lvl);
 
 /* os api */
@@ -56,7 +58,7 @@ typedef struct {
 	hb_handler_t hb_handler;
 	spo2_handler_t spo2_handler;
 	hrv_handler_t hrv_handler;
-	
+
 } hr_os_api_t;
 
 /******************************************************************************/

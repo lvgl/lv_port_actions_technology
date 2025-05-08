@@ -35,6 +35,13 @@ config DEBUG_COREDUMP_BACKEND_FLASH_DEV
 	help
 	  Core dump is saved to a flash dev with "coredump-partition".	  
 
+config DEBUG_COREDUMP_BACKEND_NAND_SD
+	bool "Use flash NAND or SD for coredump"
+	depends on LOG
+	help
+	  Core dump is saved to a NAND/SD dev with "coredump-partition".
+
+
 endchoice
 
 choice

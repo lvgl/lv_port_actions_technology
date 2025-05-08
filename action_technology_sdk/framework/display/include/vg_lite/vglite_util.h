@@ -25,7 +25,8 @@
 /**********************
  *      TYPEDEFS
  **********************/
-/*
+
+/**
  * Euler angle rotation order around model's dynamic axis
  */
 typedef enum rotate_order {
@@ -58,6 +59,7 @@ typedef struct normal_rec {
 /**********************
  * Buffer functions
  **********************/
+
 /**
  * @brief Convert display hal pixel format to vglite buffer format
  *
@@ -78,7 +80,7 @@ int vglite_buf_format_from_hal(uint32_t hal_format, uint8_t *bits_per_pixel);
  */
 uint32_t vglite_buf_format_to_hal(vg_lite_buffer_format_t format, uint8_t *bits_per_pixel);
 
-/*
+/**
  * Query vglite buffer is valid or not
  *
  * @param vgbuf pointer to structure vg_lite_buffer
@@ -87,8 +89,44 @@ uint32_t vglite_buf_format_to_hal(vg_lite_buffer_format_t format, uint8_t *bits_
  */
 bool vglite_buf_is_valid(vg_lite_buffer_t *vgbuf);
 
-/*
+/**
+ * Initialize a vglite buffer
+ *
+ * This routhine only intialized the structure, vg_lite_map() is required
+ * before using in VGLite API.
+ *
+ * @param vgbuf pointer to structure vg_lite_buffer
+ * @param data buffer address
+ * @param width width of buffer in pixels
+ * @param height height of buffer in pixels
+ * @param stride number of bytes to move from one line in the buffer to the next line
+ * @param format buffer format
+ *
+ * @retval 0 on success else negative code
+ */
+int vglite_buf_init(vg_lite_buffer_t *vgbuf, void *data, uint16_t width, uint16_t height,
+	uint16_t stride, vg_lite_buffer_format_t format);
+
+/**
+ * Map a vglite buffer with optional new buffer address
+ *
+ * Do unmap using vglite_buf_unmap()
+ *
+ * @param vgbuf pointer to structure vg_lite_buffer
+ * @param data optional new buffer address if not NULL
+ *
+ * @retval 0 on success else negative code
+ */
+int vglite_buf_map_data(vg_lite_buffer_t *vgbuf, void *data);
+
+/**
  * Map a vglite buffer
+ *
+ * This routine is equal to:
+ *   vglite_buf_init(vgbuf, data, width, height, stride, foramt) +
+ *   vglite_buf_map_data(vgbuf, NULL)
+ *
+ * Do unmap using vglite_buf_unmap()
  *
  * @param vgbuf pointer to structure vg_lite_buffer
  * @param data buffer address to map
@@ -100,10 +138,12 @@ bool vglite_buf_is_valid(vg_lite_buffer_t *vgbuf);
  * @retval 0 on success else negative code
  */
 int vglite_buf_map(vg_lite_buffer_t *vgbuf, void *data, uint16_t width, uint16_t height,
-			uint16_t stride, vg_lite_buffer_format_t format);
+	uint16_t stride, vg_lite_buffer_format_t format);
 
-/*
+/**
  * Map a vglite buffer from graphic buffer
+ *
+ * Do unmap using vglite_buf_unmap()
  *
  * @param vgbuf pointer to structure vg_lite_buffer
  * @param gbuf pointer to structure graphic_buffer_t
@@ -112,7 +152,7 @@ int vglite_buf_map(vg_lite_buffer_t *vgbuf, void *data, uint16_t width, uint16_t
  */
 int vglite_buf_map_graphic(vg_lite_buffer_t *vgbuf, const graphic_buffer_t *gbuf);
 
-/*
+/**
  * Unmap a vglite buffer
  *
  * @param vgbuf pointer to structure vg_lite_buffer
@@ -124,7 +164,8 @@ int vglite_buf_unmap(vg_lite_buffer_t *vgbuf);
 /**********************
  * Matrix functions
  **********************/
-/*
+
+/**
  * Compute rotate matrix around x-axis to the world coordinate
  *
  * @param rx Euler angle in radian around X axis
@@ -134,7 +175,7 @@ int vglite_buf_unmap(vg_lite_buffer_t *vgbuf);
  */
 void matrix_rotate_x(float rx, vg_lite_matrix_t *matrix);
 
-/*
+/**
  * Compute rotate matrix around x-axis to the world coordinate
  *
  * @param ry Euler angle in radian around Y axis
@@ -144,7 +185,7 @@ void matrix_rotate_x(float rx, vg_lite_matrix_t *matrix);
  */
 void matrix_rotate_y(float ry, vg_lite_matrix_t *matrix);
 
-/*
+/**
  * Compute rotate matrix around x-axis to the world coordinate
  *
  * @param rz Euler angle in radian around Z axis
@@ -154,7 +195,7 @@ void matrix_rotate_y(float ry, vg_lite_matrix_t *matrix);
  */
 void matrix_rotate_z(float rz, vg_lite_matrix_t *matrix);
 
-/*
+/**
  * Compute rotate matrix to the world coordinate
  *
  * The rotation from model coordinate to world coordinate around model's dynamic axis.
@@ -169,7 +210,7 @@ void matrix_rotate_z(float rz, vg_lite_matrix_t *matrix);
  */
 void matrix_rotate(float rx, float ry, float rz, uint8_t order, vg_lite_matrix_t *matrix);
 
-/*
+/**
  * Compute rotate matrix around arbitrary axis to the world coordinate
  *
  * The rotate axis is defined as follows:
@@ -185,7 +226,7 @@ void matrix_rotate(float rx, float ry, float rz, uint8_t order, vg_lite_matrix_t
  */
 void matrix_rotate_axis(float x, float y, float z, float angle, vg_lite_matrix_t *matrix);
 
-/*
+/**
  * Compute matrix multiplication
  *
  * @param matrix_left pointer to the left multiplication matrix
@@ -196,7 +237,7 @@ void matrix_rotate_axis(float x, float y, float z, float angle, vg_lite_matrix_t
  */
 void matrix_multiply(const vg_lite_matrix_t *matrix_left, const vg_lite_matrix_t *matrix_right, vg_lite_matrix_t *result);
 
-/*
+/**
  * Compute left multiply translate matrix
  *
  * @param tx X translate
@@ -209,7 +250,7 @@ void matrix_multiply(const vg_lite_matrix_t *matrix_left, const vg_lite_matrix_t
 void matrix_translate_left(float tx, float ty,
 		const vg_lite_matrix_t *matrix_right, vg_lite_matrix_t *matrix);
 
-/*
+/**
  * Compute affine transformation matrix for blit
  *
  * @param w image width
@@ -224,7 +265,7 @@ void matrix_translate_left(float tx, float ty,
  */
 void matrix_affine_blit(int w, int h, vertex_t *v0, vertex_t *v1, vertex_t *v2, vertex_t *v3, vg_lite_matrix_t *matrix);
 
-/*
+/**
  * Compute perspective transformation matrix for blit
  *
  * @param w image width
@@ -239,7 +280,7 @@ void matrix_affine_blit(int w, int h, vertex_t *v0, vertex_t *v1, vertex_t *v2, 
  */
 void matrix_perspective_blit(int w, int h, vertex_t *v0, vertex_t *v1, vertex_t *v2, vertex_t *v3, vg_lite_matrix_t *matrix);
 
-/*
+/**
  * Compute full transformation matrix for blit
  *
  * @param rect image bounding rectangle
@@ -256,7 +297,7 @@ void matrix_transform_rect(vg_lite_rectangle_t *rect,
 		float pivots[3], float angles[3], float scale, float camera[3],
 		vertex_t result[4], vg_lite_matrix_t *matrix);
 
-/*
+/**
  * Compute full transformation matrix of given rotate order for blit
  *
  * @param rect image bounding rectangle
@@ -275,7 +316,7 @@ void matrix_transform_rect2(vg_lite_rectangle_t *rect,
 		float scale, float camera[3],
 		vertex_t result[4], vg_lite_matrix_t *matrix);
 
-/*
+/**
  * Compute rotated vertex
  *
  * @param result store the rotated vertex result
@@ -288,7 +329,7 @@ void matrix_transform_rect2(vg_lite_rectangle_t *rect,
  */
 void transfrom_rotate(vertex_t *result, vg_lite_matrix_t *rotate, const vertex_t *vertex, const vertex_t *scale, const vertex_t *translate);
 
-/*
+/**
  * Compute perspective vertex
  *
  * @param vertex vertex to do perspective transformation
@@ -300,7 +341,7 @@ void transfrom_rotate(vertex_t *result, vg_lite_matrix_t *rotate, const vertex_t
  */
 void transfrom_perspective(vertex_t *vertex, float camera_x, float camera_y, float camera_distance);
 
-/*
+/**
  * Compute rotated normal value
  *
  * @param rotate rotate matrix
@@ -310,7 +351,7 @@ void transfrom_perspective(vertex_t *vertex, float camera_x, float camera_y, flo
  */
 float transfrom_normal_z(vg_lite_matrix_t *rotate, const normal_t *normal);
 
-/*
+/**
  * Nomalize a vector
  *
  * @param x pointer to X component of vector

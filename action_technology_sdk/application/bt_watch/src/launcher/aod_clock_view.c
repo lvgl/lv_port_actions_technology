@@ -13,6 +13,10 @@
 #include "clock_view.h"
 #include "main_view.h"
 
+#ifdef CONFIG_SYS_WAKELOCK
+#  include <sys_wakelock.h>
+#endif
+
 typedef struct aod_clock_view_tmp_res {
 	lvgl_res_group_t grp_hour;
 	lvgl_res_group_t grp_minute;
@@ -263,6 +267,10 @@ static int _aod_clock_view_paint(view_data_t *view_data, bool first)
 	aod_clock_view_data_t *data = view_data->user_data;
 	struct rtc_time time;
 
+#ifdef CONFIG_SYS_WAKELOCK
+	sys_wake_lock(PARTIAL_WAKE_LOCK);
+#endif
+
 	if (data->obj_clock == NULL) {
 		goto out_exit;
 	}
@@ -295,6 +303,10 @@ static int _aod_clock_view_paint(view_data_t *view_data, bool first)
 	view_wait_for_refresh(AOD_CLOCK_VIEW, -1);
 
 out_exit:
+#ifdef CONFIG_SYS_WAKELOCK
+	sys_wake_unlock(PARTIAL_WAKE_LOCK);
+#endif
+
 	system_request_fast_standby();
 #endif /* CONFIG_RTC_ACTS */
 
@@ -329,9 +341,8 @@ int aod_clock_view_enter(void)
 	int wait_ms = 2000;
 
 	if (clock_dsc) {
-		ui_switch_effect_set_type(UI_SWITCH_EFFECT_NONE);
-
 		g_aod_inflated = false;
+		view_stack_set_effect_type(UI_SWITCH_EFFECT_NONE);
 		view_stack_push_view(AOD_CLOCK_VIEW, &clock_view_presenter);
 
 		while (g_aod_inflated == false && wait_ms > 0) {
@@ -350,8 +361,8 @@ int aod_clock_view_exit(void)
 	int res = 0;
 
 	if (g_aod_inflated) {
-		res = view_stack_pop();
-		ui_switch_effect_set_type(main_view_presenter.get_switch_mode());
+		res = view_stack_back_prev_or_home();
+		view_stack_set_effect_type(main_view_presenter.get_switch_mode());
 	}
 
 	return res;

@@ -26,8 +26,12 @@
 /** Color depth: 1 (I1), 8 (L8), 16 (RGB565), 24 (RGB888), 32 (XRGB8888) */
 #ifdef CONFIG_LV_COLOR_DEPTH_32
     #define LV_COLOR_DEPTH 32
-#else
+#elif defined(CONFIG_LV_COLOR_DEPTH_24)
+    #define LV_COLOR_DEPTH 24
+#elif defined(CONFIG_LV_COLOR_DEPTH_16)
     #define LV_COLOR_DEPTH 16
+#else
+    #define LV_COLOR_DEPTH 8
 #endif
 
 /*=========================

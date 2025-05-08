@@ -11,17 +11,17 @@
 
 uint8_t display_format_get_bits_per_pixel(uint32_t pixel_format)
 {
-	if (pixel_format & (PIXEL_FORMAT_BGR_565 | PIXEL_FORMAT_RGB_565 | PIXEL_FORMAT_BGRA_5551))
+	if (pixel_format & (PIXEL_FORMAT_BGR_565 | PIXEL_FORMAT_RGB_565 | PIXEL_FORMAT_BGR_565_SWAP | PIXEL_FORMAT_BGRA_5551))
 		return 16;
 
-	if (pixel_format & (PIXEL_FORMAT_ARGB_8888 | PIXEL_FORMAT_XRGB_8888))
+	if (pixel_format & (PIXEL_FORMAT_ARGB_8888 | PIXEL_FORMAT_XRGB_8888 | PIXEL_FORMAT_ABGR_8888 | PIXEL_FORMAT_XBGR_8888))
 		return 32;
 
-	if (pixel_format & (PIXEL_FORMAT_RGB_888 | PIXEL_FORMAT_BGR_888 | PIXEL_FORMAT_BGRA_5658 |
+	if (pixel_format & (PIXEL_FORMAT_RGB_888 | PIXEL_FORMAT_BGR_888 | PIXEL_FORMAT_BGRA_5658 | PIXEL_FORMAT_RGBA_5658 |
 		                PIXEL_FORMAT_BGRA_6666 | PIXEL_FORMAT_RGBA_6666))
 		return 24;
 
-	if (pixel_format & (PIXEL_FORMAT_A8 | PIXEL_FORMAT_I8))
+	if (pixel_format & (PIXEL_FORMAT_A8 | PIXEL_FORMAT_I8 | PIXEL_FORMAT_L8))
 		return 8;
 
 	if (pixel_format & (PIXEL_FORMAT_A4 | PIXEL_FORMAT_A4_LE | PIXEL_FORMAT_I4))
@@ -42,10 +42,16 @@ const char * display_format_get_name(uint32_t pixel_format)
 	switch (pixel_format) {
 	case PIXEL_FORMAT_ARGB_8888:
 		return "ARGB_8888";
+	case PIXEL_FORMAT_ABGR_8888:
+		return "ABGR_8888";
 	case PIXEL_FORMAT_XRGB_8888:
 		return "XRGB_8888";
+	case PIXEL_FORMAT_XBGR_8888:
+		return "XBGR_8888";
 	case PIXEL_FORMAT_BGR_565:
 		return "RGB_565";
+	case PIXEL_FORMAT_BGR_565_SWAP:
+		return "BGR_565";
 	case PIXEL_FORMAT_RGB_565:
 		return "RGB_565_BE";
 	case PIXEL_FORMAT_BGRA_5551:
@@ -56,6 +62,8 @@ const char * display_format_get_name(uint32_t pixel_format)
 		return "RGB_888";
 	case PIXEL_FORMAT_BGRA_5658:
 		return "ARGB_8565";
+	case PIXEL_FORMAT_RGBA_5658:
+		return "ABGR_8565";
 	case PIXEL_FORMAT_BGRA_6666:
 		return "ARGB_6666";
 	case PIXEL_FORMAT_RGBA_6666:
@@ -80,6 +88,8 @@ const char * display_format_get_name(uint32_t pixel_format)
 		return "I2";
 	case PIXEL_FORMAT_I1:
 		return "I1";
+	case PIXEL_FORMAT_L8:
+		return "L8";
 	case PIXEL_FORMAT_MONO01: /* 0=Black 1=White */
 		return "MONO_01";
 	case PIXEL_FORMAT_MONO10: /* 1=Black 0=White */
@@ -119,6 +129,15 @@ loop_next_line:
 			*buf8++ = c8[0];
 			*buf8++ = c8[1];
 		}
+	} else if (buffer->desc.pixel_format == PIXEL_FORMAT_BGR_565_SWAP) {
+		uint8_t c8[2];
+		c8[0] = ((color.g & 0x1c) << 3) | (color.r >> 3);
+		c8[1] = ((color.b & 0xf8) << 0) | (color.g >> 5);
+
+		for (i = buffer->desc.width; i > 0; i--) {
+			*buf8++ = c8[0];
+			*buf8++ = c8[1];
+		}
 	} else if (buffer->desc.pixel_format == PIXEL_FORMAT_RGB_565) {
 		uint8_t c8[2];
 		c8[1] = ((color.g & 0x1c) << 3) | (color.b >> 3);
@@ -144,11 +163,25 @@ loop_next_line:
 			*buf8++ = color.r;
 			*buf8++ = color.a;
 		}
+	} else if (buffer->desc.pixel_format == PIXEL_FORMAT_ABGR_8888) {
+		for (i = buffer->desc.width; i > 0; i--) {
+			*buf8++ = color.r;
+			*buf8++ = color.g;
+			*buf8++ = color.b;
+			*buf8++ = color.a;
+		}
 	} else if (buffer->desc.pixel_format == PIXEL_FORMAT_XRGB_8888) {
 		for (i = buffer->desc.width; i > 0; i--) {
 			*buf8++ = color.b;
 			*buf8++ = color.g;
 			*buf8++ = color.r;
+			*buf8++ = 0xff;
+		}
+	} else if (buffer->desc.pixel_format == PIXEL_FORMAT_XBGR_8888) {
+		for (i = buffer->desc.width; i > 0; i--) {
+			*buf8++ = color.r;
+			*buf8++ = color.g;
+			*buf8++ = color.b;
 			*buf8++ = 0xff;
 		}
 	} else if (buffer->desc.pixel_format == PIXEL_FORMAT_RGB_888) {
@@ -196,6 +229,17 @@ loop_next_line:
 			*buf8++ = c8[1];
 			*buf8++ = c8[2];
 		}
+	} else if (buffer->desc.pixel_format == PIXEL_FORMAT_RGBA_5658) {
+		uint8_t c8[3];
+		c8[0] = ((color.g & 0x1c) << 3) | (color.r >> 3);
+		c8[1] = ((color.b & 0xf8) << 0) | (color.g >> 5);
+		c8[2] = color.a;
+
+		for (i = buffer->desc.width; i > 0; i--) {
+			*buf8++ = c8[0];
+			*buf8++ = c8[1];
+			*buf8++ = c8[2];
+		}
 	} else if (buffer->desc.pixel_format == PIXEL_FORMAT_A8 ||
 		       buffer->desc.pixel_format == PIXEL_FORMAT_I8) {
 		memset(buf8, color.a, bytes_to_fill);
@@ -211,12 +255,16 @@ loop_next_line:
 				 ((color.a & 0xc0) >> 4) | (color.a >> 6);
 
 		memset(buf8, a8, bytes_to_fill);
-	}else if (buffer->desc.pixel_format == PIXEL_FORMAT_A1 ||
+	} else if (buffer->desc.pixel_format == PIXEL_FORMAT_A1 ||
 		      buffer->desc.pixel_format == PIXEL_FORMAT_A1_LE ||
 		      buffer->desc.pixel_format == PIXEL_FORMAT_I1) {
 		uint8_t a8 = (color.a & 0x80) ? 0xff : 0x00;
 
 		memset(buf8, a8, bytes_to_fill);
+	} else if (buffer->desc.pixel_format == PIXEL_FORMAT_L8) {
+		uint8_t l8 = display_color_luminance(color);
+
+		memset(buf8, l8, bytes_to_fill);
 	} else if (buffer->desc.pixel_format == PIXEL_FORMAT_MONO01) { /* 0=Black 1=White */
 		uint8_t c8 = ((color.r | color.g | color.b) & 0x80) ? 0xff : 0x00;
 

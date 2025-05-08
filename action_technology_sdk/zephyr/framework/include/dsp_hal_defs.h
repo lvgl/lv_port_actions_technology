@@ -297,6 +297,13 @@ enum {
 
     /* configure the encoder ext parameter set, struct encoder_dspfunc_ext_params */
 	DSP_CONFIG_ENCODER_EXT,
+
+    /* prepare to configure a second encoder running in the same session*/
+	DSP_CONFIG_ENCODER_SECOND,
+
+    /* configure to enable data flow toward the second encoder */
+	DSP_CONFIG_ENCODER_ENABLE_SECOND,
+
 };
 
 /* session error state */

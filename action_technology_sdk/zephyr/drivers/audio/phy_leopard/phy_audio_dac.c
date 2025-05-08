@@ -3509,11 +3509,12 @@ static int phy_dac_disable(struct device *dev, void *param)
 		uint8_t is_busy;
         if (adc_dev) {
 			phy_audio_control(adc_dev, PHY_CMD_IS_ADC_BUSY, &is_busy);
-      adc_reset_control(false);
+      		adc_reset_control(false);
 			if (!is_busy)
-      {
+            {
+                adc_reset_control(false);
 				acts_clock_peripheral_disable(CLOCK_ID_ADC);
-      }
+            }
 		}
 		audio_pll_unset(data->audio_pll_index);
 #else

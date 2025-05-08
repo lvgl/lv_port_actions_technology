@@ -112,17 +112,21 @@ static int _sys_standby_check_auto_powerdown(void)
 
 static int _sys_standby_enter_s1(void)
 {
-	char *cur_app = app_manager_get_current_app();
+#ifndef CONFIG_AEM_WATCH_SUPPORT
+    char *cur_app = app_manager_get_current_app();
+#endif
 
 	standby_context->standby_state = STANDBY_S1;
-
+#ifdef CONFIG_AEM_WATCH_SUPPORT
+	app_manager_notify_app("main", MSG_EARLY_SUSPEND_APP);
+#else
 	if (!cur_app) {
 		app_manager_notify_app("main", MSG_EARLY_SUSPEND_APP);
 	}
 	else if(strcmp(APP_ID_OTA, cur_app)) {
 		app_manager_notify_app(cur_app, MSG_EARLY_SUSPEND_APP);
 	}
-
+#endif
 #ifndef CONFIG_SIMULATOR
 	pm_early_suspend();
 #endif
@@ -165,13 +169,16 @@ static int _sys_standby_exit_s1(void)
 #endif
 
 	cur_app = app_manager_get_current_app();
+#ifdef CONFIG_AEM_WATCH_SUPPORT
+    app_manager_notify_app("main", MSG_LATE_RESUME_APP);
+#else
 	if (!cur_app) {
 		app_manager_notify_app("main", MSG_LATE_RESUME_APP);
 	}
 	else if (strcmp(APP_ID_OTA, cur_app)) {
 		app_manager_notify_app(cur_app, MSG_LATE_RESUME_APP);
 	}
-
+#endif
 	/**clear ble state stanyby*/
 	SYS_LOG_INF("Exit S1");
 

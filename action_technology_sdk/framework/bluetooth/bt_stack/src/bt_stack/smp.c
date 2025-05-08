@@ -3066,6 +3066,10 @@ static uint8_t smp_pairing_req_deal(struct bt_smp *smp, struct bt_smp_pairing *d
 
 		rsp->init_key_dist &= RECV_KEYS_SC;
 		rsp->resp_key_dist &= SEND_KEYS_SC;
+		if (conn->id > 0) {
+			rsp->init_key_dist &= (~(LINK_DIST));
+			rsp->resp_key_dist &= (~(LINK_DIST));
+		}
 	} else {
 		rsp->init_key_dist &= (~(LINK_DIST));
 		rsp->resp_key_dist &= (~(LINK_DIST));

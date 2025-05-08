@@ -72,6 +72,7 @@ struct fs_file_system_t {
 					uint32_t cluster, uint32_t blk_ofs);
 	int (*opendir_cluster)(struct fs_dir_t *zdp, const char *path,
 					uint32_t cluster, uint32_t blk_ofs);
+	int (*size)(struct fs_file_t *filp);
 };
 
 /**

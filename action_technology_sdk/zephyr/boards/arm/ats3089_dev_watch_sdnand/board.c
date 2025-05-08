@@ -38,9 +38,9 @@ static const struct acts_pin_config board_pin_config[] = {
     /*UART2 */
 #if IS_ENABLED(CONFIG_UART_2)
     /* uart1 tx */
-    PIN_MFP_SET(GPIO_63,  UART2_MFP_SEL),
+    PIN_MFP_SET(GPIO_63,  UART2_MFP_CFG),
     /* uart1 rx */
-    PIN_MFP_SET(GPIO_62,  UART2_MFP_SEL),
+    PIN_MFP_SET(GPIO_62,  UART2_MFP_CFG),
 #endif
 
 #if IS_ENABLED(CONFIG_SPI_FLASH_0)

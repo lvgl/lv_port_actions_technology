@@ -27,6 +27,9 @@
 #include "ams_service.h"
 #include "ams_service_disc.h"
 #include "ancs_ams_log.h"
+#if CONFIG_AEM_WATCH_SUPPORT
+#include "aem_ams_ancs_dev.h"
+#endif
 
 static const char *remote_command_str[] = {
     "play", "pause", "toggle play pause", "next track", "previous track", "volume up",
@@ -102,6 +105,12 @@ static float __atof(const char *s)
 
     return (float)n + f;
 }
+#if CONFIG_AEM_WATCH_SUPPORT
+uint8_t aem_get_ams_pending_flag(void)
+{
+    return ams_write_pending_flag;
+}
+#endif
 
 static void write_func(struct bt_conn *conn, uint8_t err,
 	struct bt_gatt_write_params *params)
@@ -337,10 +346,22 @@ static void set_player(uint8_t attr_id, uint8_t *value, uint16_t len)
         ams_log_inf("[Player] playback state: %s, rate: %.2f, elapsed time: %.2fs\n",
             playback_state_str[player.playback.state], player.playback.rate, player.playback.elapsed_time);
         ble_ancs_ams_notify_playback_pos(player.playback.elapsed_time);
+#if CONFIG_AEM_WATCH_SUPPORT
+        uint32_t elapsed_time = (uint32_t)((player.playback.elapsed_time * 1000) / 1000);
+        aem_ams_state_info_t info = {0};
+        info.state = player.playback.state;
+        info.elapsed_time = elapsed_time;
+        aem_ble_ams_data_ind(AMS_MUSIC_STATE,(uint8_t*)&info,sizeof(aem_ams_state_info_t));
+#endif
         break;
     case PLAYER_ATTR_VOLUME:
         player.volume = __atof(value);
         ams_log_inf("[Player] volume: %.2f%%\n", player.volume * 100.0);
+#if CONFIG_AEM_WATCH_SUPPORT
+        int vol = (int)(player.volume* 10000.0) / 625;
+        uint8_t volume = (uint8_t)vol;
+        aem_ble_ams_data_ind(AMS_VOL,(uint8_t*)&volume,sizeof(uint8_t));
+#endif        
         break;
     default:
         break;
@@ -378,6 +399,9 @@ static void set_track(uint8_t attr_id, uint8_t *value, uint16_t len)
         memcpy(track.artist, value, cpy_len);
         track.artist[cpy_len] = '\0';
         ams_log_inf("[Track] artist: %s\n", track.artist);
+#if CONFIG_AEM_WATCH_SUPPORT
+        aem_ble_ams_data_ind(AMS_MUSIC_PLAYER,(uint8_t*)&track.artist[0],cpy_len);
+#endif 
         break;
     case TRACK_ATTR_ALBUM:
         memcpy(track.album, value, cpy_len);
@@ -388,10 +412,17 @@ static void set_track(uint8_t attr_id, uint8_t *value, uint16_t len)
         memcpy(track.title, value, cpy_len);
         track.title[cpy_len] = '\0';
         ams_log_inf("title: %s\n", track.title);
+#if CONFIG_AEM_WATCH_SUPPORT
+        aem_ble_ams_data_ind(AMS_MUSIC_NAME,(uint8_t*)&track.title[0],cpy_len);
+#endif 
         break;
     case TRACK_ATTR_DURATION:
         track.duration = __atof(value);
         ams_log_inf("duration: %.2fs\n", track.duration);
+#if CONFIG_AEM_WATCH_SUPPORT
+        uint16_t duration = (uint16_t)track.duration;
+        aem_ble_ams_data_ind(AMS_MUSIC_INFO,(uint8_t*)&duration,sizeof(uint16_t));
+#endif
         break;
     }  
 }

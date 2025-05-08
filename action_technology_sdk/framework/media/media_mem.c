@@ -71,7 +71,8 @@ static const struct media_memory_block media_memory_config[] = {
 		.stream_type = AUDIO_STREAM_MUSIC,
 		.mem_cell = {
             {.mem_type = OUTPUT_PKG_HDR,  .mem_base = (uint32_t)&playback_input_buffer[0], .mem_size = 0x100,},
-			{.mem_type = INPUT_PLAYBACK,  .mem_base = (uint32_t)&playback_input_buffer[0x100], .mem_size = 0x2B00,},
+			{.mem_type = OUTPUT_RESAMPLE, .mem_base = (uint32_t)&playback_input_buffer[0x100], .mem_size = 0x400,},
+			{.mem_type = INPUT_PLAYBACK,  .mem_base = (uint32_t)&playback_input_buffer[0x500], .mem_size = 0x2700,},
 			{.mem_type = OUTPUT_DECODER,  .mem_base = (uint32_t)&output_decoder[0], .mem_size = sizeof(output_decoder),},
 			{.mem_type = OUTPUT_PLAYBACK, .mem_base = (uint32_t)&playback_output_buffer[0], .mem_size = sizeof(playback_output_buffer),},
 			{.mem_type = OUTPUT_PCM,      .mem_base = (uint32_t)&output_pcm[0], .mem_size = sizeof(output_pcm),},
@@ -138,8 +139,10 @@ static const struct media_memory_block media_memory_config[] = {
         #ifdef CONFIG_MEDIA_EFFECT
 			{.mem_type = DAE_PARAM,  .mem_base = (uint32_t)&dae_para, .mem_size = sizeof(dae_para),},
         #endif
+			{.mem_type = INPUT_VOICE_REC, .mem_base = (uint32_t)&playback_input_buffer[0x1C58], .mem_size = 0x200 ,},
+			{.mem_type = OUTPUT_VOICE_REC, .mem_base = (uint32_t)&playback_input_buffer[0x1E58], .mem_size = 0x1000 ,},
 
-            {.mem_type = OUTPUT_PKG_HDR,  .mem_base = (uint32_t)&playback_input_buffer[0x2858], .mem_size = 0x100,},
+            {.mem_type = OUTPUT_PKG_HDR,  .mem_base = (uint32_t)&playback_input_buffer[0x2E58], .mem_size = 0x100,},
 		},
 	},
 
@@ -184,9 +187,9 @@ static const struct media_memory_block media_memory_config[] = {
 		.stream_type = AUDIO_STREAM_TTS,
 		.mem_cell = {
 			{.mem_type = OUTPUT_PCM,      .mem_base = (uint32_t)&output_pcm[0], .mem_size = sizeof(output_pcm),},
-            {.mem_type = INPUT_PLAYBACK,  .mem_base = (uint32_t)&playback_input_buffer[0], .mem_size = 0x800,},
-			{.mem_type = OUTPUT_DECODER,  .mem_base = (uint32_t)&playback_input_buffer[0x800], .mem_size = 0x400,},
-			{.mem_type = OUTPUT_PLAYBACK, .mem_base = (uint32_t)&playback_input_buffer[0xc00], .mem_size = 0x800,},
+            {.mem_type = INPUT_PLAYBACK,  .mem_base = (uint32_t)&playback_input_buffer[0x1800], .mem_size = 0x800,},
+			{.mem_type = OUTPUT_DECODER,  .mem_base = (uint32_t)&playback_input_buffer[0x2000], .mem_size = 0x400,},
+			{.mem_type = OUTPUT_PLAYBACK, .mem_base = (uint32_t)&playback_input_buffer[0x2400], .mem_size = 0x800,},
 		},
 	},
 #else

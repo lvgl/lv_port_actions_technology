@@ -158,7 +158,9 @@ struct bt_hci_rp_acts_vs_read_bt_us_cnt {
 struct bt_hci_cp_sync_perior_adv_params {
 	uint16_t sync_handle;
 	uint8_t sync_enable;
-	uint8_t rsv;
+	uint8_t sync_num;
+	uint8_t sync_no;
+	uint8_t rsv[3];
 }__packed;
 
 /* Events */

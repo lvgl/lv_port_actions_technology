@@ -1,0 +1,18 @@
+# Copyright (c) 2020 Actions Technology Co., Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+config LIBDL_MODULE
+    bool "Enable dynamic module APIs"
+    default n
+	help
+	  This option enables dynamic module
+
+if LIBDL_MODULE
+
+config LIBDL_MODULE_HEAP_SIZE
+	int "heap size for dynamic module"
+	default 32768
+	help
+	  This option set heap size for dynamic module
+
+endif # LIBDL_MODULE

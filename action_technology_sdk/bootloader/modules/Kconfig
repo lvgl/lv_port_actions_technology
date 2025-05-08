@@ -67,6 +67,10 @@ comment "loramac-node module not available."
 comment "CANopenNode module not available."
 	depends on !ZEPHYR_CANOPENNODE_MODULE
 
+
+comment "cmsis-nn module not available."
+	depends on !ZEPHYR_CMSIS_NN_MODULE
+
 # This ensures that symbols are available in Kconfig for dependency checking
 # and referencing, while keeping the settings themselves unavailable when the
 # modules are not present in the workspace

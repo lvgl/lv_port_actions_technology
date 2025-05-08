@@ -67,7 +67,13 @@ void sys_event_send_message_new(uint32_t message, uint8_t cmd, void* extra_data,
 }
 
 
-
+#ifdef CONFIG_AEM_WATCH_SUPPORT
+extern void aem_input_event_handle(uint32_t key_event);
+void sys_event_report_input(uint32_t key_event)
+{
+	aem_input_event_handle(key_event);
+}
+#else
 void sys_event_report_input(uint32_t key_event)
 {
 	struct app_msg  msg = {0};
@@ -76,6 +82,7 @@ void sys_event_report_input(uint32_t key_event)
 	msg.value = key_event;
 	send_async_msg("main", &msg);
 }
+#endif
 
 void sys_event_notify(uint32_t event)
 {

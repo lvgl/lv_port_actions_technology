@@ -2689,13 +2689,13 @@ int hostif_bt_le_per_adv_sync_create(const struct bt_le_per_adv_sync_param *para
 
 }
 
-int hostif_bt_le_per_adv_sync_comp_set(struct bt_le_per_adv_sync *per_adv_sync, uint8_t sync_enable, uint8_t rsv)
+int hostif_bt_le_per_adv_sync_comp_set(struct bt_le_per_adv_sync *per_adv_sync, uint8_t sync_enable, uint8_t sync_num, uint8_t sync_no)
 {
 	int ret;
 	int prio;
 
 	prio = hostif_set_negative_prio();
-	ret = bt_le_per_adv_sync_comp_set(per_adv_sync, sync_enable, rsv);
+	ret = bt_le_per_adv_sync_comp_set(per_adv_sync, sync_enable, sync_num, sync_no);
 	hostif_revert_prio(prio);
 
 	return ret;

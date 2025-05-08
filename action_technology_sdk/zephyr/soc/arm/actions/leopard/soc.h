@@ -50,6 +50,8 @@ int soc_dvfs_opt(void);
 void soc_watchdog_clear(void);
 void wd_clear_wdreset_cnt(void);
 uint8_t ipmsg_btc_get_ic_pkt(void);
+int soc_get_app_version(char *ver, int maxlen);
+
 
 //#define CONFIG_SLEEP_DBG 
 #ifdef CONFIG_SLEEP_DBG

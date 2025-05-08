@@ -23,6 +23,17 @@
  */
 
 /**
+ * @brief View stadk back modes
+ */
+enum view_stack_back_mode {
+	VIEW_STACK_BACK_HOME = 0,     /* back to bottom level directly */
+	VIEW_STACK_BACK_PREV,         /* back to previous level without preserving the bottom level */
+	VIEW_STACK_BACK_PREV_OR_HOME, /* back to previous level if not at bottom level */
+
+	NUM_VIEW_STACK_BACK_MODES,
+};
+
+/**
  * @typedef view_group_scroll_cb_t
  * @brief Callback to notify view scroll result
  */
@@ -56,13 +67,6 @@ typedef struct view_group_dsc {
  * @retval 0 on success else negative code.
  */
 int view_stack_init(void);
-
-/**
- * @brief Deinitialize the view stack
- *
- * @retval 0 on success else negative code.
- */
-void view_stack_deinit(void);
 
 /**
  * @brief Get the number of elements of the view stack
@@ -109,20 +113,50 @@ uint16_t view_stack_level_get_view_id(uint16_t level_id);
 void view_stack_clean(void);
 
 /**
- * @brief Pop all elements until the first from the view stack
+ * @brief Go back to previous level of the stack
+ *
+ * @param mode back mode, see @enum view_stack_back_mode
  *
  * @retval 0 on success else negative code.
  */
-int view_stack_pop_home(void);
-
-#define view_stack_pop_until_first view_stack_pop_home
+int view_stack_back(int mode);
 
 /**
- * @brief Pop one element except the first from the view stack
+ * @brief Got back directly to the bottom(home) level of the stack
  *
  * @retval 0 on success else negative code.
  */
-int view_stack_pop(void);
+static inline int view_stack_back_home(void)
+{
+	return view_stack_back(VIEW_STACK_BACK_HOME);
+}
+
+/**
+ * @brief Got back to the previous level of the stack
+ *
+ * If at bottom level, this will take action like view_stack_clean()
+ *
+ * @retval 0 on success else negative code.
+ */
+static inline int view_stack_back_prev(void)
+{
+	return view_stack_back(VIEW_STACK_BACK_PREV);
+}
+
+/**
+ * @brief Got back to the previous level if exist of the stack
+ *
+ * If already at bottom level, this will do nothing
+ *
+ * @retval 0 on success else negative code.
+ */
+static inline int view_stack_back_prev_or_home(void)
+{
+	return view_stack_back(VIEW_STACK_BACK_PREV_OR_HOME);
+}
+
+#define view_stack_pop_home view_stack_back_home
+#define view_stack_pop      view_stack_back_prev_or_home
 
 /**
  * @brief Push view cache to the view stack
@@ -214,13 +248,29 @@ int view_stack_jump_view(uint16_t view_id, const void *presenter);
 void view_stack_dump(void);
 
 /**
- * @brief Dump the view stack
+ * @brief Get switch effect type
+ *
+ * @retval switch effect type.
+ */
+uint8_t view_stack_get_effect_type(void);
+
+/**
+ * @brief Set switch effect type
  *
  * @param type type of switch effect
  *
  * @retval N/A.
  */
-void view_stack_set_switch_effect(uint8_t type);
+void view_stack_set_effect_type(uint8_t type);
+
+/**
+ * @brief Set switch effect touch tracking enabled
+ *
+ * @param enabled enable touch tracking or not
+ *
+ * @retval N/A.
+ */
+void view_stack_set_effect_touch_tracking(bool enabled);
 
 /**
  * @brief View group change focused view index

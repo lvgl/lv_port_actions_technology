@@ -6,6 +6,10 @@ if(CONFIG_MBEDTLS_BUILTIN)
 	  MBEDTLS_CONFIG_FILE="${CONFIG_MBEDTLS_CFG_FILE}"
 	)
 
+  zephyr_include_directories(
+	 ${ZEPHYR_CURRENT_MODULE_DIR}/mbedtls/include
+	)
+
 	set(MBEDTLS_DIR ${ZEPHYR_CURRENT_MODULE_DIR} CACHE PATH "Mbedtls Module")
 
   target_include_directories(mbedTLS INTERFACE

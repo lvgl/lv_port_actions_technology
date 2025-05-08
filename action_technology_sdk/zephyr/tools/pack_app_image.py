@@ -20,6 +20,21 @@ from ctypes import *;
 BINARY_BLOCK_SIZE_ALIGN = 512
 IMAGE_HEAD_SIZE = 512
 
+FW_VER_OFFSET = 64
+FW_VERSION_FILE_NAME="fw_version.bin"
+
+
+def img_add_version(img_bin_f):
+    ver_file = os.path.join(os.path.dirname(img_bin_f), FW_VERSION_FILE_NAME)
+    if os.path.exists(ver_file) == True:
+        with open(ver_file, 'rb') as fv:
+            ver_str = fv.read()
+            fv.close()
+            with open(img_bin_f, 'rb+') as f:
+                f.seek(FW_VER_OFFSET, 0)
+                f.write(ver_str)
+                f.close()
+
 def boot_padding(filename, align = BINARY_BLOCK_SIZE_ALIGN):
     fsize = os.path.getsize(filename)
     if fsize % align:
@@ -122,6 +137,7 @@ def bootloader_img_post_build(imge_name):
         f.close()
         h_magic0,h_magic1= struct.unpack('II',data)
         if(h_magic0 == 0x48544341 and h_magic1 == 0x41435448) or (h_magic0 == 0x0 and h_magic1 == 0x0) :
+            img_add_version(imge_name)
             img_header_add(imge_name)
             image_add_cksum(imge_name, 0)
             boot_padding(imge_name)
@@ -201,7 +217,7 @@ def app_img_post_build(imge_name):
     #boot_padding(imge_name)
 
 def boot_post_build(imge_name):
-    with open(imge_name, 'rb+') as f:
+    with open(imge_name, 'rb+') as f:        
         f.seek(0x200, 0)
         data = f.read(8)
         f.close()

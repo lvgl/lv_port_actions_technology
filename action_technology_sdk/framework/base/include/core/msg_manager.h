@@ -123,6 +123,9 @@ typedef void (*MSG_CALLBAK)(struct app_msg*, int, void*);
 #define send_async_msg(receiver, msg) \
 			msg_manager_send_async_msg(receiver, msg)
 
+#define IRQ_send_async_msg(receiver, msg) \
+			msg_manager_send_async_IRQ(receiver, msg)
+
 #define receive_msg(msg, timeout) \
 			msg_manager_receive_msg(msg, timeout)
 
@@ -179,6 +182,7 @@ bool msg_manager_init(void);
  * @return false send failed
  */
 bool msg_manager_send_async_msg(char * receiver , struct app_msg *msg);
+bool msg_manager_send_async_IRQ(char *receiver, struct app_msg *msg);
 
 /**
  * @brief receive message

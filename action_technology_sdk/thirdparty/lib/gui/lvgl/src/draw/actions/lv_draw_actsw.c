@@ -212,6 +212,51 @@ void lv_draw_actsw_blit(lv_draw_unit_t * draw_unit, const lv_draw_buf_t * src_bu
                 return;
         }
     }
+#if LV_COLOR_DEPTH == 8
+    else if(dest_buf->header.cf == LV_COLOR_FORMAT_L8) {
+        switch(src_buf->header.cf) {
+            case LV_COLOR_FORMAT_ARGB8565:
+                sw_blend_argb8565_over_l8(dest8, src_data, dest_buf->header.stride,
+                                          src_buf->header.stride, dest_w, dest_h);
+                break;
+            case LV_COLOR_FORMAT_I8:
+                src_data += 256 * 4;
+                sw_blend_index8_over_l8(dest8, src_data, (uint32_t *)src_buf->data, dest_buf->header.stride,
+                                        src_buf->header.stride, dest_w, dest_h);
+                break;
+            case LV_COLOR_FORMAT_I4:
+                src_data += 16 * 4;
+                sw_blend_index4_over_l8(dest8, src_data, (uint32_t *)src_buf->data, dest_buf->header.stride,
+                                        src_buf->header.stride, src_bofs, dest_w, dest_h);
+                break;
+            case LV_COLOR_FORMAT_I2:
+                src_data += 4 * 4;
+                sw_blend_index2_over_l8(dest8, src_data, (uint32_t *)src_buf->data, dest_buf->header.stride,
+                                        src_buf->header.stride, src_bofs, dest_w, dest_h);
+                break;
+            case LV_COLOR_FORMAT_I1:
+                src_data += 2 * 4;
+                sw_blend_index1_over_l8(dest8, src_data, (uint32_t *)src_buf->data, dest_buf->header.stride,
+                                        src_buf->header.stride, src_bofs, dest_w, dest_h);
+                break;
+            case LV_COLOR_FORMAT_A8:
+                sw_blend_a8_over_l8(dest8, src_data, color32, dest_buf->header.stride,
+                                    src_buf->header.stride, dest_w, dest_h);
+                break;
+            case LV_COLOR_FORMAT_A4:
+                sw_blend_a4_over_l8(dest8, src_data, color32, dest_buf->header.stride,
+                                    src_buf->header.stride, src_bofs, dest_w, dest_h);
+                break;
+            case LV_COLOR_FORMAT_A2:
+                sw_blend_a2_over_l8(dest8, src_data, color32, dest_buf->header.stride,
+                                    src_buf->header.stride, src_bofs, dest_w, dest_h);
+                break;
+            default:
+                LV_LOG_ERROR("Unsupported src cf %x", src_buf->header.cf);
+                return;
+        }
+    }
+#endif /* LV_COLOR_DEPTH == 8 */
     else {
         LV_LOG_ERROR("Unsupported dest cf %x", dest_buf->header.cf);
         return;
@@ -241,7 +286,7 @@ void lv_draw_buf_actsw_clear(lv_draw_buf_t * draw_buf, const lv_area_t * area)
 }
 
 void lv_draw_buf_actsw_copy(lv_draw_buf_t * dest, const lv_area_t * dest_area,
-                             const lv_draw_buf_t * src, const lv_area_t * src_area)
+                            const lv_draw_buf_t * src, const lv_area_t * src_area)
 {
     uint8_t * dest_bufc;
     uint8_t * src_bufc;
@@ -291,6 +336,9 @@ static bool _sw_dest_cf_supported(lv_color_format_t cf)
         case LV_COLOR_FORMAT_ARGB8565:
         case LV_COLOR_FORMAT_RGB888:
         case LV_COLOR_FORMAT_ARGB8888:
+#if LV_COLOR_DEPTH == 8
+        case LV_COLOR_FORMAT_L8:
+#endif
             return true;
         case LV_COLOR_FORMAT_XRGB8888:
         case LV_COLOR_FORMAT_RGB565A8:
@@ -303,8 +351,12 @@ static bool _sw_src_cf_supported(lv_color_format_t cf)
 {
     switch(cf) {
         case LV_COLOR_FORMAT_ARGB8565:
+#if LV_COLOR_DEPTH == 8
+        case LV_COLOR_FORMAT_I1:
+        case LV_COLOR_FORMAT_I2:
+        case LV_COLOR_FORMAT_I4:
+#endif
         case LV_COLOR_FORMAT_I8:
-        case LV_COLOR_FORMAT_A1:
         case LV_COLOR_FORMAT_A2:
         case LV_COLOR_FORMAT_A4:
         case LV_COLOR_FORMAT_A8:
@@ -315,9 +367,12 @@ static bool _sw_src_cf_supported(lv_color_format_t cf)
         case LV_COLOR_FORMAT_ARGB8888:
         case LV_COLOR_FORMAT_XRGB8888:
         case LV_COLOR_FORMAT_RGB888:
+        case LV_COLOR_FORMAT_A1:
+#if LV_COLOR_DEPTH != 8
         case LV_COLOR_FORMAT_I1:
         case LV_COLOR_FORMAT_I2:
         case LV_COLOR_FORMAT_I4:
+#endif
         default:
             return false;
     }
@@ -405,6 +460,37 @@ static void _sw_transform(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t 
                 return;
         }
     }
+#if LV_COLOR_DEPTH == 8
+    else if(dest_buf->header.cf == LV_COLOR_FORMAT_L8) {
+        switch(src_buf->header.cf) {
+            case LV_COLOR_FORMAT_ARGB8565:
+                transform_fn = sw_transform_argb8565_over_l8;
+                break;
+            case LV_COLOR_FORMAT_I8:
+                transform_index_fn = sw_transform_index8_over_l8;
+                src_data += 1024;
+                break;
+            case LV_COLOR_FORMAT_I4:
+                transform_index_fn = sw_transform_index4_over_l8;
+                src_data += 64;
+                break;
+            case LV_COLOR_FORMAT_I2:
+                transform_index_fn = sw_transform_index2_over_l8;
+                src_data += 16;
+                break;
+            case LV_COLOR_FORMAT_I1:
+                transform_index_fn = sw_transform_index1_over_l8;
+                src_data += 8;
+                break;
+            case LV_COLOR_FORMAT_A8:
+                transform_alpha_fn = sw_transform_a8_over_l8;
+                break;
+            default:
+                LV_LOG_ERROR("Unsupported src cf %x", src_buf->header.cf);
+                return;
+        }
+    }
+#endif /* LV_COLOR_DEPTH == 8 */
     else {
         LV_LOG_ERROR("Unsupported dest cf %x", dest_buf->header.cf);
         return;
@@ -567,7 +653,7 @@ static void _sw_draw_image(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t
             lv_area_move(&rel_img_area, -coords->x1, -coords->y1);
 
             lv_draw_actsw_blit(draw_unit, decoder_dsc.decoded, &rel_img_area,
-                     draw_dsc->recolor, draw_dsc->opa);
+                               draw_dsc->recolor, draw_dsc->opa);
         }
 
         draw_unit->clip_area = clip_area_ori;
@@ -611,7 +697,7 @@ static void _sw_draw_glyph(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * gly
     draw_unit->clip_area = &blend_area;
 
     lv_draw_actsw_blit(draw_unit, glyph_dsc->glyph_data, &rel_coords,
-             glyph_dsc->color, glyph_dsc->opa);
+                       glyph_dsc->color, glyph_dsc->opa);
 
     draw_unit->clip_area = clip_area_ori;
 }
@@ -668,11 +754,11 @@ static void _sw_draw_letter_cb(lv_draw_unit_t * draw_unit,
 static void _sw_draw_label(lv_draw_unit_t * draw_unit,
                 const lv_draw_label_dsc_t * dsc, const lv_area_t * coords)
 {
-  if(dsc->opa <= LV_OPA_MIN) return;
+    if(dsc->opa <= LV_OPA_MIN) return;
 
-  LV_PROFILER_BEGIN;
-  lv_draw_label_iterate_characters(draw_unit, dsc, coords, _sw_draw_letter_cb);
-  LV_PROFILER_END;
+    LV_PROFILER_BEGIN;
+    lv_draw_label_iterate_characters(draw_unit, dsc, coords, _sw_draw_letter_cb);
+    LV_PROFILER_END;
 }
 
 static void _sw_draw_execute(lv_draw_actsw_unit_t * u)

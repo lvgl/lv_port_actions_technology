@@ -22,6 +22,7 @@
 #ifdef CONFIG_SYS_WAKELOCK
 #include <sys_wakelock.h>
 #endif
+#include "app_switch.h"
 
 LOG_MODULE_DECLARE(btcall, LOG_LEVEL_INF);
 
@@ -589,6 +590,8 @@ void btcall_view_init(void)
 	sys_wake_lock(PARTIAL_WAKE_LOCK);
 #endif
 
+	app_switch_lock(1);
+
 	SYS_LOG_INF("ok\n");
 }
 
@@ -613,6 +616,8 @@ void btcall_view_deinit(void)
 #ifdef CONFIG_SYS_WAKELOCK
 	sys_wake_unlock(PARTIAL_WAKE_LOCK);
 #endif
+
+	app_switch_unlock(1);
 
 	SYS_LOG_INF("ok\n");
 }

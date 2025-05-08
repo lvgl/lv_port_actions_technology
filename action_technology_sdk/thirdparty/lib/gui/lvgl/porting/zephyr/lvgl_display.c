@@ -412,7 +412,7 @@ static void lvgl_flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t *
             _lv_area_join(&flush_data->area, &flush_data->area, area);
         }
 
-         if(!lv_display_flush_is_last(disp)) {
+        if(!lv_display_flush_is_last(disp)) {
             lv_display_flush_ready(disp);
             goto out_exit;
         }

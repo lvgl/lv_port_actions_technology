@@ -367,7 +367,9 @@ static int dma_acts_get_status(const struct device *dev, uint32_t channel,
 {
 	struct dma_acts_data *ddev = DEV_DATA(dev);
 	struct acts_dma_chan_reg *cregs = DMA_CHAN(ddev->base, channel);
+	struct acts_dma_reg *gregs = (struct acts_dma_reg *)ddev->base;
 	struct dma_acts_channel *chan  = &ddev->channels[channel];
+	uint32_t hf_pending, tc_pending;
 
 	if (channel >= ddev->chan_num || stat == NULL) {
 		return -EINVAL;
@@ -381,6 +383,11 @@ static int dma_acts_get_status(const struct device *dev, uint32_t channel,
 		stat->pending_length = 0;
 	}
 	stat->dir = chan->channel_direction;
+
+	hf_pending = DMA_PD_HFIP(channel) & gregs->dma_ip & gregs->dma_ie;
+	tc_pending = DMA_PD_TCIP(channel) & gregs->dma_ip & gregs->dma_ie;
+	stat->pending = (hf_pending || tc_pending);
+
 	return 0;
 }
 
@@ -425,7 +432,8 @@ static void dma_acts_free(const struct device *dev, uint32_t channel)
 {
 	struct dma_acts_data *ddev = DEV_DATA(dev);
 	uint32_t key;
-
+	if(channel >= ddev->chan_num)
+		return;
 	key = irq_lock();
 	if(!ddev->channels[channel].busy){
 		printk("err:dma chan%d is free\n", channel);

@@ -147,6 +147,7 @@ enum {
 	ZFD_IOCTL_POLL_UPDATE,
 	ZFD_IOCTL_POLL_OFFLOAD,
 	ZFD_IOCTL_SET_LOCK,
+	ZFD_IOCTL_STAT,
 };
 
 #ifdef __cplusplus

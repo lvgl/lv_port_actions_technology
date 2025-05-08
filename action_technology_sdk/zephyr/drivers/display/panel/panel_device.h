@@ -25,13 +25,21 @@
 /**********************
  *      TYPEDEFS
  **********************/
+
+enum lcd_panel_pin_state {
+	PANEL_PIN_STATE_ON = 0,  /* All pins on */
+	PANEL_PIN_STATE_WR, /* All pins on except TE which can write() */
+	PANEL_PIN_STATE_IDLE,    /* Only CSX/reset/power on */
+	PANEL_PIN_STATE_OFF,     /* All pins off */
+};
+
 struct lcd_panel_ops {
 	/* all ops return 0 on success else negative code by default */
 
 	/* init sequence after power on */
 	int (*init)(const struct device *dev);
-	/* detect connected or not */
-	int (*detect)(const struct device *dev);
+	/* detect connected state, and return the panel ID in param "id" if connected */
+	int (*detect)(const struct device *dev, uint32_t *id);
 	/* blanking on (display off) */
 	int (*blanking_on)(const struct device *dev);
 	/* blanking off (display on) */
@@ -101,13 +109,11 @@ struct lcd_panel_config {
 
 struct lcd_panel_data {
 	const struct lcd_panel_config *config;
+	const struct device *de_dev;
 	const struct device *lcdc_dev;
 	const struct display_callback *callback;
 	struct display_buffer_descriptor refr_desc;
-
-#if CONFIG_PANEL_PORT_TYPE == DISPLAY_PORT_QSPI_SYNC
-	const struct device *de_dev;
-#endif
+	uint32_t panel_id;
 
 #ifdef CONFIG_PANEL_RESET_GPIO
 	const struct device *reset_gpio;
@@ -143,17 +149,18 @@ struct lcd_panel_data {
 #endif
 #endif /* CONFIG_PANEL_ESD_CHECK_PERIOD > 0 */
 
-	struct k_work resume_work;
 #ifdef CONFIG_LCD_WORK_QUEUE
 	struct k_work_q pm_workq;
 #endif
+	struct k_work resume_work;
+	struct k_mutex pm_mutex;
 
-	uint32_t pm_state;
+	uint8_t pin_state;
+	uint8_t pm_state;
 	uint8_t pm_changing : 1; /* power state changing */
 	uint8_t te_active : 1;
-	uint8_t __reserved : 6;
+	uint8_t aod_mode;
 
-	uint8_t disp_on : 1;
 	uint8_t in_sleep : 1;
 	/* indicate transferring the last part of frame */
 	uint8_t transfering_last : 1;
@@ -218,6 +225,20 @@ static inline void lcd_panel_wake_unlock(void)
 {
 #ifdef CONFIG_SYS_WAKELOCK
 	sys_wake_unlock_ext(FULL_WAKE_LOCK, DISPLAY_WAKE_LOCK_USER);
+#endif
+}
+
+static inline void lcd_panel_partial_wake_lock(void)
+{
+#ifdef CONFIG_SYS_WAKELOCK
+	sys_wake_lock_ext(PARTIAL_WAKE_LOCK, DISPLAY_WAKE_LOCK_USER);
+#endif
+}
+
+static inline void lcd_panel_partial_wake_unlock(void)
+{
+#ifdef CONFIG_SYS_WAKELOCK
+	sys_wake_unlock_ext(PARTIAL_WAKE_LOCK, DISPLAY_WAKE_LOCK_USER);
 #endif
 }
 

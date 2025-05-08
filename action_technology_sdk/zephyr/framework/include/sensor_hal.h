@@ -14,6 +14,10 @@
 /******************************************************************************/
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /******************************************************************************/
 //constants
 /******************************************************************************/
@@ -81,6 +85,10 @@ void sensor_hal_config_tm(int id, int ms);
 uint32_t sensor_hal_get_tm(int id);
 uint32_t sensor_hal_get_30K_counter(int id);
 void sensor_hal_clear_tm_pending(int id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _SENSOR_HAL_H */
 

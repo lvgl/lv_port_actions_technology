@@ -158,6 +158,47 @@ static int pts_disconnect(const struct shell *shell, size_t argc, char *argv[])
 	return 0;
 }
 
+
+/* Set by app */
+ uint8_t reset_a2dp_sbc_codec[] = {
+	BT_A2DP_AUDIO << 4,
+	BT_A2DP_SBC,
+	0x21,	/* 44100, join stereo */
+	0x15,	/*  Block length: 16, subbands:8, Allocation Method: Londness */
+	0x02,	/* min bitpool */
+	0x35	/* max bitpool */
+};
+
+static const int32_t test_a2dp_audio_interval = 10;
+static uint8_t send_audio_start;
+static struct k_delayed_work bt_a2dp_send_audio_work;
+
+uint8_t *bt_test_get_sbc_data(uint16_t *len);
+
+ void bredr_a2dp_send_audio(struct k_work *work)
+{
+	uint8_t *data;
+	uint16_t len;
+
+	if (!send_audio_start) {
+		LOG_INF("a2dp not connected!");
+		return;
+	}
+
+	if (bt_manager_get_connected_dev_num() == 0) {
+		send_audio_start = 0;
+		return;
+	}
+
+	data = bt_test_get_sbc_data(&len);
+	LOG_INF("send len %d!",len);
+	btif_pts_a2dp_send_audio_data(data, len);
+
+	if (send_audio_start) {
+		k_delayed_work_submit(&bt_a2dp_send_audio_work, K_MSEC(test_a2dp_audio_interval));
+	}
+}
+
 static int pts_a2dp_test(const struct shell *shell, size_t argc, char *argv[])
 {
 #ifdef CONFIG_BT_A2DP
@@ -182,6 +223,75 @@ static int pts_a2dp_test(const struct shell *shell, size_t argc, char *argv[])
 		value = strtoul(argv[2], NULL, 16);
 		btif_pts_a2dp_set_err_code(value);
 		SYS_LOG_INF("Set a2dp err code 0x%x", value);
+	} else if (!strcmp(cmd, "discover")) {
+		return btif_pts_a2dp_discover();
+	} else if (!strcmp(cmd, "getcap")) {
+		return btif_pts_a2dp_get_capabilities();
+	} else if (!strcmp(cmd, "getallcap")) {
+		return btif_pts_a2dp_get_all_capabilities();
+	} else if (!strcmp(cmd, "setcfg")) {
+		return btif_pts_a2dp_set_configuration();
+	} else if (!strcmp(cmd, "reconfig")) {
+		return btif_pts_a2dp_reconfig((void *)reset_a2dp_sbc_codec);
+	} else if (!strcmp(cmd, "open")) {
+		return btif_pts_a2dp_open();
+	} else if (!strcmp(cmd, "start")) {
+		return btif_pts_a2dp_start();
+	} else if (!strcmp(cmd, "suspend")) {
+		if (send_audio_start) {
+			send_audio_start = 0;
+			k_delayed_work_cancel(&bt_a2dp_send_audio_work);
+		}
+		return btif_pts_a2dp_suspend();
+	} else if (!strcmp(cmd, "close")) {
+		if (send_audio_start) {
+			send_audio_start = 0;
+			k_delayed_work_cancel(&bt_a2dp_send_audio_work);
+		}
+		return btif_pts_a2dp_close();
+	} else if (!strcmp(cmd, "abort")) {
+		return btif_pts_a2dp_abort();
+	} else if (!strcmp(cmd, "disconnectmedia")) {
+		return btif_pts_a2dp_disconnect_media_session();
+	} else if (!strcmp(cmd, "connectmedia")) {
+		return btif_pts_a2dp_connect(BT_A2DP_CH_MEDIA);
+	} else if (!strcmp(cmd, "senddata")) {
+		send_audio_start = 1;
+		k_delayed_work_init(&bt_a2dp_send_audio_work, bredr_a2dp_send_audio);
+		k_delayed_work_submit(&bt_a2dp_send_audio_work, K_MSEC(test_a2dp_audio_interval));
+	} else if (!strcmp(cmd, "run")) {
+		SYS_LOG_INF("discover.");
+		btif_pts_a2dp_discover();
+		os_sleep(200);
+		SYS_LOG_INF("get_capabilities.");
+		btif_pts_a2dp_get_capabilities();
+		os_sleep(200);
+		SYS_LOG_INF("get_capabilities.");
+		btif_pts_a2dp_get_capabilities();
+		//btif_pts_a2dp_get_all_capabilities();
+		os_sleep(200);
+		SYS_LOG_INF("set_configuration.");
+		btif_pts_a2dp_set_configuration();
+		os_sleep(200);
+		SYS_LOG_INF("a2dp_open.");
+		btif_pts_a2dp_open();
+		os_sleep(200);
+		SYS_LOG_INF("a2dp_connect media.");
+		btif_pts_a2dp_connect(BT_A2DP_CH_MEDIA);
+		os_sleep(200);
+		SYS_LOG_INF("a2dp_start.");
+		btif_pts_a2dp_start();
+		os_sleep(200);
+		send_audio_start = 1;
+		SYS_LOG_INF("a2dp send data.");
+		k_delayed_work_init(&bt_a2dp_send_audio_work, bredr_a2dp_send_audio);
+		k_delayed_work_submit(&bt_a2dp_send_audio_work, K_MSEC(test_a2dp_audio_interval));
+	} else if (!strcmp(cmd, "source")) {
+		return btif_pts_a2dp_connect(BT_A2DP_CH_SOURCE);
+	} else if (!strcmp(cmd, "sink")) {
+		return btif_pts_a2dp_connect(BT_A2DP_CH_SINK);
+	} else {
+		LOG_INF("Unkown cmd:%s", cmd);
 	}
 #endif
 

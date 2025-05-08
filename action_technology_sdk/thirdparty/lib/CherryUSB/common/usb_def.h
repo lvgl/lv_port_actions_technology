@@ -283,6 +283,34 @@
 #define USB_OTG_FEATURE_A_HNP_SUPPORT     4 /* A device supports HNP */
 #define USB_OTG_FEATURE_A_ALT_HNP_SUPPORT 5 /* Another port on the A device supports HNP */
 
+#ifdef CONFIG_USB_ACTIONS_VENDOR_CTRL
+/* Vendor-defined command direction */
+#define VENDOR_TYPE_IN                    0xC0
+#define VENDOR_TYPE_OUT                   0x40
+
+/* Actions Custom Command */
+#define GET_INFO                          0x00
+#define SWITCH_USB_DEVICE_CLASS           0x01
+
+/* Command parameters */
+#define OBTAIN_IDENTITY                   0x0000
+
+#define SWITCH_TO_ADFU_MODE               0x0000
+#define SWITCH_TO_CDC_MODE                0x0001
+#define SWITCH_TO_STUB_MODE               0x0002
+
+/* Actions vendor id */
+#define ACTIONS_ID                        0x10D6
+
+/* Desc parameters */
+#define GET_IDENTITY_LENGTH               0x05
+#define ACTIONS_CMD_VERSION               0x0100
+
+#define SWITCH_MODE_LENGTH                0x02
+#define ACTIONS_CMD_ACK                   0xD2
+#define ACTIONS_CMD_STALL                 0x1E
+#endif
+
 /* WinUSB Microsoft OS 2.0 descriptor request codes */
 #define WINUSB_REQUEST_GET_DESCRIPTOR_SET 0x07
 #define WINUSB_REQUEST_SET_ALT_ENUM       0x08
@@ -497,6 +525,14 @@ struct usb_msosv1_comp_id_function_descriptor {
         struct usb_msosv1_compat_id_header_descriptor compat_id_header;      \
         struct usb_msosv1_comp_id_function_descriptor compat_id_function[x]; \
     };
+
+#ifdef CONFIG_USB_ACTIONS_VENDOR_CTRL
+struct usb_actions_get_identity_descriptor {
+    uint8_t bLength;            /* Descriptor size in bytes = 5 */
+    uint16_t idVendor;          /* Actions vendor id*/
+    uint16_t bcdDevice;         /* Version number of the Actions protocol */
+}__attribute__((packed));;
+#endif
 
 struct usb_msosv1_descriptor {
     const uint8_t *string;

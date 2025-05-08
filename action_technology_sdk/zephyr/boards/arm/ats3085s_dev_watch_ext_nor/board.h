@@ -166,6 +166,7 @@ int board_extern_pa_ctl(u8_t pa_class, bool is_on);
 int gps_power095_pin_ctl( bool is_on);
 int gps_power_pin_ctl( bool is_on);
 int gps_wake_up_pin_ctl( bool is_on);
+int gps_reset_pin_ctl();
 #endif
 #ifdef CONFIG_PANEL
 void board_lcd_suspend(bool aod_en, bool early_suspend);

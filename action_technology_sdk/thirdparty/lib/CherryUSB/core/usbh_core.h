@@ -48,6 +48,9 @@ extern "C" {
 
 #define USBH_GET_URB_INTERVAL(interval, speed) (speed < USB_SPEED_HIGH ? interval : (1 << (interval - 1)))
 
+#define USBH_GET_URB_INTERVAL_MS(interval, speed) \
+    ((speed < USB_SPEED_HIGH ? USBH_GET_URB_INTERVAL(interval, speed) : ((USBH_GET_URB_INTERVAL(interval, speed) + 7) >> 3)))
+
 #define USBH_EP_INIT(ep, ep_desc)                                            \
     do {                                                                     \
         ep = ep_desc;                                                        \

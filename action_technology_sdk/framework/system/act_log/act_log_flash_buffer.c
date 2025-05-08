@@ -154,7 +154,8 @@ struct flash_buffer_ctx *flash_buffer_init(int partition_id, int erase_enable, i
                 return NULL;
             }
             ctx->base_addr = part->offset;
-            ctx->total_size = part->size;
+            //ctx->total_size = part->size;
+			ctx->total_size = CONFIG_SIM_FLASH_SIZE;
             ctx->storage_dev = storage_dev;
             ctx->erase_enable = erase_enable;
         } else {

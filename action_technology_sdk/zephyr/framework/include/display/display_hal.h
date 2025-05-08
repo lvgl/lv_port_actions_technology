@@ -99,6 +99,9 @@ enum hal_pixel_format {
 
 	/* order: [7] A7, [6] A6, [5] A5, [4] A4, [3] A3, [2] A2, [1] A1, [0] A0 */
 	HAL_PIXEL_FORMAT_A1_LE              = PIXEL_FORMAT_A1_LE,
+
+	/* order: [7..0] Gray value */
+	HAL_PIXEL_FORMAT_L8                 = PIXEL_FORMAT_L8,
 };
 
 /**
@@ -213,6 +216,41 @@ static inline hal_color_t hal_color_hex16(uint16_t c)
 	color.b = color.b | ((color.b >> 5) & 0x7);
 
 	return color;
+}
+
+static inline uint8_t hal_rgb16_to_l8(uint16_t rgb16)
+{
+	return display_rgb16_luminance(rgb16);
+}
+
+static inline uint8_t hal_rgb24_to_l8(uint8_t r, uint8_t g, uint8_t b)
+{
+	return display_rgb24_luminance(r, g, b);
+}
+
+static inline uint8_t hal_color_to_l8(hal_color_t color)
+{
+	return hal_rgb24_to_l8(color.r, color.g, color.b);
+}
+
+static inline uint8_t hal_rgb32_to_l8(uint32_t rgb32)
+{
+	return hal_color_to_l8(hal_color_hex(rgb32));
+}
+
+static inline uint16_t hal_l8_to_rgb16(uint8_t luminance)
+{
+	return display_luminance_to_rgb16(luminance);
+}
+
+static inline uint32_t hal_l8_to_rgb32(uint8_t luminance)
+{
+	return display_luminance_to_rgb32(luminance);
+}
+
+static inline hal_color_t hal_l8_to_color(uint8_t luminance)
+{
+	return hal_color_hex(hal_l8_to_rgb32(luminance));
 }
 
 /**

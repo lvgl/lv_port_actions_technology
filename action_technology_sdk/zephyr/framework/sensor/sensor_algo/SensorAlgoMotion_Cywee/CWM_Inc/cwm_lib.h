@@ -49,6 +49,14 @@
 #define SCL_ACT_ZONE_TIME       37
 #define SCL_ACT_TRAINING_INFO   38
 #define SCL_WATCH_INTF_RESET    40
+#define SCL_PEDO_CONFIG2        42
+#define SCL_HG_INTF_CONFIG      43
+#define SCL_ACT_AUTO_PAUSE_CFG  44
+#define SCL_AR_ALERT2_CONFIG    45
+#define SCL_WI_SENS_REQ_CFG     46
+#define SCL_ACT_SA_METR_INFO    47
+#define SCL_SLEEP_ALARM_CFG     48
+#define SCL_FITNESS_INFO        49
 
 #define SCL_SZ_BREACH_CONFIG    50
 
@@ -64,6 +72,7 @@
 #define SCL_SENS_CALI_SET_MAG   115
 #define SCL_SENS_CALI_SET_A     116
 
+#define SCL_SIN_HR_EXT          200
 
 /**
   * @brief Custom Sensor Input sensorId

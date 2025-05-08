@@ -66,6 +66,8 @@
 #include <linux/kernel.h>
 #include <linux/pm.h>
 #include <linux/suspend.h>
+#elif defined(__ZEPHYR__)
+#include <zephyr.h>
 #endif
 
 #if gcdVG_RECORD_HARDWARE_RUNNING_TIME
@@ -956,6 +958,10 @@ static vg_lite_error_t do_wait(vg_lite_kernel_wait_t * data)
         unsigned int debug;
         unsigned int iter;
 
+#ifdef VG_LITE_DEBUG_DUMP_BEGIN
+        VG_LITE_DEBUG_DUMP_BEGIN();
+#endif
+
         debug = vg_lite_hal_peek(VG_LITE_HW_IDLE);
         vg_lite_kernel_print("idle = 0x%x\n",debug);
 
@@ -1049,6 +1055,9 @@ static vg_lite_error_t do_wait(vg_lite_kernel_wait_t * data)
         vg_lite_kernel_print("0x%x = 0x%08x\n", 0xE8, debug); 
 #if gcdVG_ENABLE_DUMP_COMMAND && gcdVG_ENABLE_BACKUP_COMMAND
         dump_last_frame();
+#endif
+#ifdef VG_LITE_DEBUG_DUMP_END
+        VG_LITE_DEBUG_DUMP_END();
 #endif
         return VG_LITE_TIMEOUT;
     }

@@ -43,6 +43,9 @@ zephyr_library_sources_ifdef(CONFIG_OTA_PRODUCT_SUPPORT
 zephyr_library_sources_ifdef(CONFIG_OTA_BLE_MASTER_SUPPORT
     ota_trans_bt.c
 )
+zephyr_library_sources_ifdef(CONFIG_CWF_SERVICE
+    ota_backend_cwf.c
+)
 
 add_subdirectory(libota)
 add_subdirectory_ifdef(CONFIG_OTA_LZMA minlzma)

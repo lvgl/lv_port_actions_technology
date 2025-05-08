@@ -124,6 +124,9 @@ typedef enum {
 
     MIX_INPUT_BUF,
     MIX_RES_BUF,
+
+	INPUT_VOICE_REC,
+	OUTPUT_VOICE_REC,
 } cache_pool_type_e;
 
 /**

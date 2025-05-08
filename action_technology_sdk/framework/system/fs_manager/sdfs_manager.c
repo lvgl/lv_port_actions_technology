@@ -21,29 +21,46 @@
 #include <board_cfg.h>
 
 static const char * const sd_fs_volume_names[] = {
+#if CONFIG_AEM_WATCH_SUPPORT
 #ifdef CONFIG_SPINAND_ACTS
-	 "/NAND:A", "/NAND:K", "/NAND:C", "/NAND:B",
+	"/NAND:A", "/NAND:K", "/NAND:C", "/NAND:B", "/NAND:L"
 #elif CONFIG_BOARD_EMMCBOOT
-	"/SD:A", "/SD:K", "/SD:C", "/SD:B"
+	"/SD:A", "/SD:K", "/SD:C", "/SD:B", "/SD:L"
+#elif CONFIG_SDFS_NOR_NOT_XIP
+	"/NOR:A", "/NOR:K", "/NOR:C", "/NOR:B", "/NOR:L"
 #elif CONFIG_DISK_ACCESS_SD
-	"/SD:A", "/SD:K", "/SD:C", "/SD:B"
+	"/SD:A", "/SD:K", "/SD:C", "/SD:B", "/SD:L"
+#else
+	"/DNOR:A", "/DNOR:K", "/DNOR:C", "/DNOR:B", "/DNOR:L"
+#endif
+#else
+#ifdef CONFIG_SPINAND_ACTS
+	"/NAND:A", "/NAND:K", "/NAND:C", "/NAND:B",
+	"/NAND:U", "/NAND:V", "/NAND:W", "/NAND:X",  //cloud watch
+#elif CONFIG_BOARD_EMMCBOOT
+	"/SD:A", "/SD:K", "/SD:C", "/SD:B",
+	"/SD:U", "/SD:V", "/SD:W", "/SD:X",  //cloud watch
+#elif CONFIG_DISK_ACCESS_SD
+	"/SD:A", "/SD:K", "/SD:C", "/SD:B",
+	"/SD:U", "/SD:V", "/SD:W", "/SD:X",  //cloud watch
 #elif CONFIG_SDFS_NOR_NOT_XIP
 #if IS_ENABLED(CONFIG_SPI_FLASH_2)
-	"/DNOR:A", "/DNOR:K", "/DNOR:C", "/DNOR:B"
+	"/DNOR:A", "/DNOR:K", "/DNOR:C", "/DNOR:B",
+	"/DNOR:U", "/DNOR:V", "/DNOR:W", "/DNOR:X",  //cloud watch
 #else
-	"/NOR:A", "/NOR:K", "/NOR:C", "/NOR:B"
+	"/NOR:A", "/NOR:K", "/NOR:C", "/NOR:B",
+	"/NOR:U", "/NOR:V", "/NOR:W", "/NOR:X",  //cloud watch
 #endif
 #else
-	"/DNOR:A", "/DNOR:K", "/DNOR:C", "/DNOR:B"
+	"/DNOR:A", "/DNOR:K", "/DNOR:C", "/DNOR:B",
+	"/DNOR:U", "/DNOR:V", "/DNOR:W", "/DNOR:X",  //cloud watch
 #endif
-	
+#endif
 
 };
-
-
 struct sd_fs_volume {
 	struct fs_mount_t *mp;
-	uint8_t allocated : 1;	/* 0: buffer not allocated, 1: buffer allocated */
+	uint8_t allocated : 1; /* 0: buffer not allocated, 1: buffer allocated */
 	uint8_t mounted : 1;	/* 0: volume not mounted, 1: volume mounted */
 };
 

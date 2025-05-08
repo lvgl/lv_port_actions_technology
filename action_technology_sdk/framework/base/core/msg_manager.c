@@ -20,12 +20,23 @@
 #ifdef CONFIG_TASK_WDT
 #include <task_wdt_manager.h>
 #endif
+#include <acts_ringbuf.h>
+
+typedef struct _manager_work_msg
+{
+	struct app_msg msg;
+	char *receiver_name;
+}manager_work_msg_t;
 
 extern int os_get_pending_msg_cnt(void);
 /*global data mailbox for all app thread*/
 OS_MUTEX_DEFINE(msg_manager_mutex);
 
 static sys_slist_t	global_receiver_list;
+
+static os_delayed_work msg_manager_work;
+static uint32_t s_manager_work_buf_mem[sizeof(manager_work_msg_t) * 5];
+static ACTS_RINGBUF_DEFINE(s_manager_work_buf, s_manager_work_buf_mem, sizeof(s_manager_work_buf_mem));
 
 static bool lock_flag;
 
@@ -155,10 +166,20 @@ os_tid_t  msg_manager_listener_tid(char *name)
 
 	return NULL;
 }
+
+static void _msg_manager_work_handle(struct k_work *work)
+{
+	manager_work_msg_t work_msg = {0};
+	while (acts_ringbuf_get(&s_manager_work_buf, &work_msg, sizeof(work_msg)) == sizeof(work_msg)) {
+		send_async_msg(work_msg.receiver_name, &work_msg.msg);
+	}
+}
+
 /*init manager*/
 bool msg_manager_init(void)
 {
 	os_msg_init();
+	os_delayed_work_init(&msg_manager_work, _msg_manager_work_handle);
 	lock_flag = false;
 #ifdef CONFIG_TASK_WDT
 	task_wdt_manager_init();
@@ -212,6 +233,21 @@ exit:
 #endif
 	os_thread_priority_set(os_current_get(), prio);
 	return result;
+}
+
+bool msg_manager_send_async_IRQ(char *receiver, struct app_msg *msg)
+{
+	manager_work_msg_t work_msg = {0};
+	memcpy(&work_msg.msg, msg, sizeof(work_msg.msg));
+	work_msg.receiver_name = receiver;
+	if (acts_ringbuf_put(&s_manager_work_buf, &work_msg, sizeof(work_msg)) != sizeof(work_msg)) {
+		/* increase s_manager_work_buf_mem  */
+		SYS_LOG_ERR("manager send async work %s err\n", receiver);
+		return true;
+	}
+	os_delayed_work_cancel(&msg_manager_work);
+	os_delayed_work_submit(&msg_manager_work, 0);
+	return false;
 }
 
 bool msg_manager_send_async_msg_discardable(char *receiver, struct app_msg *msg)

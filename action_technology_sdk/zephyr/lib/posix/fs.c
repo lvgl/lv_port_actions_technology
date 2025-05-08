@@ -162,6 +162,13 @@ static int fs_ioctl_vmeth(void *obj, unsigned int request, va_list args)
 		rc = fs_sync(&ptr->file);
 		break;
 	}
+	case ZFD_IOCTL_STAT: {
+		struct stat *st = va_arg(args, struct stat *);
+
+		st->st_mode = S_IFCHR;
+		st->st_size = fs_size(&ptr->file);
+		break;
+	}
 
 	default:
 		errno = EOPNOTSUPP;
@@ -388,3 +395,14 @@ int mkdir(const char *path, mode_t mode)
 
 	return 0;
 }
+
+/**
+ * @brief Remove a directory.
+ *
+ * See IEEE 1003.1
+ */
+int rmdir(const char *path)
+{
+	return unlink(path);
+}
+

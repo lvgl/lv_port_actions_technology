@@ -18,16 +18,6 @@
 #include <awk_system_adapter.h>
 #include <memory/mem_cache.h>
 
-#ifdef CONFIG_UI_MANAGER
-#define UI_MAP_MALLOC(size)        ui_mem_aligned_alloc(MEM_FB, 64, size, __func__)
-#define UI_MAP_FREE(ptr)           ui_mem_free(MEM_FB, ptr)
-#define UI_MAP_REALLOC(ptr,size)   ui_mem_realloc(MEM_FB,ptr,size,__func__)
-#else
-#define UI_MAP_MALLOC(size)        lv_malloc(size)
-#define UI_MAP_FREE(ptr)           lv_free(ptr)
-#define UI_MAP_REALLOC(ptr,size)   lv_realloc(ptr,size)
-#endif
-
 enum {
 	AWK_VIEW_MSG_START = MSG_VIEW_USER_OFFSET,
 	AWK_INIT_RESULT,
@@ -51,8 +41,8 @@ typedef struct map_view_data {
 	lv_obj_t *cont;
 	lv_obj_t *map;
 	lv_obj_t *map_bg;
-	lv_image_dsc_t img_map;
-	lv_image_dsc_t img_bg;
+	lv_draw_buf_t *img_map;
+	lv_draw_buf_t *img_bg;
 	lv_obj_t *zoom_in_btn;
 	lv_obj_t *zoom_out_btn;
 	lv_obj_t *test_btn;
@@ -294,64 +284,50 @@ void awk_map_create_view_result_handler(struct view_data *view_data, void *user_
 		lv_color_format_t cf = LV_COLOR_FORMAT_RGB565;
 		int32_t width = DEF_UI_WIDTH;
 		int32_t height = DEF_UI_HEIGHT;
-		uint32_t stride = width * lv_color_format_get_size(cf);
-		uint32_t buffer_size = stride * height;
 
-		uint8_t *img_data_bg = (uint8_t *)UI_MAP_MALLOC(buffer_size);
-		if(img_data_bg == NULL) {
-			SYS_LOG_ERR("malloc %d failed", buffer_size);
+		data->img_bg = lv_draw_buf_create(width, height, cf, LV_STRIDE_AUTO);
+		if(data->img_bg == NULL) {
+			SYS_LOG_ERR("malloc img_bg failed");
 			return;
 		}
-		memset(img_data_bg, 0, buffer_size);
-		data->img_bg.header.magic = LV_IMAGE_HEADER_MAGIC;
-		data->img_bg.header.cf = cf;
-		data->img_bg.header.stride = stride;
-		data->img_bg.header.w = width;
-		data->img_bg.header.h = height;
-		data->img_bg.data = img_data_bg;
-		data->img_bg.data_size = buffer_size;
-		lv_obj_t *map_bg = lv_image_create(data->cont);
-		lv_image_set_src(map_bg, &data->img_bg);
-		lv_obj_center(map_bg);
-		data->map_bg = map_bg;
+		lv_draw_buf_clear(data->img_bg, NULL);
 
-		uint8_t *img_data = (uint8_t *)UI_MAP_MALLOC(buffer_size);
-		if(img_data == NULL) {
-			SYS_LOG_ERR("malloc %d failed", buffer_size);
+		data->map_bg = lv_image_create(data->cont);
+		lv_image_set_src(data->map_bg, data->img_bg);
+		lv_obj_center(data->map_bg);
+		lv_obj_add_flag(data->map_bg, LV_OBJ_FLAG_HIDDEN);
+
+		data->img_map = lv_draw_buf_create(width, height, cf, LV_STRIDE_AUTO);
+		if(data->img_map == NULL) {
+			SYS_LOG_ERR("malloc img_map failed");
+			lv_draw_buf_destroy(data->img_bg);
+			data->img_bg = NULL;
 			return;
 		}
-		memset(img_data, 0, buffer_size);
-		data->img_map.header.magic = LV_IMAGE_HEADER_MAGIC;
-		data->img_map.header.cf = cf;
-		data->img_map.header.stride = stride;
-		data->img_map.header.w = width;
-		data->img_map.header.h = height;
-		data->img_map.data = img_data;
-		data->img_map.data_size = buffer_size;
-		lv_obj_t *map = lv_image_create(data->cont);
-		lv_image_set_src(map, &data->img_map);
-		lv_obj_center(map);
-		data->map = map;
+		lv_draw_buf_clear(data->img_map, NULL);
 
-		lv_obj_add_flag(map_bg, LV_OBJ_FLAG_HIDDEN);
-		lv_obj_add_flag(map, LV_OBJ_FLAG_HIDDEN);
+		data->map = lv_image_create(data->cont);
+		lv_image_set_src(data->map, &data->img_map);
+		lv_obj_center(data->map);
+		lv_obj_add_flag(data->map, LV_OBJ_FLAG_HIDDEN);
+
 		lv_refr_now(view_data->display);
 
 		t_awk_view_buffer_info render_buffer_info;
 		render_buffer_info.cf = AWK_PIXEL_MODE_RGB_565;
-		render_buffer_info.width = width;
-		render_buffer_info.height = height;
-		render_buffer_info.stride = stride;
-		render_buffer_info.data = img_data;
-		render_buffer_info.data_size = buffer_size;
+		render_buffer_info.width = data->img_map->header.w;
+		render_buffer_info.height = data->img_map->header.h;
+		render_buffer_info.stride = data->img_map->header.stride;
+		render_buffer_info.data = data->img_map->data;
+		render_buffer_info.data_size = data->img_map->data_size;
 
 		t_awk_view_buffer_info background_buffer_info;
 		background_buffer_info.cf = AWK_PIXEL_MODE_RGB_565;
-		background_buffer_info.width = width;
-		background_buffer_info.height = height;
-		background_buffer_info.stride = stride;
-		background_buffer_info.data = img_data_bg;
-		background_buffer_info.data_size = buffer_size;
+		background_buffer_info.width = data->img_bg->header.w;
+		background_buffer_info.height = data->img_bg->header.h;
+		background_buffer_info.stride = data->img_bg->header.stride;
+		background_buffer_info.data = data->img_bg->data;
+		background_buffer_info.data_size = data->img_bg->data_size;
 		awk_render_init(&render_buffer_info, &background_buffer_info, user_render_commit_cbk);
 
 		awk_service_render_start();
@@ -450,11 +426,11 @@ static int _map_view_delete(view_data_t *view_data)
 		param.map_id = data->map_id;
 		awk_map_destroy_view_async(param, NULL);
 		awk_uninit_async(NULL);
-		if (data->img_map.data) {
-			UI_MAP_FREE((void *)data->img_map.data);
+		if (data->img_map) {
+			lv_draw_buf_destroy(data->img_map);
 		}
-		if(data->img_bg.data){
-			UI_MAP_FREE((void *)data->img_bg.data);
+		if(data->img_bg){
+			lv_draw_buf_destroy(data->img_bg);
 		}
 		LVGL_FONT_CLOSE(&data->font);
 		lv_obj_delete(data->cont);

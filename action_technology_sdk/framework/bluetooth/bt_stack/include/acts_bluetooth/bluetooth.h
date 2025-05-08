@@ -565,9 +565,6 @@ struct bt_le_adv_param {
 	 *       enabled or not supported by the controller it is not possible
 	 *       to scan and advertise simultaneously using two different
 	 *       random addresses.
-	 *
-	 * @note It is not possible to have multiple connectable advertising
-	 *       sets advertising simultaneously using different identities.
 	 */
 	uint8_t  id;
 
@@ -2303,8 +2300,11 @@ int bt_vs_enable_tws_int_new(uint8_t enable, uint8_t index);
 int bt_vs_read_bt_us_cnt(uint32_t *cnt);
 int bt_vs_set_apll_temp_comp(uint8_t enable);
 int bt_vs_do_apll_temp_comp(void);
-int bt_le_per_adv_sync_comp_set(struct bt_le_per_adv_sync *per_adv_sync, uint8_t sync_enable, uint8_t rsv);
-
+int bt_le_per_adv_sync_comp_set(struct bt_le_per_adv_sync *per_adv_sync, uint8_t sync_enable, uint8_t sync_num, uint8_t sync_no);
+#if defined(CONFIG_BT_EXT_ADV)
+int bt_set_name_by_id(uint8_t id, const char *name);
+char *bt_get_name_by_id(uint8_t id);
+#endif
 /* Actions add end */
 
 /**

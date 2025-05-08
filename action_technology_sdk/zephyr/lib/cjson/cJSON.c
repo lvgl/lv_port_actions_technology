@@ -175,9 +175,26 @@ static void * CJSON_CDECL internal_realloc(void *pointer, size_t size)
     return realloc(pointer, size);
 }
 #else
+#ifdef CONFIG_UI_MANAGER
+#include <ui_mem.h>
+#include <os_common_api.h>
+static void * CJSON_CDECL internal_malloc(size_t size)
+{
+    return ui_mem_alloc(MEM_RES, size, __func__);
+}
+static void CJSON_CDECL internal_free(void *pointer)
+{
+    ui_mem_free(MEM_RES, pointer);
+}
+static void * CJSON_CDECL internal_realloc(void *pointer, size_t size)
+{
+    return ui_mem_realloc(MEM_RES, pointer, size, __func__);
+}
+#else
 #define internal_malloc malloc
 #define internal_free free
 #define internal_realloc realloc
+#endif
 #endif
 
 /* strlen of character literals resolved at compile time */

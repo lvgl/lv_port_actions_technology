@@ -191,7 +191,12 @@ static volatile int thread_op;
 #ifndef CONFIG_USB_MASS_STORAGE_SHARE_THREAD
 static K_THREAD_STACK_DEFINE(mass_thread_stack, DISK_THREAD_STACK_SZ);
 static struct k_thread mass_thread_data;
+
+static K_THREAD_STACK_DEFINE(mass_thread_write_stack, DISK_THREAD_STACK_SZ);
+static struct k_thread mass_thread_write;
+static struct k_sem disk_write_sem;
 #endif
+
 static struct k_sem disk_wait_sem;
 static struct k_sem usb_wait_sem;
 static volatile u32_t defered_wr_sz;
@@ -200,9 +205,26 @@ static volatile u32_t defered_rd_off;
 static u8_t *page;
 static u8_t *page2;
 static u32_t page_size;
+static u64_t addr_wr;
+static u8_t *page_disk_wr;
+static int page_disk_wr_index;
+static u32_t sectors_wr;
+u8_t disk_state;
+
+enum{
+	PAGE_FREE,
+	PAGE_USED,
+};
+
+enum{
+	PAGE_INDEX,
+	PAGE2_INDEX,
+};
+
+//0-free, 1-used
+static volatile int page_status[2];
 
 #define USB_RW_TIMEOUT	K_MSEC(5000)
-
 static u8_t usb_rw_working;
 
 /* Initialized during mass_storage_init() */
@@ -1352,12 +1374,83 @@ done:
 	return 0;
 }
 
+int set_page_used(int index)
+{
+	page_status[index] = PAGE_USED;
+	return 0;
+}
+
+int set_page_free(int index)
+{
+	page_status[index] = PAGE_FREE;
+	return 0;
+}
+
+int set_page_disk(u8_t **page, u8_t *page_next, int index)
+{
+	while(page_status[index]){
+		LOG_DBG("disk wait:%d", index);
+		k_sleep(K_MSEC(1));
+	}
+
+	LOG_DBG("disk buf-index:%d", index);
+	*page = page_next;
+	page_disk_wr_index = index;
+	return 0;
+}
+
+int set_page_usb(u8_t **page, u8_t *page_next, int index)
+{
+	while(page_status[index]){
+		LOG_DBG("usb wait:%d", index);
+		k_sleep(K_MSEC(1));
+	}
+
+	LOG_DBG("usb buf-index:%d", index);
+	*page = page_next;
+	return 0;
+}
+
+void usb_mass_storage_write_thread(void *p1, void *p2, void *p3)
+{
+	int ret, index;
+
+	while (msc_state_running()) {
+		k_sem_take(&disk_write_sem, K_FOREVER);
+		index=page_disk_wr_index;
+		set_page_used(index);
+		ret=disk_write(disk_pdrv, page_disk_wr, (addr_wr/BLOCK_SIZE), sectors_wr);
+		if(ret!=0)
+		{
+			if (disk_ioctl(disk_pdrv, DISK_HW_DETECT, &disk_state) ||
+			    (disk_state != STA_DISK_OK)) {
+				disk_pdrv = MSC_DISK_NO_MEDIA;
+			}
+
+			msc_sense_data = SS_WRITE_ERROR;
+			stage = ERROR;
+			usb_ep_set_stall(mass_ep_data[MSD_OUT_EP_IDX].ep_addr);
+			LOG_ERR("Disk Write Error 0x%x %d",
+					(u32_t)(addr/BLOCK_SIZE), sectors_wr);
+
+			thread_op = THREAD_OP_WRITE_DONE;
+			LOG_DBG("write done");
+			csw.Status = (stage == ERROR) ? CSW_FAILED : CSW_PASSED;
+			sendCSW();
+			set_page_free(index);
+			break;
+		}
+		set_page_free(index);
+	}
+}
+
 void usb_mass_storage_thread(void *p1, void *p2, void *p3)
 {
-	u32_t sectors, len, len_ping, len_pong, disk_left;
-	u8_t *page_disk, *page_usb;
+	u32_t sectors;
+	u32_t len, len_ping, len_pong, disk_left;
+	u8_t *page_disk;
+	u8_t *page_usb;
 	u8_t skip_disk_write;
-	u8_t disk_state;
 	int ret;
 
 	ARG_UNUSED(p1);
@@ -1378,8 +1471,7 @@ restart:
 		switch (thread_op) {
 		case THREAD_OP_READ_QUEUED:
 			usb_rw_working = 0;
-			page_disk = page;
-
+			set_page_disk(&page_disk, page, PAGE_INDEX);
 			while (length) {
 				if (length > page_size) {
 					len = page_size;
@@ -1452,10 +1544,10 @@ restart:
 							mass_ep_data[MSD_IN_EP_IDX].ep_addr);
 				}
 #endif
-				if (page_disk == page) {
-					page_disk = page2;
+				if(page_disk == page) {
+					set_page_disk(&page_disk, page2, PAGE2_INDEX);
 				} else {
-					page_disk = page;
+					set_page_disk(&page_disk, page, PAGE_INDEX);
 				}
 
 				if (stage == ERROR) {
@@ -1487,11 +1579,9 @@ restart:
 			break;
 
 		case THREAD_OP_WRITE_QUEUED:
-			page_usb = page;
-			page_disk = page2;
+			set_page_usb(&page_usb, page, PAGE_INDEX);
 			disk_left = length;
 			skip_disk_write = 0;
-
 			LOG_DBG("length: %d, disk_left: %d",
 				length, disk_left);
 
@@ -1508,6 +1598,7 @@ restart:
 #else
 			usb_read_async(mass_ep_data[MSD_OUT_EP_IDX].ep_addr,
 					page_usb, len_ping, NULL);
+			page_disk = page2;
 #endif
 			ret = k_sem_take(&usb_wait_sem, USB_RW_TIMEOUT);
 			if (ret != 0) {
@@ -1542,11 +1633,11 @@ restart:
 					length -= len;
 
 					if (page_usb == page) {
-						page_usb = page2;
+						set_page_usb(&page_usb, page2, PAGE2_INDEX);
 						len_pong = len;
 						LOG_DBG("usb read pong");
 					} else {
-						page_usb = page;
+						set_page_usb(&page_usb, page, PAGE_INDEX);
 						len_ping = len;
 						LOG_DBG("usb read ping");
 					}
@@ -1560,11 +1651,11 @@ restart:
 				}
 
 				if (page_disk == page) {
-					page_disk = page2;
+					set_page_disk(&page_disk, page2, PAGE2_INDEX);
 					len = len_pong;
 					LOG_DBG("disk write pong");
 				} else {
-					page_disk = page;
+					set_page_disk(&page_disk, page, PAGE_INDEX);
 					len = len_ping;
 					LOG_DBG("disk write ping");
 				}
@@ -1601,22 +1692,13 @@ restart:
     				}
                 }
 #else
-				if ((skip_disk_write == 0) &&
-				    disk_write(disk_pdrv, page_disk, (addr/BLOCK_SIZE), sectors)) {
-					if (disk_ioctl(disk_pdrv, DISK_HW_DETECT, &disk_state) ||
-					    (disk_state != STA_DISK_OK)) {
-						disk_pdrv = MSC_DISK_NO_MEDIA;
-					}
 
-					msc_sense_data = SS_WRITE_ERROR;
-#if DISK_WRITE_ERROR_CONTINUE
-					skip_disk_write = 1;
-#else
-					stage = ERROR;
-					usb_ep_set_stall(mass_ep_data[MSD_OUT_EP_IDX].ep_addr);
-#endif
-					LOG_ERR("Disk Write Error 0x%x %d",
-							(u32_t)(addr/BLOCK_SIZE), sectors);
+				if (skip_disk_write == 0)
+				{
+					addr_wr=addr;
+					page_disk_wr=page_disk;
+					sectors_wr=sectors;
+					k_sem_give(&disk_write_sem);
 				}
 #endif
 				disk_left -= len;
@@ -1928,6 +2010,7 @@ int usb_mass_storage_init(struct device *dev, u8_t *buf, u32_t len)
 
 	k_sem_init(&disk_wait_sem, 0, 1);
 	k_sem_init(&usb_wait_sem, 0, 1);
+	k_sem_init(&disk_write_sem, 0, 1);
 
 #ifdef CONFIG_MASS_STORAGE_SWITCH_TO_ADFU
 	k_work_init(&switch_to_adfu_work, switch_to_adfu_work_handler);
@@ -1946,7 +2029,14 @@ int usb_mass_storage_init(struct device *dev, u8_t *buf, u32_t len)
 			DISK_THREAD_STACK_SZ,
 			usb_mass_storage_thread, NULL, NULL, NULL,
 			DISK_THREAD_PRIO, 0, K_NO_WAIT);
+
+	/* Start a thread to offload disk ops */
+	k_thread_create(&mass_thread_write, mass_thread_write_stack,
+			DISK_THREAD_STACK_SZ,
+			usb_mass_storage_write_thread, NULL, NULL, NULL,
+			6, 0, K_NO_WAIT);
 #endif
+
 	return 0;
 }
 

@@ -77,6 +77,160 @@ int btsrv_pts_avrcp_reg_notify_volume_change(void)
 	hostif_bt_pts_avrcp_ct_register_notification(br_conn);
 	return 0;
 }
+int btsrv_pts_a2dp_abort(void)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	bt_pts_a2dp_abort(br_conn);
+	return 0;
+}
+
+int btsrv_pts_a2dp_discover(void)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	bt_pts_a2dp_discover(br_conn);
+	return 0;
+}
+
+int btsrv_pts_a2dp_get_capabilities(void)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	bt_pts_a2dp_get_capabilities(br_conn);
+	return 0;
+}
+
+int btsrv_pts_a2dp_get_all_capabilities(void)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	bt_pts_a2dp_get_all_capabilities(br_conn);
+	return 0;
+}
+
+int btsrv_pts_a2dp_set_configuration(void)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	bt_pts_a2dp_set_configuration(br_conn);
+	return 0;
+}
+
+int btsrv_pts_a2dp_open(void)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	bt_pts_a2dp_open(br_conn);
+	return 0;
+}
+
+int btsrv_pts_a2dp_start(void)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	hostif_bt_a2dp_start(br_conn);
+	return 0;
+}
+
+int btsrv_pts_a2dp_suspend(void)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	hostif_bt_a2dp_suspend(br_conn);
+	return 0;
+}
+
+int btsrv_pts_a2dp_close(void)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	bt_pts_a2dp_close(br_conn);
+	return 0;
+}
+
+int btsrv_pts_a2dp_disconnect_media_session(void)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	bt_pts_a2dp_disconnect_media_session(br_conn);
+	return 0;
+}
+
+int btsrv_pts_a2dp_connect(uint8_t type)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	hostif_bt_a2dp_connect(br_conn, type);
+	return 0;
+}
+int btsrv_pts_a2dp_reconfig(void *ptr)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	hostif_bt_a2dp_reconfig(br_conn, (struct bt_a2dp_media_codec *)ptr);
+	return 0;
+}
+
+int btsrv_pts_a2dp_send_audio_data(uint8_t *data, uint16_t len)
+{
+	struct bt_conn *br_conn = btsrv_rdm_acl_get_connected_dev();
+
+	if (br_conn == NULL) {
+		return -EIO;
+	}
+
+	hostif_bt_a2dp_send_audio_data(br_conn, data, len);
+	return 0;
+}
 
 static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
 {
